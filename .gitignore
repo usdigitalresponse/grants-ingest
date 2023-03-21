@@ -5,6 +5,25 @@
 *.so
 *.dylib
 
+# IDE settings
+.idea/
+.vscode/
+
+# Python stuff
+__pycache__/
+__pypackages__/
+*.py[cod]
+*$py.class
+.Python
+profile_default/
+ipython_config.py
+venv/
+virtualenv/
+.venv
+.mypy_cache/
+pip-log.txt
+pip-delete-this-directory.txt
+
 # Test binary, built with `go test -c`
 *.test
 
@@ -13,3 +32,18 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+# Builds and artifacts
+bin/
+build/
+builds/
+
+# Coverage info
+cover.out
+cover.html
+
+# Taskfile metadata
+.task/
+
+# Terraform sources
+.terraform/
