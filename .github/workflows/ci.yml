@@ -67,7 +67,7 @@ jobs:
           terraform_version: ${{ steps.get_version.outputs.TF_VERSION }}
       - name: Terraform fmt
         id: fmt
-        run: terraform fmt -check -diff -recursive ./terraform
+        run: terraform fmt -check -diff -recursive
       - name: Ensure Terraform plugin cache exists
         run: mkdir -p $TF_PLUGIN_CACHE_DIR
       - name: Save/Restore Terraform plugin cache
