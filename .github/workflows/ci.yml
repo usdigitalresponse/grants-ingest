@@ -68,7 +68,7 @@ jobs:
       group: run_terraform-staging
     steps:
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-region: us-west-2
           role-to-assume: "${{ secrets.CI_ROLE_ARN }}"
