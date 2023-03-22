@@ -25,11 +25,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/cache@v3
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
           key: ${{ runner.os }}-taskfile
           path: |
             ~/.task
@@ -39,17 +36,17 @@ jobs:
             ~/cover.html
       - uses: actions/cache@v3
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
       - uses: actions/setup-go@v4
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           go-version-file: go.mod
       - uses: arduino/setup-task@v1
         with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
           version: 3.x
       - name: Check Formatting
         run: test -z "$(go fmt ./...)" || echo "Formatting check failed."
@@ -79,25 +76,22 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
           aws-region: us-west-2
           role-to-assume: "${{ secrets.CI_ROLE_ARN }}"
       - name: Check out code
         uses: actions/checkout@v3
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Get project TF version
         id: get_version
         run: echo "TF_VERSION=$(cat .terraform-version | tr -d '[:space:]')" | tee -a $GITHUB_OUTPUT
       - uses: hashicorp/setup-terraform@v2
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
           terraform_version: ${{ steps.get_version.outputs.TF_VERSION }}
       - name: Ensure Terraform plugin cache exists
         run: mkdir -p $TF_PLUGIN_CACHE_DIR
       - name: Save/Restore Terraform plugin cache
         uses: actions/cache@v3
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
           path: ${{ env.TF_PLUGIN_CACHE_DIR }}
           key: ${{ runner.os }}-terraform-${{ hashFiles('**/.terraform.lock.hcl') }}
           restore-keys: |
