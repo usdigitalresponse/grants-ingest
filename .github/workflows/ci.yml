@@ -74,22 +74,21 @@ jobs:
           role-to-assume: "${{ secrets.CI_ROLE_ARN }}"
       - name: Check out code
         uses: actions/checkout@v3
-      - name: Ensure Terraform plugin cache exists
-        run: mkdir -p $TF_PLUGIN_CACHE_DIR
-      - name: Save/Restore Terraform plugin cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.terraform.d/plugin-cache
-          key: ${{ runner.os }}-terraform-${{ hashFiles('**/.terraform.lock.hcl') }}
-          restore-keys: |
-            ${{ runner.os }}-terraform-
       - name: Get project TF version
         id: get_version
         run: echo "TF_VERSION=$(cat .terraform-version | tr -d '[:space:]')" | tee -a $GITHUB_OUTPUT
       - uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: ${{ steps.get_version.outputs.TF_VERSION }}
+      - name: Ensure Terraform plugin cache exists
+        run: mkdir -p $TF_PLUGIN_CACHE_DIR
+      - name: Save/Restore Terraform plugin cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
+          key: ${{ runner.os }}-terraform-${{ hashFiles('**/.terraform.lock.hcl') }}
+          restore-keys: |
+            ${{ runner.os }}-terraform-
       - name: Terraform fmt
         id: fmt
         run: terraform fmt -check -diff -recursive
