@@ -75,6 +75,7 @@ variable "additional_lambda_environment_variables" {
 variable "datadog_tags" {
   description = "Datadog reserved tags to configure in Lambda function environments (when var.datadog_enabled is true)."
   type        = map(string)
+  default     = {}
 }
 
 variable "lambda_default_log_retention_in_days" {
