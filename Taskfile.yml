@@ -1,0 +1,131 @@
+# https://taskfile.dev
+
+version: '3'
+
+output: prefixed
+
+tasks:
+  default:
+    silent: true
+    interactive: true
+    cmds:
+      - cmd: task --list
+      - cmd: printf "\nRun \"task --help\" for more information.\n"
+
+  check:
+    desc: >-
+      Simulates all steps of the "QA" job executed during the pull request CI workflow
+    deps:
+      - fmt
+      - test
+      - lint
+      - vet
+      - build-all
+
+  test:
+    desc: "Runs unit tests and updates the HTML coverage report"
+    run: once
+    prefix: "test output"
+    cmds:
+      - go test -race -covermode=atomic -coverprofile=cover.out {{ .CLI_ARGS }} ./...
+      - task: coverage-report-html
+    sources:
+      - ./**/*.go
+      - ./Taskfile.yml
+      - ./go.mod
+      - ./go.sum
+
+  coverage-report-html:
+    desc: "Writes an HTML coverage report to cover.html"
+    cmds:
+      - go tool cover -html=cover.out -o cover.html
+    sources:
+      - ./cover.out
+    generates:
+      - ./cover.html
+
+  lint:
+    interactive: true
+    desc: "Runs the staticcheck linter utility"
+    vars:
+      FORMAT: '{{ default "stylish" .FORMAT }}'
+    cmds:
+      - "staticcheck -f {{ .FORMAT }} ./..."
+    ignore_error: true
+    sources:
+      - ./**/*.go
+
+  generate:
+    desc: "Discovers and runs all go:generate directives for the entire project"
+    cmds:
+      - go generate ./...
+
+  fmt:
+    desc: Runs `go fmt` for the entire project
+    cmds:
+      - go fmt ./...
+    sources:
+      - ./**/*.go
+
+  vet:
+    desc: Runs `go vet` for the entire project
+    cmds:
+      - go vet ./...
+    sources:
+      - ./**/*.go
+
+  clean:
+    desc: "Removes generated content from ./bin and ./build directories"
+    silent: true
+    cmds:
+      - find ./bin -mindepth 1 -type d -exec rm -rf {} + -print
+      - find ./build -mindepth 1 -type d -exec rm -rf {} + -print
+
+  build-lambda:
+    internal: true
+    run: when_changed
+    label: "build-{{ .LAMBDA_CMD }}"
+    vars:
+      BUILD_DIR: bin/{{ .LAMBDA_CMD }}
+      BUILD_BIN: "{{ .BUILD_DIR }}/bootstrap"
+      SOURCE: ./cmd/{{ .LAMBDA_CMD }}/...
+    env:
+      GOARCH: arm64
+      GOOS: linux
+      GOPATH:
+        sh: go env GOPATH
+    cmds:
+      - go build -gcflags="-trimpath=$GOPATH" -ldflags="-s -w" -asmflags="-trimpath=$GOPATH" -trimpath -tags "lambda.norpc" -v -o {{ .BUILD_BIN }} {{ .SOURCE }}
+      - cmd: echo {{ .BUILD_BIN }}
+        silent: true
+    sources:
+      - ./**/*.go
+      - ./Taskfile.yml
+      - ./go.mod
+      - ./go.sum
+    generates:
+      - "{{ .BUILD_BIN }}"
+
+  build-all:
+    desc: "Compiles all Lambda handlers"
+    deps:
+      - build-download_grants_gov_db
+      - build-split_grants_gov_xml_db
+
+  build-download_grants_gov_db:
+    desc: Compiles download_grants_gov_db
+    cmds:
+      - task: build-lambda
+        vars:
+          LAMBDA_CMD: download_grants_gov_db
+    generates:
+      - "./bin/download_grants_gov_db/bootstrap"
+
+  build-split_grants_gov_xml_db:
+    desc: Compiles split_grants_gov_xml_db
+    cmds:
+      - task: build-lambda
+        vars:
+          LAMBDA_CMD: split_grants_gov_xml_db
+    generates:
+      - "./bin/split_grants_gov_xml_db/bootstrap"
