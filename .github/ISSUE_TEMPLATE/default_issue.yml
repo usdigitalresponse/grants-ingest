@@ -1,7 +1,6 @@
 name: Default Issue
 description: File an issue for a new feature or bug
 title: "[Issue]: "
-projects: "Grants Team Agile Planning"
 assignees:
   - usdr-grants
 body:
