@@ -182,3 +182,4 @@ jobs:
                 body: output
               })
             }
+      - run: ls $TF_PLUGIN_CACHE_DIR
