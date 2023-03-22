@@ -1,0 +1,13 @@
+# Require admin approval for GitHub settings and workflow modifications
+/.github/  @usdigitalresponse/grants-admins
+
+# Require admin approval for Taskfile modifications
+Taskfile.yml  @usdigitalresponse/grants-admins
+
+# Require admin approval for Terraform modifications
+/terraform/
+
+# Require admin approval for special doc modifications
+README.md  @usdigitalresponse/grants-admins
+LICENSE  @usdigitalresponse/grants-admins
+CODE_OF_CONDUCT.md  @usdigitalresponse/grants-admins

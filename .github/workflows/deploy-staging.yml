@@ -1,0 +1,23 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: run_terraform-staging
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build_and_deploy:
+    name: Build and Deploy to Staging
+    uses: "./.github/workflows/build-and-deploy.yml"
+    with:
+      tf_backend_config_file: staging.s3.tfbackend
+      tf_var_file: staging.tfvars
+    secrets:
+      AWS_ROLE_TO_ASSUME: "${{ secrets.STAGING_ROLE_ARN }}"

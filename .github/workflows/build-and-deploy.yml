@@ -1,0 +1,73 @@
+name: Build and deploy
+
+on:
+  workflow_call:
+    inputs:
+      tf_backend_config_file:
+        type: string
+        required: true
+      tf_var_file:
+        type: string
+        required: true
+    secrets:
+      AWS_ROLE_TO_ASSUME:
+        required: true
+
+concurrency:
+  group: ${{ github.workflow_ref }}
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy_terraform:
+    name: Deploy terraform
+    runs-on: ubuntu-latest
+    env:
+      TF_PLUGIN_CACHE_DIR: ~/.terraform.d/plugin-cache
+      TF_VAR_version_identifier: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+      - name: Install Taskfile
+        uses: arduino/setup-task@v1
+        with:
+          version: 3.x
+      - name: Get project TF version
+        id: get_version
+        run: echo "TF_VERSION=$(cat .terraform-version | tr -d '[:space:]')" | tee -a $GITHUB_OUTPUT
+        working-directory: terraform
+      - uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ steps.get_version.outputs.TF_VERSION }}
+      - name: Ensure Terraform plugin cache exists
+        run: mkdir -p $TF_PLUGIN_CACHE_DIR
+      - name: Save/Restore Terraform plugin cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
+          key: ${{ runner.os }}-terraform-${{ hashFiles('**/.terraform.lock.hcl') }}
+          restore-keys: |
+            ${{ runner.os }}-terraform-
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: us-west-2
+          role-to-assume: "${{ secrets.AWS_ROLE_TO_ASSUME }}"
+      - name: Terraform Init
+        id: init
+        run: terraform init -backend-config="${{ inputs.tf_backend_config_file }}"
+        working-directory: terraform
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+        working-directory: terraform
+      - name: Terraform Apply
+        if: steps.validate.outcome == 'success'
+        id: apply
+        run: terraform apply -auto-approve -input=false -no-color -var-file="${{ inputs.tf_var_file }}"
+        working-directory: terraform

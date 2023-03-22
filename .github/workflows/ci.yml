@@ -1,0 +1,172 @@
+name: Continuous Integration
+
+on:
+  pull_request: {}
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+jobs:
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/dependency-review-action@v3
+
+  # qa:
+  #   name: QA
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: actions/cache@v3
+  #       with:
+  #         key: ${{ runner.os }}-taskfile
+  #         path: |
+  #           ~/.task
+  #           ~/bin
+  #           ~/build
+  #           ~/cover.out
+  #           ~/cover.html
+  #     - uses: actions/cache@v3
+  #       with:
+  #         key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+  #         path: |
+  #           ~/.cache/go-build
+  #           ~/go/pkg/mod
+  #     - uses: actions/setup-go@v4
+  #       with:
+  #         go-version-file: go.mod
+  #     - uses: arduino/setup-task@v1
+  #       with:
+  #         version: 3.x
+  #     - name: Check Formatting
+  #       run: test -z "$(go fmt ./...)" || echo "Formatting check failed."
+  #     - name: Test
+  #       run: task test
+  #     - name: Vet
+  #       run: go vet ./...
+  #     - name: Lint
+  #       uses: dominikh/staticcheck-action@v1.3.0
+  #       with:
+  #         install-go: false
+  #     - name: Build
+  #       run: task build
+
+  terraform_validate_plan_report:
+    name: Validate and plan terraform
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+    env:
+      TF_PLUGIN_CACHE_DIR: ~/.terraform.d/plugin-cache
+      TF_VAR_version_identifier: ${{ github.sha }}
+    concurrency:
+      group: run_terraform-staging
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: us-west-2
+          role-to-assume: "${{ secrets.CI_ROLE_ARN }}"
+      - name: Check out code
+        uses: actions/checkout@v3
+      - name: Get project TF version
+        id: get_version
+        run: echo "TF_VERSION=$(cat .terraform-version | tr -d '[:space:]')" | tee -a $GITHUB_OUTPUT
+      - uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ steps.get_version.outputs.TF_VERSION }}
+      - name: Ensure Terraform plugin cache exists
+        run: mkdir -p $TF_PLUGIN_CACHE_DIR
+      - name: Save/Restore Terraform plugin cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
+          key: ${{ runner.os }}-terraform-${{ hashFiles('**/.terraform.lock.hcl') }}
+          restore-keys: |
+            ${{ runner.os }}-terraform-
+      - name: Terraform fmt
+        id: fmt
+        run: terraform fmt -check -diff -recursive
+      - name: Ensure Terraform plugin cache still exists
+        run: mkdir -p $TF_PLUGIN_CACHE_DIR
+      - name: Terraform Init
+        id: init
+        run: terraform init -backend-config="staging.s3.tfbackend"
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+      - name: Terraform Plan
+        if: steps.validate.outcome == 'success'
+        id: plan
+        run: terraform plan -input=false -no-color -out=tfplan -var-file="staging.tfvars" && terraform show -no-color tfplan
+      - name: Reformat Plan
+        if: steps.plan.outcome != 'cancelled' && steps.plan.outcome != 'skipped'
+        run: |
+          echo '${{ steps.plan.outputs.stdout || steps.plan.outputs.stderr }}' \
+          | sed -E 's/^([[:space:]]+)([-+])/\2\1/g' > plan.txt
+      - name: Put Plan in Env Var
+        if: steps.plan.outcome != 'cancelled' && steps.plan.outcome != 'skipped'
+        run: |
+          PLAN=$(cat plan.txt)
+          echo "PLAN<<EOF" >> $GITHUB_ENV
+          echo "$PLAN" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+      - uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // 1. Retrieve existing bot comments for the PR
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            })
+            const botComment = comments.find(comment => {
+              return comment.user.type === 'Bot' && comment.body.includes('Report for project: \`terraform\`')
+            })
+
+            // 2. Prepare format of the comment
+            const output = `### Report for project: \`terraform\`
+            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+            <details><summary>Validation Output</summary>
+
+            \`\`\`\n
+            ${{ steps.validate.outputs.stdout }}
+            \`\`\`
+
+            </details>
+
+            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+
+            <details><summary>Show Plan</summary>
+
+            \`\`\`diff\n
+            ${process.env.PLAN}
+            \`\`\`
+
+            </details>
+
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
+
+            // 3. If we have a comment, update it, otherwise create a new one
+            if (botComment) {
+              github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: output
+              })
+            } else {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              })
+            }

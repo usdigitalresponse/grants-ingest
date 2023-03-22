@@ -1,0 +1,21 @@
+name: Deploy to Production
+
+on:
+  release:
+
+concurrency:
+  group: run_terraform-prod
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build_and_deploy:
+    name: Build and Deploy to Production
+    uses: "./.github/workflows/build-and-deploy.yml"
+    with:
+      tf_backend_config_file: prod.s3.tfbackend
+      tf_var_file: prod.tfvars
+    secrets:
+      AWS_ROLE_TO_ASSUME: ${{ secrets.PRODUCTION_ROLE_ARN }}
