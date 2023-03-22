@@ -20,7 +20,7 @@ tasks:
       - test
       - lint
       - vet
-      - build-all
+      - build
 
   test:
     desc: "Runs unit tests and updates the HTML coverage report"
