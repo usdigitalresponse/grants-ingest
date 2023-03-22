@@ -110,7 +110,6 @@ tasks:
     desc: "Compiles all Lambda handlers"
     deps:
       - build-download_grants_gov_db
-      - build-split_grants_gov_xml_db
 
   build-download_grants_gov_db:
     desc: Compiles download_grants_gov_db
@@ -118,10 +117,3 @@ tasks:
       - task: build-lambda
         vars:
           LAMBDA_CMD: download_grants_gov_db
-
-  build-split_grants_gov_xml_db:
-    desc: Compiles split_grants_gov_xml_db
-    cmds:
-      - task: build-lambda
-        vars:
-          LAMBDA_CMD: split_grants_gov_xml_db
