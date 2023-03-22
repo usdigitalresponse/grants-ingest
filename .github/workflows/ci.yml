@@ -3,6 +3,10 @@ name: Continuous Integration
 on:
   pull_request: {}
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   dependency-review:
     name: Dependency Review
