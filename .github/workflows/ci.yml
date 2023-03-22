@@ -76,6 +76,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Ensure Terraform plugin cache exists
         run: mkdir -p $TF_PLUGIN_CACHE_DIR
+      - run: ls $TF_PLUGIN_CACHE_DIR
       - name: Save/Restore Terraform plugin cache
         uses: actions/cache@v3
         with:
@@ -84,32 +85,41 @@ jobs:
           key: ${{ runner.os }}-terraform-${{ hashFiles('**/.terraform.lock.hcl') }}
           restore-keys: |
             ${{ runner.os }}-terraform-
+      - run: ls $TF_PLUGIN_CACHE_DIR
       - name: Get project TF version
         id: get_version
         run: echo "TF_VERSION=$(cat .terraform-version | tr -d '[:space:]')" | tee -a $GITHUB_OUTPUT
+      - run: ls $TF_PLUGIN_CACHE_DIR
       - uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: ${{ steps.get_version.outputs.TF_VERSION }}
+      - run: ls $TF_PLUGIN_CACHE_DIR
       - name: Terraform fmt
         id: fmt
         run: terraform fmt -check -diff -recursive
+      - run: ls $TF_PLUGIN_CACHE_DIR
       - name: Ensure Terraform plugin cache still exists
         run: mkdir -p $TF_PLUGIN_CACHE_DIR
+      - run: ls $TF_PLUGIN_CACHE_DIR
       - name: Terraform Init
         id: init
         run: terraform init -backend-config="staging.s3.tfbackend"
+      - run: ls $TF_PLUGIN_CACHE_DIR
       - name: Terraform Validate
         id: validate
         run: terraform validate -no-color
+      - run: ls $TF_PLUGIN_CACHE_DIR
       - name: Terraform Plan
         if: steps.validate.outcome == 'success'
         id: plan
         run: terraform plan -input=false -no-color -out=tfplan -var-file="staging.tfvars" && terraform show -no-color tfplan
+      - run: ls $TF_PLUGIN_CACHE_DIR
       - name: Reformat Plan
         if: steps.plan.outcome != 'cancelled' && steps.plan.outcome != 'skipped'
         run: |
           echo '${{ steps.plan.outputs.stdout || steps.plan.outputs.stderr }}' \
           | sed -E 's/^([[:space:]]+)([-+])/\2\1/g' > plan.txt
+      - run: ls $TF_PLUGIN_CACHE_DIR
       - name: Put Plan in Env Var
         if: steps.plan.outcome != 'cancelled' && steps.plan.outcome != 'skipped'
         run: |
@@ -117,6 +127,7 @@ jobs:
           echo "PLAN<<EOF" >> $GITHUB_ENV
           echo "$PLAN" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
+      - run: ls $TF_PLUGIN_CACHE_DIR
       - uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
