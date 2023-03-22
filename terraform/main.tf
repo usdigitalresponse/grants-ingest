@@ -221,6 +221,26 @@ locals {
     join("", data.aws_iam_policy_document.read_datadog_api_key_secret.*.json)
   ])
   lambda_layer_arns = compact([
-    var.datadog_enabled ? local.datadog_extension_layer_arn : ""
+    var.datadog_enabled ? local.datadog_extension_layer_arn : "",
   ])
+}
+
+// Modules providing Lambda functions
+module "download_grants_gov_db" {
+  source = "./modules/download_grants_gov_db"
+
+  namespace                                    = var.namespace
+  permissions_boundary_arn                     = local.permissions_boundary_arn
+  lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
+  log_retention_in_days                        = var.lambda_default_log_retention_in_days
+  log_level                                    = var.lambda_default_log_level
+  lambda_code_path                             = local.lambda_code_path
+  lambda_arch                                  = var.lambda_arch
+  additional_environment_variables             = local.lambda_environment_variables
+  additional_lambda_execution_policy_documents = local.lambda_execution_policies
+  lambda_layer_arns                            = local.lambda_layer_arns
+
+  scheduler_group_name           = join("", aws_scheduler_schedule_group.default.*.name)
+  grants_source_data_bucket_name = module.grants_source_data_bucket.bucket_id
+  eventbridge_scheduler_enabled  = var.eventbridge_scheduler_enabled
 }
