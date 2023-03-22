@@ -1,14 +1,28 @@
 terraform {
   required_version = "1.3.9"
-
   required_providers {
     aws = {
       source  = "hashicorp/aws"
       version = "~> 4.55.0"
     }
   }
-
   backend "s3" {}
+}
+
+provider "aws" {
+  default_tags {
+    tags = merge(
+      {
+        env        = var.environment
+        management = "terraform"
+        owner      = "grants"
+        repo       = "grants-ingest"
+        service    = "grants-ingest"
+        usage      = "workload"
+      },
+      var.tags
+    )
+  }
 }
 
 data "aws_region" "current" {}
@@ -184,18 +198,20 @@ data "aws_iam_policy_document" "read_datadog_api_key_secret" {
 // Lambda defaults
 locals {
   lambda_environment_variables = merge(
-    !var.datadog_enabled ? {} : {
-      DD_API_KEY_SECRET_ARN        = join("", data.aws_ssm_parameter.datadog_api_key_secret_arn.*.value)
-      DD_APM_ENABLED               = "true"
-      DD_CAPTURE_LAMBDA_PAYLOAD    = "true"
-      DD_ENV                       = var.datadog_tags.DD_ENV
-      DD_SERVERLESS_APPSEC_ENABLED = "true"
-      DD_SERVICE                   = var.datadog_tags.DD_SERVICE
-      DD_SITE                      = "datadoghq.com"
-      DD_TRACE_ENABLED             = "true"
-      # DD_TRACE_SAMPLE_RATE         = "1.000"
-      DD_VERSION = coalesce(var.datadog_tags.DD_VERSION, "dev")
-    },
+    !var.datadog_enabled ? {} : merge(
+      {
+        DD_API_KEY_SECRET_ARN        = join("", data.aws_ssm_parameter.datadog_api_key_secret_arn.*.value)
+        DD_APM_ENABLED               = "true"
+        DD_CAPTURE_LAMBDA_PAYLOAD    = "true"
+        DD_ENV                       = var.environment
+        DD_SERVERLESS_APPSEC_ENABLED = "true"
+        DD_SERVICE                   = "grants-ingest"
+        DD_SITE                      = "datadoghq.com"
+        DD_TRACE_ENABLED             = "true"
+        DD_VERSION                   = var.version_identifier
+      },
+      var.datadog_tags, // Allow conflicting variable-defined tags to override the above defaults
+    ),
     {
       TZ = "UTC"
     },

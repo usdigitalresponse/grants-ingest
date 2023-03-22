@@ -9,6 +9,16 @@ variable "namespace" {
   description = "Prefix to use for resource names and identifiers."
 }
 
+variable "environment" {
+  type        = string
+  description = "Name of the environment/stage targeted by deployments (e.g. sandbox/staging/prod)."
+}
+
+variable "version_identifier" {
+  type        = string
+  description = "The version for this service deployment."
+}
+
 variable "permissions_boundary_policy_name" {
   description = "Name of the permissions boundary for service roles"
   type        = string
@@ -64,16 +74,7 @@ variable "additional_lambda_environment_variables" {
 
 variable "datadog_tags" {
   description = "Datadog reserved tags to configure in Lambda function environments (when var.datadog_enabled is true)."
-  type = object({
-    DD_ENV     = string
-    DD_SERVICE = string
-    DD_VERSION = optional(string)
-  })
-  default = {
-    DD_ENV     = ""
-    DD_SERVICE = "grants-ingest-pipeline"
-    DD_VERSION = ""
-  }
+  type        = map(string)
 }
 
 variable "lambda_default_log_retention_in_days" {
