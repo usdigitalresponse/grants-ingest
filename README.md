@@ -67,6 +67,7 @@ is unavailable.
 #### Prerequisites
 
 To begin, make sure the following tools are available in your development workspace:
+- [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 - [Terraform](https://developer.hashicorp.com/terraform/downloads)
 - [LocalStack](https://docs.localstack.cloud/getting-started/installation)
 - [tflocal](https://github.com/localstack/terraform-local)
