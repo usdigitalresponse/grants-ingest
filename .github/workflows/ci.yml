@@ -21,6 +21,21 @@ jobs:
   #   runs-on: ubuntu-latest
   #   steps:
   #     - uses: actions/checkout@v3
+  #     - uses: actions/cache@v3
+  #       with:
+  #         key: ${{ runner.os }}-taskfile
+  #         path: |
+  #           ~/.task
+  #           ~/bin
+  #           ~/build
+  #           ~/cover.out
+  #           ~/cover.html
+  #     - uses: actions/cache@v3
+  #       with:
+  #         key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+  #         path: |
+  #           ~/.cache/go-build
+  #           ~/go/pkg/mod
   #     - uses: actions/setup-go@v4
   #       with:
   #         go-version-file: go.mod
@@ -59,6 +74,16 @@ jobs:
           role-to-assume: "${{ secrets.CI_ROLE_ARN }}"
       - name: Check out code
         uses: actions/checkout@v3
+      - name: Ensure Terraform plugin cache exists
+        run: mkdir -p $TF_PLUGIN_CACHE_DIR
+      - name: Save/Restore Terraform plugin cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ${{ env.TF_PLUGIN_CACHE_DIR }}
+          key: ${{ runner.os }}-terraform-${{ hashFiles('**/.terraform.lock.hcl') }}
+          restore-keys: |
+            ${{ runner.os }}-terraform-
       - name: Get project TF version
         id: get_version
         run: echo "TF_VERSION=$(cat .terraform-version | tr -d '[:space:]')" | tee -a $GITHUB_OUTPUT
@@ -68,15 +93,6 @@ jobs:
       - name: Terraform fmt
         id: fmt
         run: terraform fmt -check -diff -recursive
-      - name: Ensure Terraform plugin cache exists
-        run: mkdir -p $TF_PLUGIN_CACHE_DIR
-      - name: Save/Restore Terraform plugin cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
-          key: ${{ runner.os }}-terraform-${{ hashFiles('**/.terraform.lock.hcl') }}
-          restore-keys: |
-            ${{ runner.os }}-terraform-
       - name: Ensure Terraform plugin cache still exists
         run: mkdir -p $TF_PLUGIN_CACHE_DIR
       - name: Terraform Init
