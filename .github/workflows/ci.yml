@@ -14,8 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/dependency-review-action@v3
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
@@ -76,7 +74,6 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
           aws-region: us-west-2
           role-to-assume: "${{ secrets.CI_ROLE_ARN }}"
       - name: Check out code
