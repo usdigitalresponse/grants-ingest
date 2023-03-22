@@ -1,7 +1,6 @@
 ### Ticket #<Enter Number Here To Auto-Link>
-## Description
 
-## Screenshots / Demo Video
+## Description
 
 ## Testing
 
