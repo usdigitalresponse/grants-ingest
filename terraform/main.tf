@@ -46,7 +46,7 @@ locals {
   datadog_extension_layer_arn = join(":", [
     local.datadog_layer_arn_prefix,
     format("Datadog-Extension%s", var.lambda_arch == "arm64" ? "-ARM" : ""),
-    "38",
+    var.datadog_lambda_extension_version,
   ])
 }
 

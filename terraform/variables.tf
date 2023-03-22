@@ -60,22 +60,28 @@ variable "lambda_arch" {
   }
 }
 
-variable "datadog_enabled" {
-  description = "Whether to enable datadog instrumentation in the current environment."
-  type        = bool
-  default     = false
-}
-
 variable "additional_lambda_environment_variables" {
   description = "Map of additional/override environment variables to apply to all Lambda functions."
   type        = map(string)
   default     = {}
 }
 
+variable "datadog_enabled" {
+  description = "Whether to enable datadog instrumentation in the current environment."
+  type        = bool
+  default     = false
+}
+
 variable "datadog_tags" {
   description = "Datadog reserved tags to configure in Lambda function environments (when var.datadog_enabled is true)."
   type        = map(string)
   default     = {}
+}
+
+variable "datadog_lambda_extension_version" {
+  description = "Version to use for the Datadog Lambda Extension layer (when var.datadog_enabled is true)."
+  type        = string
+  default     = "38"
 }
 
 variable "lambda_default_log_retention_in_days" {
