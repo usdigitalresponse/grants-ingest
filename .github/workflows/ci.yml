@@ -104,68 +104,73 @@ jobs:
         id: plan
         run: terraform plan -input=false -no-color -out=tfplan -var-file="staging.tfvars" && terraform show -no-color tfplan
       - name: Reformat Plan
-        if: steps.plan.outcome != 'cancelled' && steps.plan.outcome != 'skipped'
+        if: always() && steps.plan.outcome != 'cancelled' && steps.plan.outcome != 'skipped'
         run: |
           echo '${{ steps.plan.outputs.stdout || steps.plan.outputs.stderr }}' \
-          | sed -E 's/^([[:space:]]+)([-+])/\2\1/g' > plan.txt
-      - name: Put Plan in Env Var
-        if: steps.plan.outcome != 'cancelled' && steps.plan.outcome != 'skipped'
-        run: |
+            | sed -E 's/^([[:space:]]+)([-+])/\2\1/g' > plan.txt
           PLAN=$(cat plan.txt)
           echo "PLAN<<EOF" >> $GITHUB_ENV
           echo "$PLAN" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
-      - uses: actions/github-script@v6
+      - name: Write the report markdown file
+        if: always()
+        run: |
+          REPORT_FILE=$(mktemp -t summary.md.XXXXX )
+          echo "REPORT_FILE=$REPORT_FILE" >> $GITHUB_ENV
+          cat >> $REPORT_FILE << 'ENDOFREPORT'
+          ## Terraform Summary
+
+          | Step                         | Result  |
+          |:-----------------------------|:-------:|
+          | 🖌  Terraform Format & Style | ${{ (steps.fmt.outcome == 'success' && '✅') || (steps.fmt.outcome == 'skipped' && '➖') || '❌'  }} |
+          | ⚙️  Terraform Initialization | ${{ (steps.init.outcome == 'success' && '✅') || (steps.init.outcome == 'skipped' && '➖') || '❌' }} |
+          | 🤖  Terraform Validation     | ${{ (steps.validate.outcome == 'success' && '✅') || (steps.validate.outcome == 'skipped' && '➖') || '❌' }} |
+          | 📖  Terraform Plan           | ${{ (steps.plan.outcome == 'success' && '✅') || (steps.plan.outcome == 'skipped' && '➖') || '❌' }} |
+
+          ### Output
+
+          <details>
+          <summary>Validation Output</summary>
+
+          ```
+          ${{ steps.validate.outputs.stdout }}
+          ```
+
+          </details>
+
+          <details>
+          <summary>Plan Output</summary>
+
+          ```diff
+          ${{ env.PLAN }}
+          ```
+
+          </details>
+
+          *Pusher: @${{ github.actor }}, Action: `${{ github.event_name }}`, Workflow: [`${{ github.workflow }}`](${{ github.server_url}}/${{ github.repository }}/actions/runs/${{ github.run_id }})*
+          ENDOFREPORT
+
+      - name: Write the step summary
+        if: always()
+        run: |
+          cat $REPORT_FILE >> $GITHUB_STEP_SUMMARY
+          CONTENT=$(cat $REPORT_FILE)
+          echo "REPORT_CONTENT<<ENDOFREPORT" >> $GITHUB_ENV
+          echo "$CONTENT" >> $GITHUB_ENV
+          echo "ENDOFREPORT" >> $GITHUB_ENV
+      - name: Find previous report comment
+        if: always()
+        uses: peter-evans/find-comment@v2
+        id: fc
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            // 1. Retrieve existing bot comments for the PR
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            })
-            const botComment = comments.find(comment => {
-              return comment.user.type === 'Bot' && comment.body.includes('Report for project: \`terraform\`')
-            })
-
-            // 2. Prepare format of the comment
-            const output = `### Report for project: \`terraform\`
-            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
-            <details><summary>Validation Output</summary>
-
-            \`\`\`\n
-            ${{ steps.validate.outputs.stdout }}
-            \`\`\`
-
-            </details>
-
-            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
-
-            <details><summary>Show Plan</summary>
-
-            \`\`\`diff\n
-            ${process.env.PLAN}
-            \`\`\`
-
-            </details>
-
-            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
-
-            // 3. If we have a comment, update it, otherwise create a new one
-            if (botComment) {
-              github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id,
-                body: output
-              })
-            } else {
-              github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: output
-              })
-            }
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: Terraform Summary
+      - name: Create or update comment
+        if: always()
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: ${{ env.REPORT_CONTENT }}
+          edit-mode: replace
