@@ -45,13 +45,11 @@ tasks:
       - ./cover.html
 
   lint:
-    interactive: true
     desc: "Runs the staticcheck linter utility"
     vars:
       FORMAT: '{{ default "stylish" .FORMAT }}'
     cmds:
       - "staticcheck -f {{ .FORMAT }} ./..."
-    ignore_error: true
     sources:
       - ./**/*.go
 
