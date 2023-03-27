@@ -47,3 +47,7 @@ cover.html
 
 # Terraform sources
 .terraform/
+
+# Environment variable files
+.env
+.envrc
