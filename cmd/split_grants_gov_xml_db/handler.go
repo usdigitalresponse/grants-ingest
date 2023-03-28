@@ -213,6 +213,7 @@ func processOpportunities(ctx context.Context, svc *s3.Client, ch <-chan opportu
 				workSpan, ctx := tracer.StartSpanFromContext(ctx, "processing.worker.work")
 				err := processOpportunity(ctx, svc, opportunity)
 				if err != nil {
+					sendMetric("opportunity.failed", 1)
 					errs = multierror.Append(errs, err)
 				}
 				workSpan.Finish(tracer.WithError(err))
