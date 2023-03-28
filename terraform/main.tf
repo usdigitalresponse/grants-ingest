@@ -210,15 +210,16 @@ locals {
         DD_TRACE_ENABLED             = "true"
         DD_VERSION                   = var.version_identifier
       },
-      var.datadog_tags, // Allow conflicting variable-defined tags to override the above defaults
+      var.datadog_reserved_tags, // Allow conflicting variable-defined tags to override the above defaults
     ),
     {
       TZ = "UTC"
     },
+    // Allow conflicting variable-defined environment variables the override of the above
     var.additional_lambda_environment_variables,
   )
   lambda_execution_policies = compact([
-    join("", data.aws_iam_policy_document.read_datadog_api_key_secret.*.json)
+    try(data.aws_iam_policy_document.read_datadog_api_key_secret[0].json, ""),
   ])
   lambda_layer_arns = compact([
     var.datadog_enabled ? local.datadog_extension_layer_arn : "",
@@ -249,6 +250,7 @@ module "split_grants_gov_db" {
   source = "./modules/split_grants_gov_xml_db"
 
   namespace                                    = var.namespace
+  function_name                                = "SplitGrantsGovXMLDB"
   permissions_boundary_arn                     = local.permissions_boundary_arn
   lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
   log_retention_in_days                        = var.lambda_default_log_retention_in_days

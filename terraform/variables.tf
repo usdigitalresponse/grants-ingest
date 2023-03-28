@@ -72,10 +72,42 @@ variable "datadog_enabled" {
   default     = false
 }
 
-variable "datadog_tags" {
+variable "datadog_reserved_tags" {
   description = "Datadog reserved tags to configure in Lambda function environments (when var.datadog_enabled is true)."
   type        = map(string)
   default     = {}
+
+  validation {
+    condition = alltrue([
+      for k in keys(var.datadog_reserved_tags) :
+      contains(["DD_ENV", "DD_SERVICE", "DD_VERSION"], k)
+    ])
+    error_message = "Datadog reserved tags may only include keys DD_ENV, DD_SERVICE, or DD_VERSION."
+  }
+}
+
+variable "datadog_lambda_custom_tags" {
+  description = "Custom (non-reserved) tags for configuring on the DD_TAGS environment variable for all Lambda functions."
+  type        = map(string)
+  default     = {}
+
+  validation {
+    condition = !anytrue([
+      for k in keys(var.datadog_lambda_custom_tags) :
+      contains(["DD_ENV", "DD_SERVICE", "DD_VERSION"], upper(k))
+    ])
+    error_message = "Datadog reserved tags may not be configured with this variable (see var.datadog_reserved_tags)."
+  }
+
+  validation {
+    condition     = alltrue([for k in keys(var.datadog_lambda_custom_tags) : (k == lower(k))])
+    error_message = "Datadog custom tag keys must be lowercase."
+  }
+
+  validation {
+    condition     = alltrue([for v in values(var.datadog_lambda_custom_tags) : (v == lower(v))])
+    error_message = "Datadog custom tag values must be lowercase."
+  }
 }
 
 variable "datadog_lambda_extension_version" {

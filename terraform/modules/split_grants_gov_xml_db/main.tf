@@ -5,6 +5,14 @@ terraform {
   }
 }
 
+locals {
+  dd_tags = merge(
+    try(var.additional_environment_variables.dd_tags, {}),
+    var.datadog_custom_tags,
+    { functionname = lower(var.function_name) },
+  )
+}
+
 data "aws_s3_bucket" "source_data" {
   bucket = var.grants_source_data_bucket_name
 }
@@ -64,7 +72,7 @@ module "lambda_function" {
   source  = "terraform-aws-modules/lambda/aws"
   version = "4.12.1"
 
-  function_name = "${var.namespace}-SplitGrantsGovXMLDB"
+  function_name = "${var.namespace}-${var.function_name}"
   description   = "Creates per-grant XML data files from a source Grants.gov XML DB extract."
 
   role_permissions_boundary         = var.permissions_boundary_arn
@@ -91,9 +99,11 @@ module "lambda_function" {
   s3_bucket                 = var.lambda_artifact_bucket
   s3_server_side_encryption = "AES256"
 
-  timeout = 300 # 5 minutes, in seconds
+  timeout     = 300 # 5 minutes, in seconds
+  memory_size = 1024
   environment_variables = merge(var.additional_environment_variables, {
     DD_TRACE_RATE_LIMIT              = "1000"
+    DD_TAGS                          = join(",", [for k, v in local.dd_tags : "${k}:${v}"])
     DOWNLOAD_CHUNK_LIMIT             = "20"
     GRANTS_PREPARED_DATA_BUCKET_NAME = data.aws_s3_bucket.prepared_data.id
     GRANTS_SOURCE_DATA_BUCKET_NAME   = data.aws_s3_bucket.source_data.id
@@ -101,7 +111,6 @@ module "lambda_function" {
     MAX_CONCURRENT_UPLOADS           = "10"
     S3_USE_PATH_STYLE                = "true"
   })
-  memory_size = 1024
 
   allowed_triggers = {
     S3BucketNotification = {
