@@ -106,7 +106,6 @@ module "lambda_function" {
     DD_TAGS                          = join(",", [for k, v in local.dd_tags : "${k}:${v}"])
     DOWNLOAD_CHUNK_LIMIT             = "20"
     GRANTS_PREPARED_DATA_BUCKET_NAME = data.aws_s3_bucket.prepared_data.id
-    GRANTS_SOURCE_DATA_BUCKET_NAME   = data.aws_s3_bucket.source_data.id
     LOG_LEVEL                        = var.log_level
     MAX_CONCURRENT_UPLOADS           = "10"
     S3_USE_PATH_STYLE                = "true"
