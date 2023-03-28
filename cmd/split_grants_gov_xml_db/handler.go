@@ -21,7 +21,6 @@ import (
 
 const (
 	MB                         = int64(1024 * 1024)
-	GRANT_XML_NS               = "http://apply.grants.gov/system/OpportunityDetail-V1.0"
 	GRANT_OPPORTUNITY_XML_NAME = "OpportunitySynopsisDetail_1_0"
 )
 
