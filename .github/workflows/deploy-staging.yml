@@ -7,6 +7,7 @@ on:
 
 concurrency:
   group: run_terraform-staging
+  cancel-in-progress: false
 
 permissions:
   contents: read
