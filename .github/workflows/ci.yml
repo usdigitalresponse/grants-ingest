@@ -73,10 +73,12 @@ jobs:
         run: tflint --version
       - name: Init TFLint
         run: tflint --init
+        working-directory: terraform
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - name: Run TFLint
         run: tflint -f compact --recursive
+        working-directory: terraform
 
   terraform_validate_plan_report:
     name: Validate and plan terraform
