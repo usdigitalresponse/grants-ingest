@@ -27,9 +27,9 @@ output "lambda_function_log_group_arn" {
 }
 
 output "eventbridge_scheduler_schedule_arn" {
-  value = join("", aws_scheduler_schedule.default.*.arn)
+  value = try(aws_scheduler_schedule.default[0].arn, "")
 }
 
 output "eventbridge_rule_arn" {
-  value = join("", aws_cloudwatch_event_rule.schedule.*.arn)
+  value = try(aws_cloudwatch_event_rule.schedule[0].arn, "")
 }
