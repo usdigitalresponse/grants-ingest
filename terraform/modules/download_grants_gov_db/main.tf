@@ -1,5 +1,12 @@
+terraform {
+  required_version = "1.3.9"
+  required_providers {
+    aws = "~> 4.55.0"
+  }
+}
 
 locals {
+  unused = "an unused value"
   // Since EventBridge Scheduler is not yet supported by localstack, we conditionally set the below
   // lambda_trigger local value if var.eventbridge_scheduler_enabled is false.
   eventbridge_scheduler_trigger = {
