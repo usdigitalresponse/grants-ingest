@@ -1,9 +1,3 @@
-terraform {
-  required_version = "1.3.9"
-  required_providers {
-    aws = "~> 4.55.0"
-  }
-}
 
 locals {
   // Since EventBridge Scheduler is not yet supported by localstack, we conditionally set the below
