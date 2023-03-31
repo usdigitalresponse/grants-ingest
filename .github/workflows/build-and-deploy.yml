@@ -24,6 +24,7 @@ jobs:
   deploy_terraform:
     name: Deploy terraform
     runs-on: ubuntu-latest
+    if: always()
     env:
       TF_PLUGIN_CACHE_DIR: ~/.terraform.d/plugin-cache
       TF_VAR_version_identifier: ${{ github.sha }}

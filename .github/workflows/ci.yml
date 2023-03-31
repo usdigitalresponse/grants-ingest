@@ -57,6 +57,7 @@ jobs:
   terraform_validate_plan_report:
     name: Validate and plan terraform
     runs-on: ubuntu-latest
+    if: always()
     defaults:
       run:
         working-directory: terraform
@@ -65,6 +66,7 @@ jobs:
       TF_VAR_version_identifier: ${{ github.sha }}
     concurrency:
       group: run_terraform-staging
+      cancel-in-progress: false
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
