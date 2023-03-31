@@ -5,8 +5,6 @@ terraform {
   }
 }
 
-data "aws_caller_identity" "current" {}
-
 locals {
   // Since EventBridge Scheduler is not yet supported by localstack, we conditionally set the below
   // lambda_trigger local value if var.eventbridge_scheduler_enabled is false.

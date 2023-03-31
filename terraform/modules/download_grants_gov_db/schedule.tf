@@ -1,3 +1,5 @@
+data "aws_caller_identity" "current" {}
+
 resource "aws_iam_role" "scheduler_execution" {
   count = var.eventbridge_scheduler_enabled ? 1 : 0
 
