@@ -41,7 +41,7 @@ module "lambda_execution_policy" {
 }
 
 module "lambda_function" {
-  source = "terraform-aws-modules/lambda/aws"
+  source  = "terraform-aws-modules/lambda/aws"
   version = "4.12.1"
 
   function_name = "${var.namespace}-DownloadGrantsGovDB"
