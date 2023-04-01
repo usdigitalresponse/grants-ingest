@@ -41,8 +41,6 @@ locals {
     { aws = "464622532012", aws-us-gov = "002406178527" }[data.aws_partition.current.id],
     "layer",
   ])
-  datadog_python_library_layer_arn = "${local.datadog_layer_arn_prefix}:Python39:68"
-  datadog_nodejs_library_layer_arn = "${local.datadog_layer_arn_prefix}:Node18-x:68"
   datadog_extension_layer_arn = join(":", [
     local.datadog_layer_arn_prefix,
     format("Datadog-Extension%s", var.lambda_arch == "arm64" ? "-ARM" : ""),
@@ -191,7 +189,7 @@ data "aws_iam_policy_document" "read_datadog_api_key_secret" {
     sid       = "GetDatadogAPIKeySecretValue"
     effect    = "Allow"
     actions   = ["secretsmanager:GetSecretValue"]
-    resources = data.aws_ssm_parameter.datadog_api_key_secret_arn.*.value
+    resources = [data.aws_ssm_parameter.datadog_api_key_secret_arn[0].value]
   }
 }
 
@@ -200,7 +198,7 @@ locals {
   lambda_environment_variables = merge(
     !var.datadog_enabled ? {} : merge(
       {
-        DD_API_KEY_SECRET_ARN        = join("", data.aws_ssm_parameter.datadog_api_key_secret_arn.*.value)
+        DD_API_KEY_SECRET_ARN        = data.aws_ssm_parameter.datadog_api_key_secret_arn[0].value
         DD_APM_ENABLED               = "true"
         DD_CAPTURE_LAMBDA_PAYLOAD    = "true"
         DD_ENV                       = var.environment
@@ -241,7 +239,7 @@ module "download_grants_gov_db" {
   additional_lambda_execution_policy_documents = local.lambda_execution_policies
   lambda_layer_arns                            = local.lambda_layer_arns
 
-  scheduler_group_name           = join("", aws_scheduler_schedule_group.default.*.name)
+  scheduler_group_name           = try(aws_scheduler_schedule_group.default[0].name, "")
   grants_source_data_bucket_name = module.grants_source_data_bucket.bucket_id
   eventbridge_scheduler_enabled  = var.eventbridge_scheduler_enabled
 }

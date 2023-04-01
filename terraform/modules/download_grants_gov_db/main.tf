@@ -1,15 +1,20 @@
-data "aws_caller_identity" "current" {}
+terraform {
+  required_version = "1.3.9"
+  required_providers {
+    aws = "~> 4.55.0"
+  }
+}
 
 locals {
   // Since EventBridge Scheduler is not yet supported by localstack, we conditionally set the below
   // lambda_trigger local value if var.eventbridge_scheduler_enabled is false.
   eventbridge_scheduler_trigger = {
     principal  = "scheduler.amazonaws.com"
-    source_arn = join("", aws_scheduler_schedule.default.*.arn)
+    source_arn = try(aws_scheduler_schedule.default[0].arn, "")
   }
   cloudwatch_events_trigger = {
     principal  = "events.amazonaws.com"
-    source_arn = join("", aws_cloudwatch_event_rule.schedule.*.arn)
+    source_arn = try(aws_cloudwatch_event_rule.schedule[0].arn, "")
   }
   lambda_trigger = var.eventbridge_scheduler_enabled ? local.eventbridge_scheduler_trigger : local.cloudwatch_events_trigger
 }
@@ -36,7 +41,8 @@ module "lambda_execution_policy" {
 }
 
 module "lambda_function" {
-  source = "terraform-aws-modules/lambda/aws"
+  source  = "terraform-aws-modules/lambda/aws"
+  version = "4.12.1"
 
   function_name = "${var.namespace}-DownloadGrantsGovDB"
   description   = "Downloads and stores the daily XML database extract from Grants.gov"

@@ -1,3 +1,5 @@
+data "aws_caller_identity" "current" {}
+
 resource "aws_iam_role" "scheduler_execution" {
   count = var.eventbridge_scheduler_enabled ? 1 : 0
 
@@ -20,7 +22,7 @@ data "aws_iam_policy_document" "scheduler_execution-trust" {
     condition {
       test     = "StringEquals"
       variable = "aws:SourceAccount"
-      values   = data.aws_caller_identity.current.*.account_id
+      values   = [data.aws_caller_identity.current.account_id]
     }
   }
 }
@@ -40,7 +42,7 @@ data "aws_iam_policy_document" "allow_invoke_lambda" {
 resource "aws_iam_role_policy" "scheduler_execution-allow_invoke_lambda" {
   count = var.eventbridge_scheduler_enabled ? 1 : 0
 
-  role   = join("", aws_iam_role.scheduler_execution.*.id)
+  role   = aws_iam_role.scheduler_execution[0].id
   policy = data.aws_iam_policy_document.allow_invoke_lambda.json
 }
 
@@ -61,7 +63,7 @@ resource "aws_scheduler_schedule" "default" {
 
   target {
     arn      = module.lambda_function.lambda_function_arn
-    role_arn = join("", aws_iam_role.scheduler_execution.*.arn)
+    role_arn = aws_iam_role.scheduler_execution[0].arn
     input    = file("${path.module}/lambda_input.json")
 
     retry_policy {
@@ -81,7 +83,7 @@ resource "aws_cloudwatch_event_rule" "schedule" {
 resource "aws_cloudwatch_event_target" "schedule_lambda" {
   count = var.eventbridge_scheduler_enabled ? 0 : 1
 
-  rule      = join("", aws_cloudwatch_event_rule.schedule.*.name)
+  rule      = aws_cloudwatch_event_rule.schedule[0].name
   target_id = module.lambda_function.lambda_function_name
   arn       = module.lambda_function.lambda_function_arn
 }
