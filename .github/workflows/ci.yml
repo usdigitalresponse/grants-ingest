@@ -78,7 +78,6 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
       - name: Run TFLint
         run: tflint -f compact --recursive
-        working-directory: terraform
 
   terraform_validate_plan_report:
     name: Validate and plan terraform
