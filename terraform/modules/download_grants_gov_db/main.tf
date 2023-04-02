@@ -17,6 +17,11 @@ locals {
     source_arn = try(aws_cloudwatch_event_rule.schedule[0].arn, "")
   }
   lambda_trigger = var.eventbridge_scheduler_enabled ? local.eventbridge_scheduler_trigger : local.cloudwatch_events_trigger
+  dd_tags = merge(
+    try(var.additional_environment_variables.dd_tags, {}),
+    var.datadog_custom_tags,
+    { functionname = lower(var.function_name) },
+  )
 }
 
 data "aws_s3_bucket" "grants_source_data" {
@@ -44,7 +49,7 @@ module "lambda_function" {
   source  = "terraform-aws-modules/lambda/aws"
   version = "4.12.1"
 
-  function_name = "${var.namespace}-DownloadGrantsGovDB"
+  function_name = "${var.namespace}-${var.function_name}"
   description   = "Downloads and stores the daily XML database extract from Grants.gov"
 
   role_permissions_boundary         = var.permissions_boundary_arn
@@ -73,6 +78,7 @@ module "lambda_function" {
 
   timeout = 120 # 2 minutes, in seconds
   environment_variables = merge(var.additional_environment_variables, {
+    DD_TAGS                        = join(",", [for k, v in local.dd_tags : "${k}:${v}"])
     GRANTS_GOV_BASE_URL            = "https://www.grants.gov"
     GRANTS_SOURCE_DATA_BUCKET_NAME = data.aws_s3_bucket.grants_source_data.id
     LOG_LEVEL                      = var.log_level

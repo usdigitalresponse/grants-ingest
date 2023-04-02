@@ -49,7 +49,7 @@ resource "aws_iam_role_policy" "scheduler_execution-allow_invoke_lambda" {
 resource "aws_scheduler_schedule" "default" {
   count = var.eventbridge_scheduler_enabled ? 1 : 0
 
-  name                         = "${var.namespace}-DownloadGrantsGovDB"
+  name                         = "${var.namespace}-${var.function_name}"
   description                  = "Invokes a Lambda function daily to download the Grants.gov DB extract"
   group_name                   = var.scheduler_group_name
   state                        = "ENABLED"
