@@ -89,6 +89,7 @@ jobs:
     env:
       TF_PLUGIN_CACHE_DIR: ~/.terraform.d/plugin-cache
       TF_VAR_version_identifier: ${{ github.sha }}
+      TF_VAR_git_commit_sha: ${{ github.sha }}
     concurrency:
       group: run_terraform-staging
       cancel-in-progress: false
