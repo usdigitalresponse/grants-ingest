@@ -33,16 +33,13 @@ locals {
   lambda_code_path         = coalesce(var.lambda_code_path, "${path.module}/..")
   permissions_boundary_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/${var.permissions_boundary_policy_name}"
 
-  datadog_layer_arn_prefix = join(":", [
+  datadog_extension_layer_arn = join(":", [
     "arn",
     data.aws_partition.current.id,
     "lambda",
     data.aws_region.current.name,
     { aws = "464622532012", aws-us-gov = "002406178527" }[data.aws_partition.current.id],
     "layer",
-  ])
-  datadog_extension_layer_arn = join(":", [
-    local.datadog_layer_arn_prefix,
     format("Datadog-Extension%s", var.lambda_arch == "arm64" ? "-ARM" : ""),
     var.datadog_lambda_extension_version,
   ])
