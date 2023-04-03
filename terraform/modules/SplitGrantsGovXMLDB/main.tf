@@ -12,7 +12,7 @@ locals {
       trimspace(split(":", item)[0]) => trimspace(split(":", item)[1])
     },
     var.datadog_custom_tags,
-    { functionname = lower(var.function_name), },
+    { handlername = lower(var.function_name), },
   )
 }
 
