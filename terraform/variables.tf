@@ -19,6 +19,18 @@ variable "version_identifier" {
   description = "The version for this service deployment."
 }
 
+variable "git_repository_url" {
+  type        = string
+  description = "URL for the repository that provides this service."
+  default     = "github.com/usdigitalresponse/grants-ingest"
+}
+
+variable "git_commit_sha" {
+  type        = string
+  description = "Git commit SHA for which terraform is being deployed."
+  default     = ""
+}
+
 variable "permissions_boundary_policy_name" {
   description = "Name of the permissions boundary for service roles"
   type        = string

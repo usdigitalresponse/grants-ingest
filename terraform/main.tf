@@ -192,6 +192,10 @@ data "aws_iam_policy_document" "read_datadog_api_key_secret" {
 
 // Lambda defaults
 locals {
+  datadog_custom_tags = merge(
+    { "git.repository_url" = var.git_repository_url, "git.commit.sha" = var.git_commit_sha },
+    var.datadog_lambda_custom_tags,
+  )
   lambda_environment_variables = merge(
     !var.datadog_enabled ? {} : merge(
       {
@@ -202,6 +206,7 @@ locals {
         DD_SERVERLESS_APPSEC_ENABLED = "true"
         DD_SERVICE                   = "grants-ingest"
         DD_SITE                      = "datadoghq.com"
+        DD_TAGS                      = join(",", sort([for k, v in local.datadog_custom_tags : "${k}:${v}"]))
         DD_TRACE_ENABLED             = "true"
         DD_VERSION                   = var.version_identifier
       },

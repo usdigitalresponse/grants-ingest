@@ -7,9 +7,12 @@ terraform {
 
 locals {
   dd_tags = merge(
-    try(var.additional_environment_variables.dd_tags, {}),
+    {
+      for item in split(",", try(var.additional_environment_variables.DD_TAGS, "")) :
+      trimspace(split(":", item)[0]) => trimspace(split(":", item)[1])
+    },
     var.datadog_custom_tags,
-    { functionname = lower(var.function_name) },
+    { functionname = lower(var.function_name), },
   )
 }
 
@@ -103,7 +106,7 @@ module "lambda_function" {
   memory_size = 1024
   environment_variables = merge(var.additional_environment_variables, {
     DD_TRACE_RATE_LIMIT              = "1000"
-    DD_TAGS                          = join(",", [for k, v in local.dd_tags : "${k}:${v}"])
+    DD_TAGS                          = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
     DOWNLOAD_CHUNK_LIMIT             = "20"
     GRANTS_PREPARED_DATA_BUCKET_NAME = data.aws_s3_bucket.prepared_data.id
     LOG_LEVEL                        = var.log_level

@@ -18,9 +18,12 @@ locals {
   }
   lambda_trigger = var.eventbridge_scheduler_enabled ? local.eventbridge_scheduler_trigger : local.cloudwatch_events_trigger
   dd_tags = merge(
-    try(var.additional_environment_variables.dd_tags, {}),
+    {
+      for item in split(",", try(var.additional_environment_variables.DD_TAGS, "")) :
+      split(":", trimspace(item))[0] => split(":", trimspace(item))[1]
+    },
     var.datadog_custom_tags,
-    { functionname = lower(var.function_name) },
+    { functionname = lower(var.function_name), },
   )
 }
 
@@ -78,7 +81,7 @@ module "lambda_function" {
 
   timeout = 120 # 2 minutes, in seconds
   environment_variables = merge(var.additional_environment_variables, {
-    DD_TAGS                        = join(",", [for k, v in local.dd_tags : "${k}:${v}"])
+    DD_TAGS                        = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
     GRANTS_GOV_BASE_URL            = "https://www.grants.gov"
     GRANTS_SOURCE_DATA_BUCKET_NAME = data.aws_s3_bucket.grants_source_data.id
     LOG_LEVEL                      = var.log_level
