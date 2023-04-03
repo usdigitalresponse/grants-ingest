@@ -10,10 +10,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/cenkalti/backoff/v4"
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
-
-var logger log.Logger
 
 // ScheduledEvent represents the invocation event for this Lambda function
 type ScheduledEvent struct {
@@ -36,9 +36,6 @@ func (e *ScheduledEvent) destinationS3Key() string {
 // handleWithConfig is a Lambda function handler that is called with the ScheduledEvent invocation
 // event. When invoked, it streams a Grants.gov database export (zip file) to S3.
 func handleWithConfig(cfg aws.Config, ctx context.Context, event ScheduledEvent) error {
-	uploader := manager.NewUploader(s3.NewFromConfig(cfg, func(o *s3.Options) {
-		o.UsePathStyle = env.UsePathStyleS3Opt
-	}))
 	logger := log.With(logger,
 		"db_date", event.Timestamp.Format("2006-01-02"),
 		"source", event.grantsURL(),
@@ -47,11 +44,7 @@ func handleWithConfig(cfg aws.Config, ctx context.Context, event ScheduledEvent)
 	)
 
 	log.Debug(logger, "Starting remote file download")
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, event.grantsURL(), nil)
-	if err != nil {
-		return log.Errorf(logger, "Error configuring download request for source archive", err)
-	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := startDownload(ctx, http.DefaultClient, event.grantsURL())
 	if err != nil {
 		return log.Errorf(logger, "Error initiating download request for source archive", err)
 	}
@@ -60,7 +53,11 @@ func handleWithConfig(cfg aws.Config, ctx context.Context, event ScheduledEvent)
 		return log.Errorf(logger, "Error downloading source archive", err)
 	}
 	logger = log.With(logger, "source_size_bytes", resp.ContentLength)
+	sendMetric("source_size", float64(resp.ContentLength))
 
+	uploader := manager.NewUploader(s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.UsePathStyle = env.UsePathStyleS3Opt
+	}))
 	log.Debug(logger, "Streaming remote file to S3")
 	if _, err := uploader.Upload(ctx, &s3.PutObjectInput{
 		Bucket:               aws.String(env.DestinationBucket),
@@ -73,6 +70,29 @@ func handleWithConfig(cfg aws.Config, ctx context.Context, event ScheduledEvent)
 
 	log.Info(logger, "Finished transfering source file to S3")
 	return nil
+}
+
+// startDownload starts a new download request and returns the response.
+// Failed requests retry until env.MaxDownloadBackoff elapses.
+// Returns a non-nil error if the request either could not be initialized or never succeeded.
+func startDownload(ctx context.Context, c *http.Client, url string) (resp *http.Response, err error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	b := backoff.NewExponentialBackOff()
+	b.MaxElapsedTime = env.MaxDownloadBackoff
+	attempt := 1
+	span, spanCtx := tracer.StartSpanFromContext(ctx, "download.start")
+	err = backoff.RetryNotify(func() (err error) {
+		attemptSpan, _ := tracer.StartSpanFromContext(spanCtx, fmt.Sprintf("attempt.%d", attempt))
+		resp, err = c.Do(req)
+		attemptSpan.Finish(tracer.WithError(err))
+		return err
+	}, b, func(error, time.Duration) { attempt++ })
+	span.Finish(tracer.WithError(err))
+	return resp, err
 }
 
 // validateDownloadResponse inspects an *http.Response and returns an error to indicate

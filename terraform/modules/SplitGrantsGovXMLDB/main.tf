@@ -90,8 +90,8 @@ module "lambda_function" {
   source_path = [{
     path = var.lambda_code_path
     commands = [
-      "task build-split_grants_gov_xml_db",
-      "cd bin/split_grants_gov_xml_db",
+      "task build-SplitGrantsGovXMLDB",
+      "cd bin/SplitGrantsGovXMLDB",
       ":zip",
     ],
   }]

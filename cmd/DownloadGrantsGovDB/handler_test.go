@@ -34,6 +34,7 @@ func setupLambdaEnvForTesting(t *testing.T) {
 		"GRANTS_SOURCE_DATA_BUCKET_NAME": "test-destination-bucket",
 		"S3_USE_PATH_STYLE":              "true",
 		"GRANTS_GOV_BASE_URL":            "https://example.gov",
+		"MAX_DOWNLOAD_BACKOFF":           "1us",
 	}, &env)
 	require.NoError(t, err, "Error configuring lambda environment for testing")
 }
@@ -129,8 +130,15 @@ func TestHandleWithConfig(t *testing.T) {
 			env.DestinationBucket,
 		},
 		{
-			"Fails when invalid source URL is configured",
+			"Fails when source URL is configured with a bad schema",
 			"badscheme://invalid",
+			mockResponse{},
+			fmt.Errorf("Error initiating download request for source archive"),
+			env.DestinationBucket,
+		},
+		{
+			"Fails when source URL is unparseable",
+			"#url!$#$%%^(",
 			mockResponse{},
 			fmt.Errorf("Error initiating download request for source archive"),
 			env.DestinationBucket,
@@ -152,6 +160,7 @@ func TestHandleWithConfig(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			setupLambdaEnvForTesting(t)
+			env.MaxDownloadBackoff = time.Millisecond * 1000
 			env.GrantsGovBaseURL = tt.downloadURL
 			env.DestinationBucket = tt.destinationBucket
 			server.Config.Handler = http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {

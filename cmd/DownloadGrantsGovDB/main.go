@@ -11,25 +11,32 @@ import (
 	"fmt"
 	goLog "log"
 	"net/http"
+	"time"
 
 	ddlambda "github.com/DataDog/datadog-lambda-go"
 	goenv "github.com/Netflix/go-env"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/usdigitalresponse/grants-ingest/internal/awsHelpers"
+	"github.com/usdigitalresponse/grants-ingest/internal/ddHelpers"
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
 	awstrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/aws/aws-sdk-go-v2/aws"
 	httptrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/net/http"
 )
 
 type Environment struct {
-	LogLevel          string `env:"LOG_LEVEL,default=INFO"`
-	DestinationBucket string `env:"GRANTS_SOURCE_DATA_BUCKET_NAME,required=true"`
-	GrantsGovBaseURL  string `env:"GRANTS_GOV_BASE_URL,required=true"`
-	UsePathStyleS3Opt bool   `env:"S3_USE_PATH_STYLE,default=false"`
-	Extras            goenv.EnvSet
+	LogLevel           string        `env:"LOG_LEVEL,default=INFO"`
+	DestinationBucket  string        `env:"GRANTS_SOURCE_DATA_BUCKET_NAME,required=true"`
+	GrantsGovBaseURL   string        `env:"GRANTS_GOV_BASE_URL,required=true"`
+	MaxDownloadBackoff time.Duration `env:"MAX_DOWNLOAD_BACKOFF,default=20s"`
+	UsePathStyleS3Opt  bool          `env:"S3_USE_PATH_STYLE,default=false"`
+	Extras             goenv.EnvSet
 }
 
-var env Environment
+var (
+	env        Environment
+	logger     log.Logger
+	sendMetric = ddHelpers.NewMetricSender("DownloadGrantsGovDB", "source:grants.gov")
+)
 
 func main() {
 	es, err := goenv.UnmarshalFromEnviron(&env)
@@ -38,6 +45,7 @@ func main() {
 	}
 	env.Extras = es
 	log.ConfigureLogger(&logger, env.LogLevel)
+
 	log.Debug(logger, "Starting Lambda")
 	lambda.Start(ddlambda.WrapFunction(func(ctx context.Context, event ScheduledEvent) error {
 		cfg, err := awsHelpers.GetConfig(ctx)

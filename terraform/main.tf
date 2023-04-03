@@ -225,10 +225,11 @@ locals {
 }
 
 // Modules providing Lambda functions
-module "download_grants_gov_db" {
-  source = "./modules/download_grants_gov_db"
+module "DownloadGrantsGovDB" {
+  source = "./modules/DownloadGrantsGovDB"
 
   namespace                                    = var.namespace
+  function_name                                = "DownloadGrantsGovDB"
   permissions_boundary_arn                     = local.permissions_boundary_arn
   lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
   log_retention_in_days                        = var.lambda_default_log_retention_in_days
@@ -244,8 +245,8 @@ module "download_grants_gov_db" {
   eventbridge_scheduler_enabled  = var.eventbridge_scheduler_enabled
 }
 
-module "split_grants_gov_db" {
-  source = "./modules/split_grants_gov_xml_db"
+module "SplitGrantsGovXMLDB" {
+  source = "./modules/SplitGrantsGovXMLDB"
 
   namespace                                    = var.namespace
   function_name                                = "SplitGrantsGovXMLDB"

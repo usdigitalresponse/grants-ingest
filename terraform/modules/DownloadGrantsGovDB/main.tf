@@ -67,8 +67,8 @@ module "lambda_function" {
   source_path = [{
     path = var.lambda_code_path
     commands = [
-      "task build-download_grants_gov_db",
-      "cd bin/download_grants_gov_db",
+      "task build-DownloadGrantsGovDB",
+      "cd bin/DownloadGrantsGovDB",
       ":zip",
     ],
   }]
