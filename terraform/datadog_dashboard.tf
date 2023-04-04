@@ -242,7 +242,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "records_skipped"
-                query = "avg:grants_ingest.SplitGrantsGovXMLDB.opportunity.skipped{$env,$service,$version,handlername:splitgrantsgovxmldb}"
+                query = "sum:grants_ingest.SplitGrantsGovXMLDB.opportunity.skipped{$env,$service,$version,handlername:splitgrantsgovxmldb}.as_count()"
               }
             }
 
@@ -253,7 +253,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "records_updated"
-                query = "avg:grants_ingest.SplitGrantsGovXMLDB.opportunity.updated{$env,$service,$version,handlername:splitgrantsgovxmldb}"
+                query = "sum:grants_ingest.SplitGrantsGovXMLDB.opportunity.updated{$env,$service,$version,handlername:splitgrantsgovxmldb}.as_count()"
               }
             }
 
@@ -264,7 +264,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "records_created"
-                query = "avg:grants_ingest.SplitGrantsGovXMLDB.opportunity.created{$env,$service,$version,handlername:splitgrantsgovxmldb}"
+                query = "sum:grants_ingest.SplitGrantsGovXMLDB.opportunity.created{$env,$service,$version,handlername:splitgrantsgovxmldb}.as_count()"
               }
             }
 
@@ -275,7 +275,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "records_failed"
-                query = "avg:grants_ingest.SplitGrantsGovXMLDB.opportunity.failed{$env,$service,$version,handlername:splitgrantsgovxmldb}"
+                query = "sum:grants_ingest.SplitGrantsGovXMLDB.opportunity.failed{$env,$service,$version,handlername:splitgrantsgovxmldb}.as_count()"
               }
             }
           }
