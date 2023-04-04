@@ -12,6 +12,10 @@ on:
     secrets:
       AWS_ROLE_TO_ASSUME:
         required: true
+      DATADOG_API_KEY:
+        required: true
+      DATADOG_APP_KEY:
+        required: true
 
 concurrency:
   group: ${{ github.workflow_ref }}
