@@ -5,6 +5,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 4.55.0"
     }
+    datadog = {
+      source  = "DataDog/datadog"
+      version = "~> 3.23.0"
+    }
   }
   backend "s3" {}
 }
@@ -23,6 +27,12 @@ provider "aws" {
       var.tags
     )
   }
+}
+
+provider "datadog" {
+  validate = var.datadog_api_key != "" && var.datadog_app_key != "" ? true : false
+  api_key  = var.datadog_api_key
+  app_key  = var.datadog_app_key
 }
 
 data "aws_region" "current" {}

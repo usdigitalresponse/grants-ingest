@@ -84,6 +84,24 @@ variable "datadog_enabled" {
   default     = false
 }
 
+variable "datadog_api_key" {
+  description = "API key to use when provisioning Datadog resources."
+  type        = string
+  default     = ""
+}
+
+variable "datadog_app_key" {
+  description = "Application key to use when provisioning Datadog resources."
+  type        = string
+  default     = ""
+}
+
+variable "datadog_draft" {
+  description = "Marks datadog resources as drafts. Set to false unless deploying to Production."
+  type        = bool
+  default     = false
+}
+
 variable "datadog_reserved_tags" {
   description = "Datadog reserved tags to configure in Lambda function environments (when var.datadog_enabled is true)."
   type        = map(string)
