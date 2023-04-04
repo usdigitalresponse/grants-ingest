@@ -22,3 +22,5 @@ jobs:
       tf_var_file: staging.tfvars
     secrets:
       AWS_ROLE_TO_ASSUME: "${{ secrets.STAGING_ROLE_ARN }}"
+      DATADOG_API_KEY: "${{ secrets.DATADOG_API_KEY }}"
+      DATADOG_APP_KEY: "${{ secrets.DATADOG_APP_KEY }}"

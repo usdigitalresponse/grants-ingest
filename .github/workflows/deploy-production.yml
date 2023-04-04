@@ -19,4 +19,6 @@ jobs:
       tf_backend_config_file: prod.s3.tfbackend
       tf_var_file: prod.tfvars
     secrets:
-      AWS_ROLE_TO_ASSUME: ${{ secrets.PRODUCTION_ROLE_ARN }}
+      AWS_ROLE_TO_ASSUME: "${{ secrets.PRODUCTION_ROLE_ARN }}"
+      DATADOG_API_KEY: "${{ secrets.DATADOG_API_KEY }}"
+      DATADOG_APP_KEY: "${{ secrets.DATADOG_APP_KEY }}"
