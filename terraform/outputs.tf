@@ -8,7 +8,7 @@ output "grants_prepared_data_bucket_id" {
 
 output "lambda_functions" {
   value = [
-    module.download_grants_gov_db.lambda_function_name,
-    module.split_grants_gov_db.lambda_function_name,
+    module.DownloadGrantsGovDB.lambda_function_name,
+    module.SplitGrantsGovXMLDB.lambda_function_name,
   ]
 }

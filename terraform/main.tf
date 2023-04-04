@@ -5,6 +5,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 4.55.0"
     }
+    datadog = {
+      source  = "DataDog/datadog"
+      version = "~> 3.23.0"
+    }
   }
   backend "s3" {}
 }
@@ -25,6 +29,12 @@ provider "aws" {
   }
 }
 
+provider "datadog" {
+  validate = var.datadog_api_key != "" && var.datadog_app_key != "" ? true : false
+  api_key  = var.datadog_api_key
+  app_key  = var.datadog_app_key
+}
+
 data "aws_region" "current" {}
 data "aws_partition" "current" {}
 data "aws_caller_identity" "current" {}
@@ -33,16 +43,13 @@ locals {
   lambda_code_path         = coalesce(var.lambda_code_path, "${path.module}/..")
   permissions_boundary_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/${var.permissions_boundary_policy_name}"
 
-  datadog_layer_arn_prefix = join(":", [
+  datadog_extension_layer_arn = join(":", [
     "arn",
     data.aws_partition.current.id,
     "lambda",
     data.aws_region.current.name,
     { aws = "464622532012", aws-us-gov = "002406178527" }[data.aws_partition.current.id],
     "layer",
-  ])
-  datadog_extension_layer_arn = join(":", [
-    local.datadog_layer_arn_prefix,
     format("Datadog-Extension%s", var.lambda_arch == "arm64" ? "-ARM" : ""),
     var.datadog_lambda_extension_version,
   ])
@@ -195,6 +202,10 @@ data "aws_iam_policy_document" "read_datadog_api_key_secret" {
 
 // Lambda defaults
 locals {
+  datadog_custom_tags = merge(
+    { "git.repository_url" = var.git_repository_url, "git.commit.sha" = var.git_commit_sha },
+    var.datadog_lambda_custom_tags,
+  )
   lambda_environment_variables = merge(
     !var.datadog_enabled ? {} : merge(
       {
@@ -205,6 +216,7 @@ locals {
         DD_SERVERLESS_APPSEC_ENABLED = "true"
         DD_SERVICE                   = "grants-ingest"
         DD_SITE                      = "datadoghq.com"
+        DD_TAGS                      = join(",", sort([for k, v in local.datadog_custom_tags : "${k}:${v}"]))
         DD_TRACE_ENABLED             = "true"
         DD_VERSION                   = var.version_identifier
       },
@@ -225,10 +237,11 @@ locals {
 }
 
 // Modules providing Lambda functions
-module "download_grants_gov_db" {
-  source = "./modules/download_grants_gov_db"
+module "DownloadGrantsGovDB" {
+  source = "./modules/DownloadGrantsGovDB"
 
   namespace                                    = var.namespace
+  function_name                                = "DownloadGrantsGovDB"
   permissions_boundary_arn                     = local.permissions_boundary_arn
   lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
   log_retention_in_days                        = var.lambda_default_log_retention_in_days
@@ -244,8 +257,8 @@ module "download_grants_gov_db" {
   eventbridge_scheduler_enabled  = var.eventbridge_scheduler_enabled
 }
 
-module "split_grants_gov_db" {
-  source = "./modules/split_grants_gov_xml_db"
+module "SplitGrantsGovXMLDB" {
+  source = "./modules/SplitGrantsGovXMLDB"
 
   namespace                                    = var.namespace
   function_name                                = "SplitGrantsGovXMLDB"

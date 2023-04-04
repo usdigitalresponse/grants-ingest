@@ -4,6 +4,11 @@ variable "namespace" {
   description = "Prefix to use for resource names and identifiers."
 }
 
+variable "function_name" {
+  description = "Name of this Lambda function (excluding namespace prefix)."
+  type        = string
+}
+
 variable "permissions_boundary_arn" {
   description = "ARN of the IAM policy to apply as a permissions boundary when provisioning a new role. Ignored if `role_arn` is null."
   type        = string
@@ -56,6 +61,12 @@ variable "additional_lambda_execution_policy_documents" {
 
 variable "additional_environment_variables" {
   description = "Environment variables to configure for the Lambda function, in addition to any defined by this module."
+  type        = map(string)
+  default     = {}
+}
+
+variable "datadog_custom_tags" {
+  description = "Custom tags to configure on the DD_TAGS environment variable."
   type        = map(string)
   default     = {}
 }

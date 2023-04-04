@@ -35,16 +35,15 @@ Terraform modules located within the `modules` subdirectory.
 
 Runtime code that executes (e.g. by AWS Lambda) within the target environment in response to
 some triggering event. Runtime code is written using Go (currently targeting version `1.20.x`),
-which is organized in the `code/gosrc` subdirectory. Within this directory, the source code
-is organized according to the following conventions:
+which is organized in the repository root directory according to the following conventions:
 
 - `cmd/`: This directory contains one subdirectory per Lambda function, and should provide a single
 `main` package that can be compiled into a per-function binary. Each subdirectory of `cmd`
 should have a name that obviously aligns with the particular Lambda function for which it is
 written (which generally should correspond to the Terraform module directory used to provision
 the Lambda function and its dependencies). For example:
-  - Lambda handler code: `code/gosrc/cmd/download_grants_gov_db`
-  - Terraform module: `modules/download_grants_gov_db`
+  - Lambda handler code: `cmd/DownloadGrantsGovDB`
+  - Terraform module: `modules/DownloadGrantsGovDB`
 - `pkg/`: This directory contains "library code" used by one or more Lambda functions in the project,
 organized into per-package subdirectories according to Go convention.
 - `internal/`: This directory is similar to `pkg/` but contains packages that are only intended
@@ -129,12 +128,12 @@ Once your Lambda function has been deployed to your running LocalStack environme
 invoke it in order to test its execution and observe log output. Since each Lambda function
 behaves differently and expects different inputs, the exact nature of the debugging cycle
 will vary between functions. However, the following example demonstrating invocation of the
-function defined in `module.download_grants_gov_db` may be used as a starting point.
+function defined in `module.DownloadGrantsGovDB` may be used as a starting point.
 
 In general, Lambda functions are invoked with a JSON payload that represents the `event`
 input expected by the Lambda handler. Again, the structure of this payload varies depending
 on the invocation source(s) configured for each Lambda function. In the case of the Lambda
-function defined in `module.download_grants_gov_db`, the expected payload is a JSON object
+function defined in `module.DownloadGrantsGovDB`, the expected payload is a JSON object
 containing a `"timestamp"` key whose value is an ISO-8601 timestamp string, from which
 the date of a desired Grants.gov database export is derived. For example:
 

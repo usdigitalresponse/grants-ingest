@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 
-	ddlambda "github.com/DataDog/datadog-lambda-go"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -23,8 +22,6 @@ const (
 	MB                         = int64(1024 * 1024)
 	GRANT_OPPORTUNITY_XML_NAME = "OpportunitySynopsisDetail_1_0"
 )
-
-var logger log.Logger
 
 type opportunity grantsgov.OpportunitySynopsisDetail_1_0
 
@@ -278,14 +275,4 @@ func processOpportunity(ctx context.Context, svc S3ReadWriteObjectAPI, opp oppor
 		sendMetric("opportunity.updated", 1)
 	}
 	return nil
-}
-
-// sendMetric is a helper function that emits a Datadog metric named with a consistent prefix
-// for this Lambda function.
-func sendMetric(name string, value float64, tags ...string) {
-	ddlambda.Metric(
-		fmt.Sprintf("grants_ingest.split_grants_gov_xml_db.%s", name),
-		value,
-		append(tags, "source:grants.gov")...,
-	)
 }

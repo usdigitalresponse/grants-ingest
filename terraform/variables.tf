@@ -19,6 +19,18 @@ variable "version_identifier" {
   description = "The version for this service deployment."
 }
 
+variable "git_repository_url" {
+  type        = string
+  description = "URL for the repository that provides this service."
+  default     = "github.com/usdigitalresponse/grants-ingest"
+}
+
+variable "git_commit_sha" {
+  type        = string
+  description = "Git commit SHA for which terraform is being deployed."
+  default     = ""
+}
+
 variable "permissions_boundary_policy_name" {
   description = "Name of the permissions boundary for service roles"
   type        = string
@@ -72,6 +84,24 @@ variable "datadog_enabled" {
   default     = false
 }
 
+variable "datadog_api_key" {
+  description = "API key to use when provisioning Datadog resources."
+  type        = string
+  default     = ""
+}
+
+variable "datadog_app_key" {
+  description = "Application key to use when provisioning Datadog resources."
+  type        = string
+  default     = ""
+}
+
+variable "datadog_draft" {
+  description = "Marks datadog resources as drafts. Set to false unless deploying to Production."
+  type        = bool
+  default     = false
+}
+
 variable "datadog_reserved_tags" {
   description = "Datadog reserved tags to configure in Lambda function environments (when var.datadog_enabled is true)."
   type        = map(string)
@@ -114,6 +144,17 @@ variable "datadog_lambda_extension_version" {
   description = "Version to use for the Datadog Lambda Extension layer (when var.datadog_enabled is true)."
   type        = string
   default     = "38"
+}
+
+variable "datadog_metrics_metadata" {
+  description = "Map of metadata describing custom Datadog metrics, keyed by the metric name. All metrics are automatically prefixed with grants_ingest."
+  type = map(object({
+    short_name  = optional(string)
+    description = optional(string)
+    unit        = optional(string) # https://docs.datadoghq.com/metrics/units/
+    per_unit    = optional(string)
+  }))
+  default = {}
 }
 
 variable "lambda_default_log_retention_in_days" {

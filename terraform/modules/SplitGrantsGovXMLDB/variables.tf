@@ -66,7 +66,7 @@ variable "additional_environment_variables" {
 }
 
 variable "datadog_custom_tags" {
-  description = "Custom tags for configuring on the DD_TAGS environment variable."
+  description = "Custom tags to configure on the DD_TAGS environment variable."
   type        = map(string)
   default     = {}
 }
