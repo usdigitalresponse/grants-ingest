@@ -25,7 +25,6 @@ jobs:
         with:
           languages: go
           queries: security-extended,security-and-quality
-      # The following step may need to be replaced by taskfile setup and `task build`
       - name: Autobuild
         uses: github/codeql-action/autobuild@v2
       - name: Perform CodeQL Analysis
