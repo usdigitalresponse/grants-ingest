@@ -227,17 +227,26 @@ resource "datadog_dashboard" "service_dashboard" {
 
       widget {
         timeseries_definition {
-          title          = "Results"
+          title          = "Grant Opportunities Results"
           show_legend    = true
           legend_layout  = "horizontal"
           legend_columns = ["sum"]
 
+          yaxis {
+            include_zero = false
+            scale        = "sqrt"
+          }
+
           request {
-            display_type = "line"
+            display_type = "bars"
 
             formula {
               formula_expression = "records_skipped"
               alias              = "Skipped"
+              style {
+                palette       = "cool"
+                palette_index = 4
+              }
             }
             query {
               metric_query {
@@ -249,6 +258,10 @@ resource "datadog_dashboard" "service_dashboard" {
             formula {
               formula_expression = "records_updated"
               alias              = "Updated"
+              style {
+                palette       = "purple"
+                palette_index = 4
+              }
             }
             query {
               metric_query {
@@ -260,6 +273,10 @@ resource "datadog_dashboard" "service_dashboard" {
             formula {
               formula_expression = "records_created"
               alias              = "Created"
+              style {
+                palette       = "classic"
+                palette_index = 4
+              }
             }
             query {
               metric_query {
@@ -271,6 +288,10 @@ resource "datadog_dashboard" "service_dashboard" {
             formula {
               formula_expression = "records_failed"
               alias              = "Failed"
+              style {
+                palette       = "warm"
+                palette_index = 5
+              }
             }
             query {
               metric_query {
