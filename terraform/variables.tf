@@ -146,6 +146,17 @@ variable "datadog_lambda_extension_version" {
   default     = "38"
 }
 
+variable "datadog_metrics_metadata" {
+  description = "Map of metadata describing custom Datadog metrics, keyed by the metric name. All metrics are automatically prefixed with grants_ingest."
+  type = map(object({
+    short_name  = optional(string)
+    description = optional(string)
+    unit        = optional(string) # https://docs.datadoghq.com/metrics/units/
+    per_unit    = optional(string)
+  }))
+  default = {}
+}
+
 variable "lambda_default_log_retention_in_days" {
   description = "Default number of days to retain Lambda execution logs."
   type        = number
