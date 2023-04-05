@@ -88,12 +88,14 @@ variable "datadog_api_key" {
   description = "API key to use when provisioning Datadog resources."
   type        = string
   default     = ""
+  sensitive   = true
 }
 
 variable "datadog_app_key" {
   description = "Application key to use when provisioning Datadog resources."
   type        = string
   default     = ""
+  sensitive   = true
 }
 
 variable "datadog_draft" {
