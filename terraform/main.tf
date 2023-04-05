@@ -9,6 +9,10 @@ terraform {
       source  = "DataDog/datadog"
       version = "~> 3.23.0"
     }
+    http = {
+      source = "hashicorp/http"
+      version = "3.2.1"
+    }
   }
   backend "s3" {}
 }
