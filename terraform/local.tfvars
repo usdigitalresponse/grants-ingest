@@ -2,6 +2,7 @@ namespace                             = "grants-ingest"
 environment                           = "sandbox"
 version_identifier                    = "dev"
 datadog_enabled                       = false
+datadog_dashboards_enabled            = false
 datadog_lambda_extension_version      = "38"
 lambda_default_log_retention_in_days  = 7
 lambda_default_log_level              = "DEBUG"

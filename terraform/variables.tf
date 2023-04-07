@@ -84,6 +84,12 @@ variable "datadog_enabled" {
   default     = false
 }
 
+variable "datadog_dashboards_enabled" {
+  description = "Whether to provision Datadog dashboards."
+  type        = bool
+  default     = true
+}
+
 variable "datadog_api_key" {
   description = "API key to use when provisioning Datadog resources."
   type        = string
