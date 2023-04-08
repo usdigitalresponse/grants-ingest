@@ -123,3 +123,10 @@ tasks:
       - task: build-lambda
         vars:
           LAMBDA_CMD: SplitGrantsGovXMLDB
+
+  build-PersistGrantsGovXMLDB:
+    desc: Compiles PersistGrantsGovXMLDB
+    cmds:
+      - task: build-lambda
+        vars:
+          LAMBDA_CMD: PersistGrantsGovXMLDB
