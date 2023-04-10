@@ -10,5 +10,6 @@ output "lambda_functions" {
   value = [
     module.DownloadGrantsGovDB.lambda_function_name,
     module.SplitGrantsGovXMLDB.lambda_function_name,
+    module.ExtractGrantsGovDBToXML.lambda_function_name,
   ]
 }
