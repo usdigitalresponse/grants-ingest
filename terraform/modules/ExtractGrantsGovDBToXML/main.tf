@@ -8,8 +8,8 @@ terraform {
 locals {
   dd_tags = merge(
     {
-      for item in split(",", try(var.additional_environment_variables.DD_TAGS, "")) :
-      trimspace(split(":", item)[0]) => trimspace(split(":", item)[1])
+      for item in compact(split(",", try(var.additional_environment_variables.DD_TAGS, ""))) :
+      split(":", trimspace(item))[0] => try(split(":", trimspace(item))[1], "")
     },
     var.datadog_custom_tags,
     { handlername = lower(var.function_name), },
