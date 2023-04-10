@@ -15,7 +15,18 @@ per-grant data records that can be consumed whenever updates to the underlying d
 
 This service consists of an event-driven pipeline that uses AWS Lambda for running various
 compute tasks. Additionally, Amazon S3 is used for archival storage of raw source data, while
-DynamoDB provides an active index of processed grant opportunity records.
+DynamoDB provides an active index of processed grant opportunity records. At the end of the ingestion
+pipeline, newly-created/-updated grant opportunity records are sent to an event bus that delivers
+the updates to subscribers.
+
+<details>
+  <summary>High-level architecture</summary>
+  <img src="docs/high-level-architecture.png"/>
+</details>
+<details>
+  <summary>Component-level architecture</summary>
+  <img src="docs/component-level-architecture.png"/>
+</details>
 
 
 ## Code Organization

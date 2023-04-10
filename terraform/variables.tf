@@ -84,6 +84,12 @@ variable "datadog_enabled" {
   default     = false
 }
 
+variable "datadog_dashboards_enabled" {
+  description = "Whether to provision Datadog dashboards."
+  type        = bool
+  default     = true
+}
+
 variable "datadog_api_key" {
   description = "API key to use when provisioning Datadog resources."
   type        = string
@@ -145,7 +151,7 @@ variable "datadog_lambda_custom_tags" {
 variable "datadog_lambda_extension_version" {
   description = "Version to use for the Datadog Lambda Extension layer (when var.datadog_enabled is true)."
   type        = string
-  default     = "38"
+  default     = "41"
 }
 
 variable "datadog_metrics_metadata" {

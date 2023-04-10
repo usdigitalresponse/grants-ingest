@@ -3,6 +3,8 @@ locals {
 }
 
 resource "datadog_dashboard" "service_dashboard" {
+  count = var.datadog_dashboards_enabled ? 1 : 0
+
   title       = trimspace("Grants Ingest Service Dashboard ${local.datadog_draft_label}")
   description = "Dashboard for monitoring the Grants Ingest pipeline service."
   layout_type = "ordered"
