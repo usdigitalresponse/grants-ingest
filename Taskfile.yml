@@ -109,6 +109,7 @@ tasks:
     deps:
       - build-DownloadGrantsGovDB
       - build-SplitGrantsGovXMLDB
+      - build-PersistGrantsGovXMLDB
 
   build-DownloadGrantsGovDB:
     desc: Compiles DownloadGrantsGovDB

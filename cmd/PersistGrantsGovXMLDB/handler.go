@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"encoding/xml"
 	"fmt"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/go-kit/log/level"
 	"github.com/hashicorp/go-multierror"
@@ -47,6 +47,10 @@ func handleS3EventWithConfig(cfg aws.Config, ctx context.Context, s3Event events
 		o.UsePathStyle = env.UsePathStyleS3Opt
 	})
 
+	dynamoClient := dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {
+		o.Region = "us-east-1"
+	})
+
 	// Create an opportunities channel to direct grantOpportunity values parsed from the source
 	// record to individual S3 object uploads
 	opportunities := make(chan opportunity)
@@ -56,7 +60,7 @@ func handleS3EventWithConfig(cfg aws.Config, ctx context.Context, s3Event events
 	wg := multierror.Group{}
 	for i := 0; i < env.MaxConcurrentUploads; i++ {
 		wg.Go(func() error {
-			return processOpportunities(processingCtx, s3svc, opportunities)
+			return processOpportunities(processingCtx, dynamoClient, opportunities)
 		})
 	}
 
@@ -74,7 +78,7 @@ func handleS3EventWithConfig(cfg aws.Config, ctx context.Context, s3Event events
 			sourceKey := record.S3.Object.Key
 			logger := log.With(logger, "event_name", record.EventName, "record_index", i,
 				"source_bucket", sourceBucket, "source_object_key", sourceKey)
-			log.Info(logger, "Splitting Grants.gov DB extract XML object from S3")
+			// log.Info(logger, "Splitting Grants.gov DB extract XML object from S3")
 
 			resp, err := s3svc.GetObject(recordCtx, &s3.GetObjectInput{
 				Bucket: aws.String(sourceBucket),
@@ -91,7 +95,7 @@ func handleS3EventWithConfig(cfg aws.Config, ctx context.Context, s3Event events
 				return err
 			}
 
-			log.Info(logger, "Finished splitting Grants.gov DB extract XML")
+			// log.Info(logger, "Finished splitting Grants.gov DB extract XML")
 			return nil
 		}(i, record)
 		if sourcingErr != nil {
@@ -179,7 +183,7 @@ func readOpportunities(ctx context.Context, r io.Reader, ch chan<- opportunity) 
 // It returns a multi-error containing any errors encountered while processing a received
 // grantOpportunity as well as the reason for the context cancelation, if any.
 // Returns nil if all opportunities were processed successfully until the channel was closed.
-func processOpportunities(ctx context.Context, svc *s3.Client, ch <-chan opportunity) (errs error) {
+func processOpportunities(ctx context.Context, svc *dynamodb.Client, ch <-chan opportunity) (errs error) {
 	span, ctx := tracer.StartSpanFromContext(ctx, "processing.worker")
 
 	whenCanceled := func() error {
@@ -201,7 +205,7 @@ func processOpportunities(ctx context.Context, svc *s3.Client, ch <-chan opportu
 			select {
 			case opportunity, ok := <-ch:
 				if !ok {
-					log.Debug(logger, "Done processing opportunities because channel is closed")
+					//log.Debug(logger, "Done processing opportunities because channel is closed")
 					span.Finish()
 					return
 				}
@@ -226,7 +230,7 @@ func processOpportunities(ctx context.Context, svc *s3.Client, ch <-chan opportu
 // any extant S3 object with a matching key in the bucket named by env.DestinationBucket
 // is compared with the opportunity. An upload is initiated when the opportunity was updated
 // more recently than the extant object was last modified, or when no extant object exists.
-func processOpportunity(ctx context.Context, svc S3ReadWriteObjectAPI, opp opportunity) error {
+func processOpportunity(ctx context.Context, svc DynamoDBUpdateItemAPI, opp opportunity) error {
 	logger := log.With(logger,
 		"opportunity_id", opp.OpportunityID, "opportunity_number", opp.OpportunityNumber)
 
@@ -239,40 +243,17 @@ func processOpportunity(ctx context.Context, svc S3ReadWriteObjectAPI, opp oppor
 	logger = log.With(logger, "opportunity_last_modified", lastModified)
 
 	key := opp.S3ObjectKey()
-	logger = log.With(logger, "bucket", env.DestinationBucket, "key", key)
-	remoteLastModified, err := GetS3LastModified(ctx, svc, env.DestinationBucket, key)
-	if err != nil {
-		return log.Errorf(logger, "Error determining last modified time for remote opportunity", err)
-	}
-	logger = log.With(logger, "remote_last_modified", remoteLastModified)
+	logger = log.With(logger, "table", env.DestinationTable, "key", key)
 
-	isNew := false
-	if remoteLastModified != nil {
-		if remoteLastModified.After(lastModified) {
-			log.Debug(logger, "Skipping opportunity upload because the extant record is up-to-date")
-			sendMetric("opportunity.skipped", 1)
-			return nil
-		}
-		log.Debug(logger, "Uploading updated opportunity to replace outdated remote record")
-	} else {
-		isNew = true
-		log.Debug(logger, "Uploading new opportunity")
+	if err := UpdateDynamoDBItem(ctx, svc, env.DestinationTable, opp); err != nil {
+		return log.Errorf(logger, "Error uploading prepared grant opportunity to DynamoDB", err)
 	}
 
-	b, err := xml.Marshal(grantsgov.OpportunitySynopsisDetail_1_0(opp))
-	if err != nil {
-		return log.Errorf(logger, "Error marshaling XML for opportunity", err)
-	}
-
-	if err := UploadS3Object(ctx, svc, env.DestinationBucket, key, bytes.NewReader(b)); err != nil {
-		return log.Errorf(logger, "Error uploading prepared grant opportunity to S3", err)
-	}
-
-	log.Info(logger, "Successfully uploaded opportunity")
-	if isNew {
-		sendMetric("opportunity.created", 1)
-	} else {
-		sendMetric("opportunity.updated", 1)
-	}
+	// log.Info(logger, "Successfully uploaded opportunity")
+	// if isNew {
+	// 	sendMetric("opportunity.created", 1)
+	// } else {
+	// 	sendMetric("opportunity.updated", 1)
+	// }
 	return nil
 }
