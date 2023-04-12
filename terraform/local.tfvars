@@ -1,6 +1,7 @@
 namespace                             = "grants-ingest"
 environment                           = "sandbox"
 version_identifier                    = "dev"
+permissions_boundary_policy_name      = ""
 datadog_enabled                       = false
 datadog_dashboards_enabled            = false
 datadog_lambda_extension_version      = "38"

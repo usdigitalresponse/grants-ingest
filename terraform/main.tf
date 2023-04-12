@@ -44,8 +44,15 @@ data "aws_partition" "current" {}
 data "aws_caller_identity" "current" {}
 
 locals {
-  lambda_code_path         = coalesce(var.lambda_code_path, "${path.module}/..")
-  permissions_boundary_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/${var.permissions_boundary_policy_name}"
+  lambda_code_path = coalesce(var.lambda_code_path, "${path.module}/..")
+  permissions_boundary_arn = !can(coalesce(var.permissions_boundary_policy_name)) ? null : join(":", [
+    "arn",
+    data.aws_partition.current.id,
+    "iam",
+    "",
+    data.aws_caller_identity.current.account_id,
+    "policy/${var.permissions_boundary_policy_name}"
+  ])
 
   datadog_extension_layer_arn = join(":", [
     "arn",
@@ -209,13 +216,13 @@ module "grants_prepared_dynamodb_table" {
   version = "0.32.0"
   context = module.this.context
 
-  name                           = "prepareddata"
-  hash_key                       = "grant_id"
-  table_class                    = "STANDARD"
-  enable_streams                 = true
-  stream_view_type               = "NEW_AND_OLD_IMAGES"
+  name             = "prepareddata"
+  hash_key         = "grant_id"
+  table_class      = "STANDARD"
+  enable_streams   = true
+  stream_view_type = "NEW_AND_OLD_IMAGES"
   # enable_point_in_time_recovery  = true
-  enable_encryption              = true
+  enable_encryption = true
 }
 
 # resource "aws_dynamodb_contributor_insights" "grants_prepared_dynamodb_main" {
