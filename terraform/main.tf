@@ -204,22 +204,23 @@ data "aws_iam_policy_document" "read_datadog_api_key_secret" {
   }
 }
 
-module "grants_prepared_dynamodb_main" {
-  source   = "terraform-aws-modules/dynamodb-table/aws"
+module "grants_prepared_dynamodb_table" {
+  source  = "cloudposse/dynamodb/aws"
+  version = "0.32.0"
+  context = module.this.context
 
-  name                           = "grants_prepared_dynamodb_main"
-  billing_mode                   = "PAY_PER_REQUEST"
-  table_class                    = "STANDARD"
-  stream_enabled                 = true
-  stream_view_type               = "NEW_AND_OLD_IMAGES"
-  point_in_time_recovery_enabled = true
-  server_side_encryption_enabled = true
+  name                           = "prepareddata"
   hash_key                       = "grant_id"
+  table_class                    = "STANDARD"
+  enable_streams                 = true
+  stream_view_type               = "NEW_AND_OLD_IMAGES"
+  # enable_point_in_time_recovery  = true
+  enable_encryption              = true
 }
 
-resource "aws_dynamodb_contributor_insights" "grants_prepared_dynamodb_main" {
-  table_name = "grants_prepared_dynamodb_main"
-}
+# resource "aws_dynamodb_contributor_insights" "grants_prepared_dynamodb_main" {
+#   table_name = module.grants_prepared_dynamodb_table.table_name
+# }
 
 // Lambda defaults
 locals {
@@ -313,9 +314,9 @@ module "PersistGrantsGovXMLDB" {
   lambda_layer_arns                            = local.lambda_layer_arns
 
   grants_prepared_data_bucket_name            = module.grants_prepared_data_bucket.bucket_id
-  grants_prepared_dynamodb_table_name         = "grants_prepared_dynamodb_main"
-  grants_prepared_dynamodb_table_arn          = module.grants_prepared_dynamodb_main.arn
-  grants_prepared_dynamodb_table_id           = module.grants_prepared_dynamodb_main.id
-  grants_prepared_dynamodb_table_stream_arn   = module.grants_prepared_dynamodb_main.stream_arn
-  grants_prepared_dynamodb_table_stream_label = module.grants_prepared_dynamodb_main.stream_label
+  grants_prepared_dynamodb_table_name         = module.grants_prepared_dynamodb_table.table_name
+  grants_prepared_dynamodb_table_arn          = module.grants_prepared_dynamodb_table.table_arn
+  grants_prepared_dynamodb_table_id           = module.grants_prepared_dynamodb_table.table_id
+  grants_prepared_dynamodb_table_stream_arn   = module.grants_prepared_dynamodb_table.table_stream_arn
+  grants_prepared_dynamodb_table_stream_label = module.grants_prepared_dynamodb_table.table_stream_label
 }

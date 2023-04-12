@@ -40,6 +40,7 @@ module "lambda_execution_policy" {
     AllowDynamoDBPreparedData = {
       effect = "Allow"
       actions = [
+        "dynamodb:ListTables",
 				"dynamodb:BatchGetItem",
 				"dynamodb:GetItem",
 				"dynamodb:Query",

@@ -72,11 +72,6 @@ variable "datadog_custom_tags" {
 }
 
 // Module-specific
-variable "grants_source_data_bucket_name" {
-  description = "Name of the S3 bucket used to store grants source data."
-  type        = string
-}
-
 variable "grants_prepared_data_bucket_name" {
   description = "Name of the S3 bucket used to store grants prepared data."
   type        = string
