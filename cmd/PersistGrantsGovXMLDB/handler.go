@@ -47,9 +47,7 @@ func handleS3EventWithConfig(cfg aws.Config, ctx context.Context, s3Event events
 		o.UsePathStyle = env.UsePathStyleS3Opt
 	})
 
-	dynamoClient := dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {
-		o.Region = "us-east-1"
-	})
+	dynamoClient := dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {})
 
 	// Create an opportunities channel to direct grantOpportunity values parsed from the source
 	// record to individual S3 object uploads
@@ -249,7 +247,7 @@ func processOpportunity(ctx context.Context, svc DynamoDBUpdateItemAPI, opp oppo
 		return log.Errorf(logger, "Error uploading prepared grant opportunity to DynamoDB", err)
 	}
 
-	// log.Info(logger, "Successfully uploaded opportunity")
+	log.Info(logger, "Successfully uploaded opportunity")
 	// if isNew {
 	// 	sendMetric("opportunity.created", 1)
 	// } else {
