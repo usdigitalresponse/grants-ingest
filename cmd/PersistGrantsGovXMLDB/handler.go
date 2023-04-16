@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"encoding/xml"
-	"fmt"
 	"io"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -24,11 +23,6 @@ const (
 )
 
 type opportunity grantsgov.OpportunitySynopsisDetail_1_0
-
-// S3ObjectKey returns a string to use as the object key when saving the opportunity to an S3 bucket.
-func (o *opportunity) S3ObjectKey() string {
-	return fmt.Sprintf("%s/%s/grants.gov/v2.xml", o.OpportunityID[0:3], o.OpportunityID)
-}
 
 // handleS3Event handles events representing S3 bucket notifications of type "ObjectCreated:*"
 // for XML DB extracts saved from Grants.gov. The XML data from the source S3 object provided
@@ -62,7 +56,7 @@ func handleS3EventWithConfig(cfg aws.Config, ctx context.Context, s3Event events
 		})
 	}
 
-	// Iterate over all received source records to split into per-grant values and submit them to
+	// Iterate over all received source records to upload to DynamoDB and submit them to
 	// the opportunities channel for processing by the workers pool. Instead of failing on the
 	// first encountered error, we instead accumulate them into a single "multi-error".
 	// Only one source record is consumed at a time; in normal cases, the invocation event
@@ -93,7 +87,6 @@ func handleS3EventWithConfig(cfg aws.Config, ctx context.Context, s3Event events
 				return err
 			}
 
-			// log.Info(logger, "Finished splitting Grants.gov DB extract XML")
 			return nil
 		}(i, record)
 		if sourcingErr != nil {
@@ -132,7 +125,7 @@ func handleS3EventWithConfig(cfg aws.Config, ctx context.Context, s3Event events
 	return nil
 }
 
-// readOpportunities reads XML from r, sending all parsed grantOpportunity records to ch.
+// readOpportunities reads XML from r, sending a grantOpportunity record to ch.
 // Returns nil when the end of the file is reached.
 // readOpportunities stops and returns an error when the context is canceled
 // or an error is encountered while reading.
@@ -223,35 +216,16 @@ func processOpportunities(ctx context.Context, svc *dynamodb.Client, ch <-chan o
 	}
 }
 
-// processOpportunity takes a single opportunity and conditionally uploads an XML
-// representation of the opportunity to its configured S3 destination. Before uploading,
-// any extant S3 object with a matching key in the bucket named by env.DestinationBucket
-// is compared with the opportunity. An upload is initiated when the opportunity was updated
-// more recently than the extant object was last modified, or when no extant object exists.
+// processOpportunity takes a single opportunity and uploads an XML representation of the
+// opportunity to its configured DynamoDB table.
 func processOpportunity(ctx context.Context, svc DynamoDBUpdateItemAPI, opp opportunity) error {
 	logger := log.With(logger,
 		"opportunity_id", opp.OpportunityID, "opportunity_number", opp.OpportunityNumber)
-
-	lastModified, err := opp.LastUpdatedDate.Time()
-	if err != nil {
-		return log.Errorf(logger, "Error getting last modified time for opportunity", err)
-	}
-	log.Debug(logger, "Parsed last modified time from opportunity last update date",
-		"raw_value", opp.LastUpdatedDate, "parsed_value", lastModified)
-	logger = log.With(logger, "opportunity_last_modified", lastModified)
-
-	key := opp.S3ObjectKey()
-	logger = log.With(logger, "table", env.DestinationTable, "key", key)
 
 	if err := UpdateDynamoDBItem(ctx, svc, env.DestinationTable, opp); err != nil {
 		return log.Errorf(logger, "Error uploading prepared grant opportunity to DynamoDB", err)
 	}
 
 	log.Info(logger, "Successfully uploaded opportunity")
-	// if isNew {
-	// 	sendMetric("opportunity.created", 1)
-	// } else {
-	// 	sendMetric("opportunity.updated", 1)
-	// }
 	return nil
 }
