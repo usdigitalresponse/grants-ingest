@@ -34,9 +34,11 @@ func setupLambdaEnvForTesting(t *testing.T) {
 	logger = log.NewNopLogger()
 
 	// Configure environment variables
-	goenv.Unmarshal(goenv.EnvSet{
-		"S3_USE_PATH_STYLE": "true",
+	err := goenv.Unmarshal(goenv.EnvSet{
+		"GRANTS_PREPARED_DYNAMODB_NAME": "test-destination-table",
+		"S3_USE_PATH_STYLE":             "true",
 	}, &env)
+	require.NoError(t, err, "Error configuring environment variables for testing")
 }
 
 func setupS3ForTesting(t *testing.T, sourceBucketName string) (*s3.Client, aws.Config, error) {
@@ -78,6 +80,31 @@ func setupS3ForTesting(t *testing.T, sourceBucketName string) (*s3.Client, aws.C
 	return client, cfg, nil
 }
 
+// func setupDynamoDBForTesting(t *testing.T, cfg aws.Config, tableName string) error {
+// 	t.Helper()
+
+// 	client := dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {})
+// 	ctx := context.TODO()
+// 	tablesToCreate := []string{tableName}
+// 	for _, tableName := range tablesToCreate {
+// 		_, err := client.CreateTable(ctx, &dynamodb.CreateTableInput{
+// 			TableName: aws.String(tableName),
+// 			AttributeDefinitions: []types.AttributeDefinition{{
+// 				AttributeName: aws.String("grant_id"),
+// 				AttributeType: types.ScalarAttributeTypeS,
+// 			}},
+// 			KeySchema: []types.KeySchemaElement{{
+// 				AttributeName: aws.String("grant_id"),
+// 				KeyType:       types.KeyTypeHash,
+// 			}},
+// 		})
+// 		if err != nil {
+// 			return err
+// 		}
+// 	}
+// 	return nil
+// }
+
 const SOURCE_OPPORTUNITY_TEMPLATE = `
 <OpportunitySynopsisDetail_1_0>
 	<OpportunityID>{{.OpportunityID}}</OpportunityID>
@@ -116,6 +143,9 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 		sourceBucketName := "test-source-bucket"
 		s3client, cfg, err := setupS3ForTesting(t, sourceBucketName)
 		require.NoError(t, err)
+		// destinationTableName := "test-destination-table"
+		// err = setupDynamoDBForTesting(t, cfg, destinationTableName)
+		// require.NoError(t, err)
 		sourceTemplate := template.Must(
 			template.New("xml").Delims("{{", "}}").Parse(SOURCE_OPPORTUNITY_TEMPLATE),
 		)

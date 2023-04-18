@@ -43,10 +43,10 @@ func TestUploadDynamoDBItem(t *testing.T) {
 	now := time.Now()
 	testTableName := "test-table"
 	testHashKey := map[string]types.AttributeValue{}
-	testHashKey["grant_id"] = &types.AttributeValueMemberS{Value: "1234"}
+	testHashKey["grant_id"] = &types.AttributeValueMemberS{Value: "123456"}
 	testError := fmt.Errorf("oh no this is an error")
 	testOpportunity := opportunity{
-		OpportunityID:   "1234",
+		OpportunityID:   "123456",
 		LastUpdatedDate: grantsgov.MMDDYYYYType(now.Format(grantsgov.TimeLayoutMMDDYYYYType)),
 	}
 
