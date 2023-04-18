@@ -12,7 +12,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.62
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.31.3
 	github.com/aws/smithy-go v1.13.5
-	github.com/cenkalti/backoff/v4 v4.2.0
+	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/go-kit/log v0.2.1
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/johannesboyne/gofakes3 v0.0.0-20230310080033-c0edf658332b
