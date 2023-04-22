@@ -74,8 +74,9 @@ github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.14.1 h1:lRWp3bNu5wy0X3
 github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.14.1/go.mod h1:VXBHSxdN46bsJrkniN68psSwbyBKsazQfU2yX/iSDso=
 github.com/aws/aws-sdk-go-v2/service/kms v1.19.2 h1:pgOVfu7E6zBddKGks4TvL4YuFsL/oTpiWDIzs4WPLjY=
 github.com/aws/aws-sdk-go-v2/service/kms v1.19.2/go.mod h1:XH60PhgtbXDXFBzJ2auE6bpIELxAYTnoVFFwPtG8JwY=
-github.com/aws/aws-sdk-go-v2/service/s3 v1.31.3 h1:MG+2UlhyBL3oCOoHbUQh+Sqr3elN0I5PBe0MtVh0xMg=
 github.com/aws/aws-sdk-go-v2/service/s3 v1.31.3/go.mod h1:aSl9/LJltSz1cVusiR/Mu8tvI4Sv/5w/WWrJmmkNii0=
+github.com/aws/aws-sdk-go-v2/service/s3 v1.32.0 h1:NAc8WQsVQ3+kz3rU619mlz8NcbpZI6FVJHQfH33QK0g=
+github.com/aws/aws-sdk-go-v2/service/s3 v1.32.0/go.mod h1:aSl9/LJltSz1cVusiR/Mu8tvI4Sv/5w/WWrJmmkNii0=
 github.com/aws/aws-sdk-go-v2/service/sqs v1.0.0 h1:k+iXUEMp688JqUcxb4/bzt7xgJX4TLqahrwgWA/qO6E=
 github.com/aws/aws-sdk-go-v2/service/sso v1.12.8 h1:5cb3D6xb006bPTqEfCNaEA6PPEfBXxxy4NNeX/44kGk=
 github.com/aws/aws-sdk-go-v2/service/sso v1.12.8/go.mod h1:GNIveDnP+aE3jujyUSH5aZ/rktsTM5EvtKnCqBZawdw=
@@ -87,8 +88,8 @@ github.com/aws/aws-xray-sdk-go v1.8.0 h1:0xncHZ588wB/geLjbM/esoW3FOEThWy2TJyb4VX
 github.com/aws/aws-xray-sdk-go v1.8.0/go.mod h1:7LKe47H+j3evfvS1+q0wzpoaGXGrF3mUsfM+thqVO+A=
 github.com/aws/smithy-go v1.13.5 h1:hgz0X/DX0dGqTYpGALqXJoRKRj5oQ7150i5FdTePzO8=
 github.com/aws/smithy-go v1.13.5/go.mod h1:Tg+OJXh4MB2R/uN61Ko2f6hTZwB/ZYGOtib8J3gBHzA=
-github.com/cenkalti/backoff/v4 v4.2.0 h1:HN5dHm3WBOgndBH6E8V0q2jIYIR3s9yglV8k/+MN3u4=
-github.com/cenkalti/backoff/v4 v4.2.0/go.mod h1:Y3VNntkOUPxTVeUxJ/G5vcM//AlwfmyYozVcomhLiZE=
+github.com/cenkalti/backoff/v4 v4.2.1 h1:y4OZtCnogmCPw98Zjyt5a6+QwPLGkiQsYW5oUqylYbM=
+github.com/cenkalti/backoff/v4 v4.2.1/go.mod h1:Y3VNntkOUPxTVeUxJ/G5vcM//AlwfmyYozVcomhLiZE=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cespare/xxhash/v2 v2.1.1/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/cespare/xxhash/v2 v2.1.2 h1:YRXhKfTDauu4ajMg1TPgFO5jnlC2HCbmLXMcTG5cbYE=
