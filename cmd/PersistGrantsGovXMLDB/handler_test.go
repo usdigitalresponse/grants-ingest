@@ -85,7 +85,10 @@ func setupDynamoDBForTesting(t *testing.T, tableName string) (*dynamodb.Client, 
 	t.Helper()
 
 	ctx := context.TODO()
-	cfg, _ := config.LoadDefaultConfig(ctx)
+	cfg, _ := config.LoadDefaultConfig(
+		ctx,
+		config.WithRegion("us-west-2"),
+	)
 	client := dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {})
 
 	// Checking for orphaned test tables and deleting the specificied table
