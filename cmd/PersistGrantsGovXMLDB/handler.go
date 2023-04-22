@@ -7,7 +7,6 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/hashicorp/go-multierror"
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
@@ -31,7 +30,7 @@ type opportunity grantsgov.OpportunitySynopsisDetail_1_0
 // a partial or complete invocation failure.
 // Returns nil when all grant opportunities are successfully processed from all source records,
 // indicating complete success.
-func handleS3EventWithConfig(s3svc *s3.Client, dynamodbsvc *dynamodb.Client, ctx context.Context, s3Event events.S3Event) error {
+func handleS3EventWithConfig(s3svc *s3.Client, dynamodbsvc DynamoDBUpdateItemAPI, ctx context.Context, s3Event events.S3Event) error {
 	wg := multierror.Group{}
 	for _, record := range s3Event.Records {
 		func(record events.S3EventRecord) {

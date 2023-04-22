@@ -17,7 +17,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/go-kit/log"
 	"github.com/hashicorp/go-multierror"
@@ -81,55 +80,6 @@ func setupS3ForTesting(t *testing.T, sourceBucketName string) (*s3.Client, error
 	return client, nil
 }
 
-func setupDynamoDBForTesting(t *testing.T, tableName string) (*dynamodb.Client, error) {
-	t.Helper()
-
-	ctx := context.TODO()
-	cfg, _ := config.LoadDefaultConfig(
-		ctx,
-		config.WithRegion("us-west-2"),
-	)
-	client := dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {})
-
-	// Checking for orphaned test tables and deleting the specificied table
-	// if it already exists in this context
-	tables, err := client.ListTables(ctx, &dynamodb.ListTablesInput{})
-	if err != nil {
-		return client, err
-	}
-	for _, table := range tables.TableNames {
-		if table == tableName {
-			_, err = client.DeleteTable(ctx, &dynamodb.DeleteTableInput{
-				TableName: aws.String(table),
-			})
-			if err != nil {
-				return client, err
-			}
-		}
-	}
-
-	_, err = client.CreateTable(ctx, &dynamodb.CreateTableInput{
-		TableName: aws.String(tableName),
-		AttributeDefinitions: []types.AttributeDefinition{{
-			AttributeName: aws.String("grant_id"),
-			AttributeType: types.ScalarAttributeTypeS,
-		}},
-		KeySchema: []types.KeySchemaElement{{
-			AttributeName: aws.String("grant_id"),
-			KeyType:       types.KeyTypeHash,
-		}},
-		ProvisionedThroughput: &types.ProvisionedThroughput{
-			ReadCapacityUnits:  aws.Int64(10),
-			WriteCapacityUnits: aws.Int64(10),
-		},
-	})
-	if err != nil {
-		return client, err
-	}
-
-	return client, nil
-}
-
 const SOURCE_OPPORTUNITY_TEMPLATE = `
 <OpportunitySynopsisDetail_1_0>
 	<OpportunityID>{{.OpportunityID}}</OpportunityID>
@@ -162,15 +112,6 @@ const SOURCE_OPPORTUNITY_TEMPLATE = `
 `
 
 func TestLambdaInvocationScenarios(t *testing.T) {
-	destinationTableName := "test-destination-table"
-	dynamodbClient, err := setupDynamoDBForTesting(t, destinationTableName)
-	require.NoError(t, err)
-
-	waiter := dynamodb.NewTableExistsWaiter(dynamodbClient)
-	err = waiter.Wait(context.TODO(), &dynamodb.DescribeTableInput{
-		TableName: aws.String(destinationTableName)}, 5*time.Minute)
-	require.NoError(t, err)
-
 	t.Run("Missing source object", func(t *testing.T) {
 		setupLambdaEnvForTesting(t)
 
@@ -193,6 +134,12 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 			Body:   bytes.NewReader(sourceData.Bytes()),
 		})
 		require.NoError(t, err)
+		dynamodbClient := mockDynamoDBUpdateItemAPI{
+			mockUpdateItemAPI(func(context.Context, *dynamodb.UpdateItemInput, ...func(*dynamodb.Options)) (*dynamodb.UpdateItemOutput, error) {
+				t.Helper()
+				return nil, nil
+			}),
+		}
 		err = handleS3EventWithConfig(s3Client, dynamodbClient, context.TODO(), events.S3Event{
 			Records: []events.S3EventRecord{
 				{S3: events.S3Entity{
@@ -221,6 +168,14 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
+
+		dynamodbClient := mockDynamoDBUpdateItemAPI{
+			mockUpdateItemAPI(func(context.Context, *dynamodb.UpdateItemInput, ...func(*dynamodb.Options)) (*dynamodb.UpdateItemOutput, error) {
+				t.Helper()
+				return nil, nil
+			}),
+		}
+
 		err = handleS3EventWithConfig(s3Client, dynamodbClient, ctx, events.S3Event{
 			Records: []events.S3EventRecord{
 				{S3: events.S3Entity{
@@ -237,14 +192,6 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 			}
 		} else {
 			require.Fail(t, "Invocation error could not be interpreted as *multierror.Error")
-		}
-	})
-	t.Cleanup(func() {
-		_, err = dynamodbClient.DeleteTable(context.TODO(), &dynamodb.DeleteTableInput{
-			TableName: aws.String(destinationTableName),
-		})
-		if err != nil {
-			panic(err)
 		}
 	})
 }
