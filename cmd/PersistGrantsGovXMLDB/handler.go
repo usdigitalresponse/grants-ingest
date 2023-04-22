@@ -73,6 +73,7 @@ func handleS3EventWithConfig(s3svc *s3.Client, dynamodbsvc DynamoDBUpdateItemAPI
 		log.Warn(logger, "Failures occurred during invocation; check logs for details",
 			"count_errors", errs.Len(),
 			"count_s3_events", len(s3Event.Records))
+		sendMetric("opportunity.failed", 1)
 		return err
 	}
 	return nil
@@ -89,5 +90,6 @@ func processOpportunity(ctx context.Context, svc DynamoDBUpdateItemAPI, opp oppo
 	}
 
 	log.Info(logger, "Successfully uploaded opportunity")
+	sendMetric("opportunity.created", 1)
 	return nil
 }

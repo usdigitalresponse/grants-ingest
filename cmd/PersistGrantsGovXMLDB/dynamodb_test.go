@@ -3,15 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"testing"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	awsTransport "github.com/aws/aws-sdk-go-v2/aws/transport/http"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 	"github.com/stretchr/testify/assert"
 	grantsgov "github.com/usdigitalresponse/grants-ingest/pkg/grantsSchemas/grants.gov"
 )
@@ -24,19 +21,6 @@ func (m mockUpdateItemAPI) UpdateItem(ctx context.Context, params *dynamodb.Upda
 
 type mockDynamoDBUpdateItemAPI struct {
 	mockUpdateItemAPI
-}
-
-func createErrorResponseMap() map[int]*awsTransport.ResponseError {
-	errorResponses := map[int]*awsTransport.ResponseError{}
-	for _, statusCode := range []int{404, 500} {
-		errorResponses[statusCode] = &awsTransport.ResponseError{
-			ResponseError: &smithyhttp.ResponseError{Response: &smithyhttp.Response{
-				Response: &http.Response{StatusCode: statusCode},
-			}},
-			RequestID: fmt.Sprintf("i-am-a-request-with-%d-status-response", statusCode),
-		}
-	}
-	return errorResponses
 }
 
 func TestUploadDynamoDBItem(t *testing.T) {
