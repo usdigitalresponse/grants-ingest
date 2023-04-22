@@ -86,18 +86,3 @@ variable "grants_prepared_dynamodb_table_arn" {
   description = "ARN of the DynamoDB table used to persist grants prepared data."
   type        = string
 }
-
-variable "grants_prepared_dynamodb_table_id" {
-  description = "Table ID of the DynamoDB table used to persist grants prepared data."
-  type        = string
-}
-
-variable "grants_prepared_dynamodb_table_stream_arn" {
-  description = "ARN of the DynamoDB table stream used to persist grants prepared data."
-  type        = string
-}
-
-variable "grants_prepared_dynamodb_table_stream_label" {
-  description = "Stream label of the DynamoDB table stream used to persist grants prepared data."
-  type        = string
-}

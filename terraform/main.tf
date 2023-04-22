@@ -323,7 +323,4 @@ module "PersistGrantsGovXMLDB" {
   grants_prepared_data_bucket_name            = module.grants_prepared_data_bucket.bucket_id
   grants_prepared_dynamodb_table_name         = module.grants_prepared_dynamodb_table.table_name
   grants_prepared_dynamodb_table_arn          = module.grants_prepared_dynamodb_table.table_arn
-  grants_prepared_dynamodb_table_id           = module.grants_prepared_dynamodb_table.table_id
-  grants_prepared_dynamodb_table_stream_arn   = module.grants_prepared_dynamodb_table.table_stream_arn
-  grants_prepared_dynamodb_table_stream_label = module.grants_prepared_dynamodb_table.table_stream_label
 }
