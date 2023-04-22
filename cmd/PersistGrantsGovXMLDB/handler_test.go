@@ -17,6 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/go-kit/log"
 	"github.com/hashicorp/go-multierror"
@@ -41,7 +42,7 @@ func setupLambdaEnvForTesting(t *testing.T) {
 	require.NoError(t, err, "Error configuring environment variables for testing")
 }
 
-func setupS3ForTesting(t *testing.T, sourceBucketName string) (*s3.Client, aws.Config, error) {
+func setupS3ForTesting(t *testing.T, sourceBucketName string) (*s3.Client, error) {
 	t.Helper()
 
 	// Start the S3 mock server and shut it down when the test ends
@@ -74,36 +75,57 @@ func setupS3ForTesting(t *testing.T, sourceBucketName string) (*s3.Client, aws.C
 	for _, bucketName := range bucketsToCreate {
 		_, err := client.CreateBucket(ctx, &s3.CreateBucketInput{Bucket: aws.String(bucketName)})
 		if err != nil {
-			return client, cfg, err
+			return client, err
 		}
 	}
-	return client, cfg, nil
+	return client, nil
 }
 
-// func setupDynamoDBForTesting(t *testing.T, cfg aws.Config, tableName string) error {
-// 	t.Helper()
+func setupDynamoDBForTesting(t *testing.T, tableName string) (*dynamodb.Client, error) {
+	t.Helper()
 
-// 	client := dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {})
-// 	ctx := context.TODO()
-// 	tablesToCreate := []string{tableName}
-// 	for _, tableName := range tablesToCreate {
-// 		_, err := client.CreateTable(ctx, &dynamodb.CreateTableInput{
-// 			TableName: aws.String(tableName),
-// 			AttributeDefinitions: []types.AttributeDefinition{{
-// 				AttributeName: aws.String("grant_id"),
-// 				AttributeType: types.ScalarAttributeTypeS,
-// 			}},
-// 			KeySchema: []types.KeySchemaElement{{
-// 				AttributeName: aws.String("grant_id"),
-// 				KeyType:       types.KeyTypeHash,
-// 			}},
-// 		})
-// 		if err != nil {
-// 			return err
-// 		}
-// 	}
-// 	return nil
-// }
+	ctx := context.TODO()
+	cfg, _ := config.LoadDefaultConfig(ctx)
+	client := dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {})
+
+	// Checking for orphaned test tables and deleting the specificied table
+	// if it already exists in this context
+	tables, err := client.ListTables(ctx, &dynamodb.ListTablesInput{})
+	if err != nil {
+		return client, err
+	}
+	for _, table := range tables.TableNames {
+		if table == tableName {
+			_, err = client.DeleteTable(ctx, &dynamodb.DeleteTableInput{
+				TableName: aws.String(table),
+			})
+			if err != nil {
+				return client, err
+			}
+		}
+	}
+
+	_, err = client.CreateTable(ctx, &dynamodb.CreateTableInput{
+		TableName: aws.String(tableName),
+		AttributeDefinitions: []types.AttributeDefinition{{
+			AttributeName: aws.String("grant_id"),
+			AttributeType: types.ScalarAttributeTypeS,
+		}},
+		KeySchema: []types.KeySchemaElement{{
+			AttributeName: aws.String("grant_id"),
+			KeyType:       types.KeyTypeHash,
+		}},
+		ProvisionedThroughput: &types.ProvisionedThroughput{
+			ReadCapacityUnits:  aws.Int64(10),
+			WriteCapacityUnits: aws.Int64(10),
+		},
+	})
+	if err != nil {
+		return client, err
+	}
+
+	return client, nil
+}
 
 const SOURCE_OPPORTUNITY_TEMPLATE = `
 <OpportunitySynopsisDetail_1_0>
@@ -137,15 +159,21 @@ const SOURCE_OPPORTUNITY_TEMPLATE = `
 `
 
 func TestLambdaInvocationScenarios(t *testing.T) {
+	destinationTableName := "test-destination-table"
+	dynamodbClient, err := setupDynamoDBForTesting(t, destinationTableName)
+	require.NoError(t, err)
+
+	waiter := dynamodb.NewTableExistsWaiter(dynamodbClient)
+	err = waiter.Wait(context.TODO(), &dynamodb.DescribeTableInput{
+		TableName: aws.String(destinationTableName)}, 5*time.Minute)
+	require.NoError(t, err)
+
 	t.Run("Missing source object", func(t *testing.T) {
 		setupLambdaEnvForTesting(t)
 
 		sourceBucketName := "test-source-bucket"
-		s3client, cfg, err := setupS3ForTesting(t, sourceBucketName)
+		s3Client, err := setupS3ForTesting(t, sourceBucketName)
 		require.NoError(t, err)
-		// destinationTableName := "test-destination-table"
-		// err = setupDynamoDBForTesting(t, cfg, destinationTableName)
-		// require.NoError(t, err)
 		sourceTemplate := template.Must(
 			template.New("xml").Delims("{{", "}}").Parse(SOURCE_OPPORTUNITY_TEMPLATE),
 		)
@@ -156,13 +184,13 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 			"LastUpdatedDate": "01022023",
 		}))
 		require.NoError(t, err)
-		_, err = s3client.PutObject(context.TODO(), &s3.PutObjectInput{
+		_, err = s3Client.PutObject(context.TODO(), &s3.PutObjectInput{
 			Bucket: aws.String(sourceBucketName),
 			Key:    aws.String("123/123456/grants.gov/v2.xml"),
 			Body:   bytes.NewReader(sourceData.Bytes()),
 		})
 		require.NoError(t, err)
-		err = handleS3EventWithConfig(cfg, context.TODO(), events.S3Event{
+		err = handleS3EventWithConfig(s3Client, dynamodbClient, context.TODO(), events.S3Event{
 			Records: []events.S3EventRecord{
 				{S3: events.S3Entity{
 					Bucket: events.S3Bucket{Name: sourceBucketName},
@@ -185,12 +213,12 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 
 	t.Run("Context canceled during invocation", func(t *testing.T) {
 		setupLambdaEnvForTesting(t)
-		_, cfg, err := setupS3ForTesting(t, "source-bucket")
+		s3Client, err := setupS3ForTesting(t, "source-bucket")
 		require.NoError(t, err)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
-		err = handleS3EventWithConfig(cfg, ctx, events.S3Event{
+		err = handleS3EventWithConfig(s3Client, dynamodbClient, ctx, events.S3Event{
 			Records: []events.S3EventRecord{
 				{S3: events.S3Entity{
 					Bucket: events.S3Bucket{Name: "source-bucket"},
@@ -208,24 +236,13 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 			require.Fail(t, "Invocation error could not be interpreted as *multierror.Error")
 		}
 	})
-}
-
-type MockReader struct {
-	read func([]byte) (int, error)
-}
-
-func (r *MockReader) Read(p []byte) (int, error) {
-	return r.read(p)
-}
-
-func TestReadOpportunities(t *testing.T) {
-	t.Run("Context cancelled between reads", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.TODO())
-		err := readOpportunities(ctx, &MockReader{func(p []byte) (int, error) {
-			cancel()
-			return int(copy(p, []byte("<Grants>"))), nil
-		}}, make(chan<- opportunity, 10))
-		assert.ErrorIs(t, err, context.Canceled)
+	t.Cleanup(func() {
+		_, err = dynamodbClient.DeleteTable(context.TODO(), &dynamodb.DeleteTableInput{
+			TableName: aws.String(destinationTableName),
+		})
+		if err != nil {
+			panic(err)
+		}
 	})
 }
 

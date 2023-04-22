@@ -15,11 +15,11 @@ type DynamoDBUpdateItemAPI interface {
 }
 
 func UpdateDynamoDBItem(ctx context.Context, c DynamoDBUpdateItemAPI, table string, opp opportunity) error {
-	key, err := opp.buildKey()
+	key, err := buildKey(opp)
 	if err != nil {
 		return err
 	}
-	expr, err := opp.buildUpdateExpression()
+	expr, err := buildUpdateExpression(opp)
 	if err != nil {
 		return err
 	}
@@ -34,19 +34,19 @@ func UpdateDynamoDBItem(ctx context.Context, c DynamoDBUpdateItemAPI, table stri
 	return err
 }
 
-func (o opportunity) buildKey() (map[string]types.AttributeValue, error) {
+func buildKey(o opportunity) (map[string]types.AttributeValue, error) {
 	oid, err := attributevalue.Marshal(o.OpportunityID)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	return map[string]types.AttributeValue{"grant_id": oid}, err
 }
 
-func (o opportunity) buildUpdateExpression() (expression.Expression, error) {
+func buildUpdateExpression(o opportunity) (expression.Expression, error) {
 	oppAttr, err := attributevalue.MarshalMap(o)
 	if err != nil {
-		panic(err)
+		return expression.Expression{}, err
 	}
 
 	update := expression.UpdateBuilder{}

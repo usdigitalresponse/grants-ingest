@@ -20,6 +20,8 @@ import (
 	goenv "github.com/Netflix/go-env"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/usdigitalresponse/grants-ingest/internal/awsHelpers"
 	"github.com/usdigitalresponse/grants-ingest/internal/ddHelpers"
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
@@ -27,12 +29,11 @@ import (
 )
 
 type Environment struct {
-	LogLevel             string `env:"LOG_LEVEL,default=INFO"`
-	DownloadChunkLimit   int64  `env:"DOWNLOAD_CHUNK_LIMIT,default=10"`
-	DestinationTable     string `env:"GRANTS_PREPARED_DYNAMODB_NAME,required=true"`
-	MaxConcurrentUploads int    `env:"MAX_CONCURRENT_UPLOADS,default=1"`
-	UsePathStyleS3Opt    bool   `env:"S3_USE_PATH_STYLE,default=false"`
-	Extras               goenv.EnvSet
+	LogLevel           string `env:"LOG_LEVEL,default=INFO"`
+	DownloadChunkLimit int64  `env:"DOWNLOAD_CHUNK_LIMIT,default=10"`
+	DestinationTable   string `env:"GRANTS_PREPARED_DYNAMODB_NAME,required=true"`
+	UsePathStyleS3Opt  bool   `env:"S3_USE_PATH_STYLE,default=false"`
+	Extras             goenv.EnvSet
 }
 
 var (
@@ -55,8 +56,15 @@ func main() {
 		if err != nil {
 			return fmt.Errorf("could not create AWS SDK config: %w", err)
 		}
+
+		// Configure service clients
+		s3Svc := s3.NewFromConfig(cfg, func(o *s3.Options) {
+			o.UsePathStyle = env.UsePathStyleS3Opt
+		})
+		dynamodbSvc := dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {})
+
 		awstrace.AppendMiddleware(&cfg)
 		log.Debug(logger, "Starting Lambda")
-		return handleS3EventWithConfig(cfg, ctx, s3Event)
+		return handleS3EventWithConfig(s3Svc, dynamodbSvc, ctx, s3Event)
 	}, nil))
 }
