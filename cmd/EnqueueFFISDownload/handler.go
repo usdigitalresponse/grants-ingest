@@ -14,6 +14,8 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	_ "github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
 )
 
@@ -71,11 +73,58 @@ func parseURLFromEmailBody(email string) (string, error) {
 	return matches[0], nil
 }
 
+func enqueueURLForDownload(url string, client *sqs.Client, ctx context.Context) error {
+	message := sqs.SendMessageInput{
+		MessageBody: aws.String(url),
+		QueueUrl:    aws.String(env.DestinationQueue),
+	}
+	output, err := client.SendMessage(ctx, &message)
+
+	if err != nil {
+		return err
+	}
+	log.Info(logger, *output.MessageId, "Sent SQS message")
+	return nil
+}
+
 func handleS3EventWithConfig(cfg aws.Config, ctx context.Context, s3Event events.S3Event) error {
 	// Configure service clients
 	s3svc := s3.NewFromConfig(cfg, func(o *s3.Options) {
 		o.UsePathStyle = env.UsePathStyleS3Opt
 	})
+
+	sqssvc := sqs.NewFromConfig(cfg)
 	log.Debug(logger, s3svc, "Created S3 client")
+	bucket := s3Event.Records[0].S3.Bucket.Name
+	log.Debug(logger, bucket, "Reading from bucket")
+	uploadedFile := s3Event.Records[0].S3.Object.Key
+	log.Info(logger, uploadedFile, "New email file")
+	// Get the email body
+	resp, err := s3svc.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(uploadedFile),
+	})
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	buf := new(bytes.Buffer)
+	_, err = buf.ReadFrom(resp.Body)
+	if err != nil {
+		return err
+	}
+	emailBody := buf.String()
+	// Parse the URL from the email body
+	url, err := parseURLFromEmailBody(emailBody)
+	if err != nil {
+		return err
+	}
+	log.Info(logger, url, "Parsed URL from email body")
+	// Enqueue the URL for download
+	err = enqueueURLForDownload(url, sqssvc, ctx)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

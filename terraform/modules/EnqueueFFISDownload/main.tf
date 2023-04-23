@@ -20,10 +20,6 @@ data "aws_s3_bucket" "source_data" {
   bucket = var.grants_source_data_bucket_name
 }
 
-# data "aws_sqs_queue" "downloads" {
-#   bucket = var.destination_queue_name
-# }
-
 module "lambda_execution_policy" {
   source  = "cloudposse/iam-policy/aws"
   version = "0.4.0"
@@ -36,6 +32,13 @@ module "lambda_execution_policy" {
       resources = [
         # Path: sources/YYYY/mm/dd/ffis/raw.eml
         "${data.aws_s3_bucket.source_data.arn}/sources/*/*/*/ffis/raw.eml"
+      ]
+    }
+    AllowSQSPublish = {
+      effect  = "Allow"
+      actions = ["*"]
+      resources = [
+        aws_sqs_queue.ffis_downloads.arn,
       ]
     }
   }
@@ -89,7 +92,7 @@ module "lambda_function" {
     DD_TRACE_RATE_LIMIT              = "1000"
     DD_TAGS                          = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
     DOWNLOAD_CHUNK_LIMIT             = "20"
-   # FFIS_SQS_QUEUE_URL = data.aws_sqs_queue.downloads.id TODO
+    FFIS_SQS_QUEUE_URL               = aws_sqs_queue.ffis_downloads.url
     LOG_LEVEL                        = var.log_level
     MAX_CONCURRENT_UPLOADS           = "10"
     S3_USE_PATH_STYLE                = "true"
