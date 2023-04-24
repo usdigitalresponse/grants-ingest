@@ -182,3 +182,9 @@ variable "eventbridge_scheduler_enabled" {
   type        = bool
   default     = true
 }
+
+variable "ffis_ingest_email_address" {
+  type        = string
+  description = "Email address used to receive FFIS digests and save them to S3"
+  default     = "ffis-ingest@grants.usdigitalresponse.org"
+}
