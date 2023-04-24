@@ -213,8 +213,8 @@ resource "aws_ses_receipt_rule" "ffis_ingest" {
   tls_policy    = "Require"
 
   s3_action {
-    bucket_name = module.grants_source_data_bucket.bucket_id
-    position    = 1
+    bucket_name       = module.grants_source_data_bucket.bucket_id
+    position          = 1
     object_key_prefix = "/ses/ffis_ingest/new"
   }
 }
