@@ -73,10 +73,29 @@ func parseURLFromEmailBody(email string) (string, error) {
 	return matches[0], nil
 }
 
+func getQueueUrl(queueName string, client *sqs.Client, ctx context.Context) (*string, error) {
+	result, err := client.GetQueueUrl(ctx, &sqs.GetQueueUrlInput{
+		QueueName: aws.String(queueName),
+	},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return result.QueueUrl, nil
+
+}
+
 func enqueueURLForDownload(url string, client *sqs.Client, ctx context.Context) error {
+	// TODO make env var
+	queueUrl, err := getQueueUrl("ffis_downloads", client, ctx)
+	if err != nil {
+		return err
+	}
+	log.Info(logger, *queueUrl, "Got SQS queue URL")
+
 	message := sqs.SendMessageInput{
 		MessageBody: aws.String(url),
-		QueueUrl:    aws.String(env.DestinationQueue),
+		QueueUrl:    aws.String(*queueUrl),
 	}
 	output, err := client.SendMessage(ctx, &message)
 
@@ -87,33 +106,51 @@ func enqueueURLForDownload(url string, client *sqs.Client, ctx context.Context) 
 	return nil
 }
 
+func getEmailFromS3Event(s3client *s3.Client, s3Event events.S3Event, ctx context.Context) (string, error) {
+	bucket := s3Event.Records[0].S3.Bucket.Name
+	log.Debug(logger, bucket, "Reading from bucket")
+	uploadedFile := s3Event.Records[0].S3.Object.Key
+	log.Info(logger, uploadedFile, "New email file")
+	// Get the email body
+	resp, err := s3client.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(uploadedFile),
+	})
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	buf := new(bytes.Buffer)
+	_, err = buf.ReadFrom(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	emailBody := buf.String()
+	return emailBody, nil
+}
+
 func handleS3EventWithConfig(cfg aws.Config, ctx context.Context, s3Event events.S3Event) error {
 	// Configure service clients
 	s3svc := s3.NewFromConfig(cfg, func(o *s3.Options) {
 		o.UsePathStyle = env.UsePathStyleS3Opt
 	})
 
-	sqssvc := sqs.NewFromConfig(cfg)
 	log.Debug(logger, s3svc, "Created S3 client")
-	bucket := s3Event.Records[0].S3.Bucket.Name
-	log.Debug(logger, bucket, "Reading from bucket")
-	uploadedFile := s3Event.Records[0].S3.Object.Key
-	log.Info(logger, uploadedFile, "New email file")
-	// Get the email body
-	resp, err := s3svc.GetObject(ctx, &s3.GetObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(uploadedFile),
+
+	var sqsResolver sqs.EndpointResolverFunc = func(region string, options sqs.EndpointResolverOptions) (aws.Endpoint, error) {
+		return cfg.EndpointResolverWithOptions.ResolveEndpoint("sqs", cfg.Region)
+	}
+	sqssvc := sqs.NewFromConfig(cfg, func(o *sqs.Options) {
+		o.EndpointResolver = sqsResolver
 	})
+
+	log.Debug(logger, sqssvc, "Created SQS client")
+
+	emailBody, err := getEmailFromS3Event(s3svc, s3Event, ctx)
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
-	buf := new(bytes.Buffer)
-	_, err = buf.ReadFrom(resp.Body)
-	if err != nil {
-		return err
-	}
-	emailBody := buf.String()
+
 	// Parse the URL from the email body
 	url, err := parseURLFromEmailBody(emailBody)
 	if err != nil {
