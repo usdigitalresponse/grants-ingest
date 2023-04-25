@@ -206,7 +206,7 @@ data "aws_iam_policy_document" "read_datadog_api_key_secret" {
 
 resource "aws_ses_receipt_rule" "ffis_ingest" {
   depends_on = [
-    aws_iam_policy.ses_source_data_s3_access
+    aws_s3_bucket_policy.ses_source_data_s3_access_policy
   ]
   name          = "${var.namespace}-ffis_ingest"
   rule_set_name = "ffis_ingest-rule-set"
@@ -222,32 +222,39 @@ resource "aws_ses_receipt_rule" "ffis_ingest" {
   }
 }
 
-resource "aws_iam_policy" "ses_source_data_s3_access" {
-  name        = "${var.namespace}-ses_source_data_s3_access"
-  path        = "/"
-  description = "Allows SES to putObject into Grants source data bucket"
+data "aws_iam_policy_document" "ses_source_data_s3_access" {
+  statement {
+    principals {
+      type        = "Service"
+      identifiers = ["ses.amazonaws.com"]
+    }
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Principal = {
-          Service = "ses.amazonaws.com"
-        }
-        Action = [
-          "s3:PutObject",
-        ]
-        Effect   = "Allow"
-        Resource = "${module.grants_source_data_bucket.bucket_id}/ses/*"
-        Condition = {
-          StringEquals = {
-            "AWS:SourceArn"     = "arn:aws:ses:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:receipt-rule-set/ffis_ingest-rule-set:receipt-rule/ffis_ingest-${var.environment}"
-            "AWS:SourceAccount" = data.aws_caller_identity.current.account_id
-          }
-        }
-      },
+    actions = [
+      "s3:PutObject",
     ]
-  })
+
+    resources = ["${module.grants_source_data_bucket.bucket_id}/ses/*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceArn"
+      values = [
+        "arn:aws:ses:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:receipt-rule-set/ffis_ingest-rule-set:receipt-rule/ffis_ingest-${var.environment}"
+      ]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceAccount"
+      values = [
+        data.aws_caller_identity.current.account_id
+      ]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "ses_source_data_s3_access_policy" {
+  bucket = module.grants_source_data_bucket.bucket_id
+  policy = data.aws_iam_policy_document.ses_source_data_s3_access.json
 }
 
 // Lambda defaults
