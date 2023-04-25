@@ -281,9 +281,9 @@ module "SplitGrantsGovXMLDB" {
 }
 
 module "EnqueueFFISDownload" {
-  source = "./modules/EnqueueFFISDownload"
-  namespace                                   = var.namespace
-  function_name                               = "EnqueueFFISDownload"
+  source                                       = "./modules/EnqueueFFISDownload"
+  namespace                                    = var.namespace
+  function_name                                = "EnqueueFFISDownload"
   permissions_boundary_arn                     = local.permissions_boundary_arn
   lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
   log_retention_in_days                        = var.lambda_default_log_retention_in_days
@@ -294,5 +294,5 @@ module "EnqueueFFISDownload" {
   additional_lambda_execution_policy_documents = local.lambda_execution_policies
   lambda_layer_arns                            = local.lambda_layer_arns
 
-  grants_source_data_bucket_name   = module.grants_source_data_bucket.bucket_id
+  grants_source_data_bucket_name = module.grants_source_data_bucket.bucket_id
 }

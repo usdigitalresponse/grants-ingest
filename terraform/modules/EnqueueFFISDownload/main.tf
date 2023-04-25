@@ -89,13 +89,13 @@ module "lambda_function" {
   timeout     = 300 # 5 minutes, in seconds
   memory_size = 1024
   environment_variables = merge(var.additional_environment_variables, {
-    DD_TRACE_RATE_LIMIT              = "1000"
-    DD_TAGS                          = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
-    DOWNLOAD_CHUNK_LIMIT             = "20"
-    FFIS_SQS_QUEUE_URL               = aws_sqs_queue.ffis_downloads.url
-    LOG_LEVEL                        = var.log_level
-    MAX_CONCURRENT_UPLOADS           = "10"
-    S3_USE_PATH_STYLE                = "true"
+    DD_TRACE_RATE_LIMIT    = "1000"
+    DD_TAGS                = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
+    DOWNLOAD_CHUNK_LIMIT   = "20"
+    FFIS_SQS_QUEUE_NAME    = aws_sqs_queue.ffis_downloads.name
+    LOG_LEVEL              = var.log_level
+    MAX_CONCURRENT_UPLOADS = "10"
+    S3_USE_PATH_STYLE      = "true"
   })
 
   allowed_triggers = {
