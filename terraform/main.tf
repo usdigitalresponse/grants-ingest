@@ -233,7 +233,7 @@ data "aws_iam_policy_document" "ses_source_data_s3_access" {
       "s3:PutObject",
     ]
 
-    resources = ["${module.grants_source_data_bucket.bucket_id}/ses/*"]
+    resources = ["${module.grants_source_data_bucket.bucket_arn}/ses/*"]
 
     condition {
       test     = "StringEquals"
