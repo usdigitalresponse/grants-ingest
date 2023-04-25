@@ -240,7 +240,7 @@ data "aws_iam_policy_document" "ses_source_data_s3_access" {
       test     = "StringEquals"
       variable = "AWS:SourceArn"
       values = [
-        "arn:aws:ses:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:receipt-rule-set/ffis_ingest-rule-set:receipt-rule/ffis_ingest-${var.environment}"
+        "arn:aws:ses:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:receipt-rule-set/ffis_ingest-rule-set:receipt-rule/${var.namespace}-ffis_ingest"
       ]
     }
     condition {
