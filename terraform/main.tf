@@ -208,7 +208,7 @@ resource "aws_ses_receipt_rule" "ffis_ingest" {
   depends_on = [
     aws_iam_policy.ses_source_data_s3_access
   ]
-  name          = "ffis_ingest-${var.environment}"
+  name          = "-${var.namespace}-ffis_ingest"
   rule_set_name = "ffis_ingest-rule-set"
   recipients    = [var.ffis_ingest_email_address]
   enabled       = true
@@ -223,7 +223,7 @@ resource "aws_ses_receipt_rule" "ffis_ingest" {
 }
 
 resource "aws_iam_policy" "ses_source_data_s3_access" {
-  name        = "ses_source_data_s3_access"
+  name        = "${var.namespace}-ses_source_data_s3_access"
   path        = "/"
   description = "Allows SES to putObject into Grants source data bucket"
 
