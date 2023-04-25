@@ -37,6 +37,11 @@ func handleS3EventWithConfig(s3svc *s3.Client, dynamodbsvc DynamoDBUpdateItemAPI
 			wg.Go(func() (err error) {
 				span, ctx := tracer.StartSpanFromContext(ctx, "handle.record")
 				defer span.Finish(tracer.WithError(err))
+				defer func() {
+					if err != nil {
+						sendMetric("opportunity.failed", errs.Len())
+					}
+				}()
 
 				sourceBucket := record.S3.Bucket.Name
 				sourceKey := record.S3.Object.Key
@@ -90,6 +95,6 @@ func processOpportunity(ctx context.Context, svc DynamoDBUpdateItemAPI, opp oppo
 	}
 
 	log.Info(logger, "Successfully uploaded opportunity")
-	sendMetric("opportunity.created", 1)
+	sendMetric("opportunity.saved", 1)
 	return nil
 }
