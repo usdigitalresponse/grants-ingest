@@ -204,6 +204,21 @@ data "aws_iam_policy_document" "read_datadog_api_key_secret" {
   }
 }
 
+resource "aws_ses_receipt_rule" "ffis_ingest" {
+  name          = "ffis_ingest-${var.environment}"
+  rule_set_name = "ffis_ingest-rule-set"
+  recipients    = [var.ffis_ingest_email_address]
+  enabled       = true
+  scan_enabled  = true
+  tls_policy    = "Require"
+
+  s3_action {
+    bucket_name       = module.grants_source_data_bucket.bucket_id
+    position          = 1
+    object_key_prefix = "ses/ffis_ingest/new"
+  }
+}
+
 // Lambda defaults
 locals {
   datadog_custom_tags = merge(
