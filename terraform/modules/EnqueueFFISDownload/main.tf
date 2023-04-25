@@ -36,7 +36,7 @@ module "lambda_execution_policy" {
     }
     AllowSQSPublish = {
       effect  = "Allow"
-      actions = ["*"]
+      actions = ["sqs:SendMessage"]
       resources = [
         aws_sqs_queue.ffis_downloads.arn,
       ]
