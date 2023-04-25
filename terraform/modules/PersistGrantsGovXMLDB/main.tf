@@ -97,10 +97,10 @@ module "lambda_function" {
 
   timeout     = 30
   environment_variables = merge(var.additional_environment_variables, {
-    DD_TAGS                          = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
-    GRANTS_PREPARED_DYNAMODB_NAME    = var.grants_prepared_dynamodb_table_name
-    LOG_LEVEL                        = var.log_level
-    S3_USE_PATH_STYLE                = "true"
+    DD_TAGS                       = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
+    GRANTS_PREPARED_DYNAMODB_NAME = var.grants_prepared_dynamodb_table_name
+    LOG_LEVEL                     = var.log_level
+    S3_USE_PATH_STYLE             = "true"
   })
 
   allowed_triggers = {

@@ -216,18 +216,19 @@ module "grants_prepared_dynamodb_table" {
   version = "0.32.0"
   context = module.this.context
 
-  name             = "prepareddata"
-  hash_key         = "grant_id"
-  table_class      = "STANDARD"
-  enable_streams   = true
-  stream_view_type = "NEW_AND_OLD_IMAGES"
-  # enable_point_in_time_recovery  = true
-  enable_encryption = true
+  name                          = "prepareddata"
+  hash_key                      = "grant_id"
+  table_class                   = "STANDARD"
+  enable_streams                = true
+  stream_view_type              = "NEW_AND_OLD_IMAGES"
+  enable_point_in_time_recovery = true
+  enable_encryption             = true
 }
 
-# resource "aws_dynamodb_contributor_insights" "grants_prepared_dynamodb_main" {
-#   table_name = module.grants_prepared_dynamodb_table.table_name
-# }
+resource "aws_dynamodb_contributor_insights" "grants_prepared_dynamodb_main" {
+  table_name = module.grants_prepared_dynamodb_table.table_name
+}
+
 resource "aws_ses_receipt_rule" "ffis_ingest" {
   name          = "ffis_ingest-${var.environment}"
   rule_set_name = "ffis_ingest-rule-set"

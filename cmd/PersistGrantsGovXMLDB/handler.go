@@ -39,7 +39,7 @@ func handleS3EventWithConfig(s3svc *s3.Client, dynamodbsvc DynamoDBUpdateItemAPI
 				defer span.Finish(tracer.WithError(err))
 				defer func() {
 					if err != nil {
-						sendMetric("opportunity.failed", errs.Len())
+						sendMetric("opportunity.failed", 1)
 					}
 				}()
 
@@ -78,7 +78,6 @@ func handleS3EventWithConfig(s3svc *s3.Client, dynamodbsvc DynamoDBUpdateItemAPI
 		log.Warn(logger, "Failures occurred during invocation; check logs for details",
 			"count_errors", errs.Len(),
 			"count_s3_events", len(s3Event.Records))
-		sendMetric("opportunity.failed", 1)
 		return err
 	}
 	return nil
