@@ -228,6 +228,48 @@ module "grants_prepared_dynamodb_table" {
 # resource "aws_dynamodb_contributor_insights" "grants_prepared_dynamodb_main" {
 #   table_name = module.grants_prepared_dynamodb_table.table_name
 # }
+resource "aws_ses_receipt_rule" "ffis_ingest" {
+  name          = "ffis_ingest-${var.environment}"
+  rule_set_name = "ffis_ingest-rule-set"
+  recipients    = [var.ffis_ingest_email_address]
+  enabled       = true
+  scan_enabled  = true
+  tls_policy    = "Require"
+
+  s3_action {
+    bucket_name       = module.grants_source_data_bucket.bucket_id
+    position          = 1
+    object_key_prefix = "ses/ffis_ingest/new"
+  }
+}
+
+resource "aws_iam_policy" "ses_source_data_s3_access" {
+  name        = "ses_source_data_s3_access"
+  path        = "/"
+  description = "Allows SES to putObject into Grants source data bucket"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Principal = {
+          Service = "ses.amazonaws.com"
+        }
+        Action = [
+          "s3:PutObject",
+        ]
+        Effect   = "Allow"
+        Resource = "${module.grants_source_data_bucket.bucket_id}/ses/*"
+        Condition = {
+          StringEquals = {
+            "AWS:SourceArn"     = aws_ses_receipt_rule.ffis_ingest.arn
+            "AWS:SourceAccount" = data.aws_caller_identity.current.account_id
+          }
+        }
+      },
+    ]
+  })
+}
 
 // Lambda defaults
 locals {
