@@ -206,7 +206,7 @@ data "aws_iam_policy_document" "read_datadog_api_key_secret" {
 
 resource "aws_ses_receipt_rule" "ffis_ingest" {
   depends_on = [
-    aws_iam_policy.ses_source_data_s3_access
+    aws_s3_bucket_policy.ses_source_data_s3_access_policy
   ]
   name          = "${var.namespace}-ffis_ingest"
   rule_set_name = "ffis_ingest-rule-set"
@@ -252,7 +252,7 @@ data "aws_iam_policy_document" "ses_source_data_s3_access" {
   }
 }
 
-resource "aws_s3_bucket_policy" "allow_access_from_another_account" {
+resource "aws_s3_bucket_policy" "ses_source_data_s3_access_policy" {
   bucket = module.grants_source_data_bucket.bucket_id
   policy = data.aws_iam_policy_document.ses_source_data_s3_access.json
 }
