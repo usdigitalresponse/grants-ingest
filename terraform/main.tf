@@ -219,6 +219,34 @@ resource "aws_ses_receipt_rule" "ffis_ingest" {
   }
 }
 
+resource "aws_iam_policy" "ses_source_data_s3_access" {
+  name        = "ses_source_data_s3_access"
+  path        = "/"
+  description = "Allows SES to putObject into Grants source data bucket"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Principal = {
+          Service = "ses.amazonaws.com"
+        }
+        Action = [
+          "s3:PutObject",
+        ]
+        Effect   = "Allow"
+        Resource = "${module.grants_source_data_bucket.bucket_id}/ses/*"
+        Condition = {
+          StringEquals = {
+            "AWS:SourceArn" = aws_ses_receipt_rule.ffis_ingest.arn
+            "AWS:SourceAccount" = data.aws_caller_identity.current.account_id
+          }
+        }
+      },
+    ]
+  })
+}
+
 // Lambda defaults
 locals {
   datadog_custom_tags = merge(
