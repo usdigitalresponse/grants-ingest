@@ -95,7 +95,7 @@ module "lambda_function" {
   s3_bucket                 = var.lambda_artifact_bucket
   s3_server_side_encryption = "AES256"
 
-  timeout     = 30
+  timeout = 30
   environment_variables = merge(var.additional_environment_variables, {
     DD_TAGS                       = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
     GRANTS_PREPARED_DYNAMODB_NAME = var.grants_prepared_dynamodb_table_name
