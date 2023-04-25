@@ -238,7 +238,7 @@ resource "aws_iam_policy" "ses_source_data_s3_access" {
         Resource = "${module.grants_source_data_bucket.bucket_id}/ses/*"
         Condition = {
           StringEquals = {
-            "AWS:SourceArn" = aws_ses_receipt_rule.ffis_ingest.arn
+            "AWS:SourceArn"     = aws_ses_receipt_rule.ffis_ingest.arn
             "AWS:SourceAccount" = data.aws_caller_identity.current.account_id
           }
         }
