@@ -124,7 +124,7 @@ module "grants_source_data_bucket" {
   sse_algorithm                = "AES256"
   allow_ssl_requests_only      = true
   allow_encrypted_uploads_only = true
-  source_policy_documents      = []
+  source_policy_documents      = [data.aws_iam_policy_document.ses_source_data_s3_access.json]
 
   lifecycle_configuration_rules = [
     {
@@ -206,7 +206,7 @@ data "aws_iam_policy_document" "read_datadog_api_key_secret" {
 
 resource "aws_ses_receipt_rule" "ffis_ingest" {
   depends_on = [
-    aws_s3_bucket_policy.ses_source_data_s3_access_policy
+    module.grants_source_data_bucket
   ]
   name          = "${var.namespace}-ffis_ingest"
   rule_set_name = "ffis_ingest-rule-set"
@@ -224,6 +224,7 @@ resource "aws_ses_receipt_rule" "ffis_ingest" {
 
 data "aws_iam_policy_document" "ses_source_data_s3_access" {
   statement {
+    sid = "AllowFFISEmailDeliveryFromSES"
     principals {
       type        = "Service"
       identifiers = ["ses.amazonaws.com"]
@@ -250,11 +251,6 @@ data "aws_iam_policy_document" "ses_source_data_s3_access" {
       ]
     }
   }
-}
-
-resource "aws_s3_bucket_policy" "ses_source_data_s3_access_policy" {
-  bucket = module.grants_source_data_bucket.bucket_id
-  policy = data.aws_iam_policy_document.ses_source_data_s3_access.json
 }
 
 // Lambda defaults
