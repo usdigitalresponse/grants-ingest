@@ -17,7 +17,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/usdigitalresponse/grants-ingest/internal/awsHelpers"
-	"github.com/usdigitalresponse/grants-ingest/internal/ddHelpers"
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
 	awstrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/aws/aws-sdk-go-v2/aws"
 )
@@ -31,9 +30,9 @@ type Environment struct {
 }
 
 var (
-	env              Environment
-	logger           log.Logger
-	sendMetric       = ddHelpers.NewMetricSender("EnqueueFFISDownload", "source:grants.gov")
+	env    Environment
+	logger log.Logger
+	// sendMetric       = ddHelpers.NewMetricSender("EnqueueFFISDownload", "source:grants.gov")
 	urlPattern       string
 	destinationQueue string
 )
@@ -77,6 +76,8 @@ func buildClients(cfg aws.Config) (S3API, SQSAPI, error) {
 		return cfg.EndpointResolverWithOptions.ResolveEndpoint("sqs", cfg.Region)
 	}
 	sqssvc := sqs.NewFromConfig(cfg, func(o *sqs.Options) {
+		// the logic in internal/awsHelpers/config doesn't affect the endpoint for SQS, and this is
+		// needed so that localstack will work
 		o.EndpointResolver = sqsResolver
 	})
 
