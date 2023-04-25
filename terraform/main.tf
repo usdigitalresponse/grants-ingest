@@ -224,7 +224,7 @@ resource "aws_ses_receipt_rule" "ffis_ingest" {
 
 data "aws_iam_policy_document" "ses_source_data_s3_access" {
   statement {
-    sid = "ses_source_data_s3_access"
+    sid = "AllowFFISEmailDeliveryFromSES"
     principals {
       type        = "Service"
       identifiers = ["ses.amazonaws.com"]
