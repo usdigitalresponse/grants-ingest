@@ -201,16 +201,9 @@ module "ffis_source_data_bucket" {
       filter_and                             = null
       abort_incomplete_multipart_upload_days = 1
       transition                             = [{ days = null }]
-      expiration                             = { days = null }
-      noncurrent_version_transition = [
-        {
-          days          = 30
-          storage_class = "GLACIER"
-        },
-      ]
-      noncurrent_version_expiration = {
-        days = 2557 # 7 years (includes 2 leap days)
-      }
+      expiration                             = { days = 30 }
+      noncurrent_version_transition          = []
+      noncurrent_version_expiration          = { days = null }
     }
   ]
 }
@@ -238,12 +231,16 @@ data "aws_iam_policy_document" "read_datadog_api_key_secret" {
   }
 }
 
+resource "aws_ses_receipt_rule_set" "ffis_ingest" {
+  rule_set_name = "${var.namespace}-ffis_ingest"
+}
+
 resource "aws_ses_receipt_rule" "ffis_ingest" {
   depends_on = [
     module.ffis_source_data_bucket
   ]
   name          = "${var.namespace}-ffis_ingest"
-  rule_set_name = "ffis_ingest-rule-set"
+  rule_set_name = aws_ses_receipt_rule_set.ffis_ingest.rule_set_name
   recipients    = [var.ffis_ingest_email_address]
   enabled       = true
   scan_enabled  = true
@@ -274,7 +271,7 @@ data "aws_iam_policy_document" "ses_source_data_s3_access" {
       test     = "StringEquals"
       variable = "AWS:SourceArn"
       values = [
-        "arn:aws:ses:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:receipt-rule-set/ffis_ingest-rule-set:receipt-rule/${var.namespace}-ffis_ingest"
+        "arn:aws:ses:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:receipt-rule-set/${var.namespace}-ffis_ingest:receipt-rule/${var.namespace}-ffis_ingest"
       ]
     }
     condition {
