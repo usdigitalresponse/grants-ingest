@@ -79,7 +79,7 @@ variable "eventbridge_scheduler_enabled" {
 }
 
 variable "scheduler_group_name" {
-  description = "Name of the AWS EventBridge Scheduler group in which scheuldes should be placed."
+  description = "Name of the AWS EventBridge Scheduler group in which schedules should be placed."
   type        = string
 }
 
