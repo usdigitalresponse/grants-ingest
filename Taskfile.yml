@@ -109,6 +109,7 @@ tasks:
     deps:
       - build-DownloadGrantsGovDB
       - build-SplitGrantsGovXMLDB
+      - build-PublishGrantEvents
 
   build-DownloadGrantsGovDB:
     desc: Compiles DownloadGrantsGovDB
@@ -123,3 +124,10 @@ tasks:
       - task: build-lambda
         vars:
           LAMBDA_CMD: SplitGrantsGovXMLDB
+
+  build-PublishGrantEvents:
+    desc: Compiles build-PublishGrantEvents
+    cmds:
+      - task: build-lambda
+        vars:
+          LAMBDA_CMD: PublishGrantEvents
