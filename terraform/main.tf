@@ -124,7 +124,7 @@ module "grants_source_data_bucket" {
   sse_algorithm                = "AES256"
   allow_ssl_requests_only      = true
   allow_encrypted_uploads_only = true
-  source_policy_documents      = []
+  source_policy_documents      = [data.aws_iam_policy_document.ses_source_data_s3_access.json]
 
   lifecycle_configuration_rules = [
     {
@@ -205,7 +205,10 @@ data "aws_iam_policy_document" "read_datadog_api_key_secret" {
 }
 
 resource "aws_ses_receipt_rule" "ffis_ingest" {
-  name          = "ffis_ingest-${var.environment}"
+  depends_on = [
+    module.grants_source_data_bucket
+  ]
+  name          = "${var.namespace}-ffis_ingest"
   rule_set_name = "ffis_ingest-rule-set"
   recipients    = [var.ffis_ingest_email_address]
   enabled       = true
@@ -228,6 +231,37 @@ resource "aws_sqs_queue" "ffis_downloads" {
   message_retention_seconds  = 5 * 60 * 60 * 24 # 5 days
   max_message_size           = 1024             # 1 KB
   sqs_managed_sse_enabled    = true
+}
+
+data "aws_iam_policy_document" "ses_source_data_s3_access" {
+  statement {
+    sid = "AllowFFISEmailDeliveryFromSES"
+    principals {
+      type        = "Service"
+      identifiers = ["ses.amazonaws.com"]
+    }
+
+    actions = [
+      "s3:PutObject",
+    ]
+
+    resources = ["${module.grants_source_data_bucket.bucket_arn}/ses/*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceArn"
+      values = [
+        "arn:aws:ses:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:receipt-rule-set/ffis_ingest-rule-set:receipt-rule/${var.namespace}-ffis_ingest"
+      ]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceAccount"
+      values = [
+        data.aws_caller_identity.current.account_id
+      ]
+    }
+  }
 }
 
 // Lambda defaults
