@@ -32,15 +32,6 @@ type MockSQS struct {
 	message *string
 }
 
-func (mocksqs *MockSQS) GetQueueUrl(ctx context.Context,
-	params *sqs.GetQueueUrlInput,
-	optFns ...func(*sqs.Options)) (*sqs.GetQueueUrlOutput, error) {
-	output := &sqs.GetQueueUrlOutput{
-		QueueUrl: aws.String("https://sqs.us-east-1.amazonaws.com/123456789012/MyQueue"),
-	}
-	return output, nil
-}
-
 func (mocksqs *MockSQS) SendMessage(ctx context.Context,
 	params *sqs.SendMessageInput,
 	optFns ...func(*sqs.Options)) (*sqs.SendMessageOutput, error) {
@@ -53,7 +44,7 @@ func (mocksqs *MockSQS) SendMessage(ctx context.Context,
 
 func TestHandleS3Event(t *testing.T) {
 	logger = log.NewNopLogger()
-	urlPattern = "https://mcusercontent.com/.+\\.xlsx"
+	env.URLPattern = "https://mcusercontent.com/.+\\.xlsx"
 	var tests = []struct {
 		emailFixture, expectedURL string
 	}{
@@ -70,7 +61,6 @@ func TestHandleS3Event(t *testing.T) {
 		mocks3, mocksqs := getMockClients()
 		mocks3.content = string(content)
 		ctx := context.Background()
-		cfg := aws.Config{}
 		s3Event := events.S3Event{
 			Records: []events.S3EventRecord{
 				{
@@ -86,7 +76,7 @@ func TestHandleS3Event(t *testing.T) {
 			},
 		}
 
-		err = handleS3EventWithConfig(cfg, ctx, s3Event, mocks3, mocksqs)
+		err = handleS3Event(ctx, s3Event, mocks3, mocksqs)
 
 		if test.expectedURL != "" {
 			if err != nil {

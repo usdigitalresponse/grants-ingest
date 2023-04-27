@@ -22,19 +22,17 @@ import (
 )
 
 type Environment struct {
-	LogLevel          string `env:"LOG_LEVEL,default=INFO"`
-	DestinationQueue  string `env:"FFIS_SQS_QUEUE_NAME,required=true"`
-	UsePathStyleS3Opt bool   `env:"S3_USE_PATH_STYLE,default=false"`
-	URLPattern        string `env:"FFIS_URL_PATTERN,required=false,default=https://mcusercontent.com/.+\\.xlsx"`
-	Extras            goenv.EnvSet
+	LogLevel            string `env:"LOG_LEVEL,default=INFO"`
+	DestinationQueueURL string `env:"FFIS_SQS_QUEUE_URL,required=true"`
+	UsePathStyleS3Opt   bool   `env:"S3_USE_PATH_STYLE,default=false"`
+	URLPattern          string `env:"FFIS_URL_PATTERN,default=https://mcusercontent.com/.+\\.xlsx"`
+	Extras              goenv.EnvSet
 }
 
 var (
 	env    Environment
 	logger log.Logger
 	// sendMetric       = ddHelpers.NewMetricSender("EnqueueFFISDownload", "source:grants.gov")
-	urlPattern       string
-	destinationQueue string
 )
 
 func main() {
@@ -45,9 +43,7 @@ func main() {
 	env.Extras = es
 	log.ConfigureLogger(&logger, env.LogLevel)
 
-	urlPattern = env.URLPattern
-	destinationQueue = env.DestinationQueue
-	log.Info(logger, "Starting EnqueueFFISDownload", "destinationQueue", destinationQueue, "urlPattern", urlPattern)
+	log.Info(logger, "Starting EnqueueFFISDownload", "destinationQueue", env.DestinationQueueURL, "urlPattern", env.URLPattern)
 
 	log.Debug(logger, "Starting Lambda")
 	lambda.Start(ddlambda.WrapFunction(func(ctx context.Context, s3Event events.S3Event) error {
@@ -61,7 +57,7 @@ func main() {
 		if err != nil {
 			return fmt.Errorf("could not create AWS clients: %w", err)
 		}
-		return handleS3EventWithConfig(cfg, ctx, s3Event, s3client, sqsclient)
+		return handleS3Event(ctx, s3Event, s3client, sqsclient)
 	}, nil))
 }
 
@@ -70,7 +66,7 @@ func buildClients(cfg aws.Config) (S3API, SQSAPI, error) {
 		o.UsePathStyle = env.UsePathStyleS3Opt
 	})
 
-	log.Debug(logger, s3svc, "Created S3 client")
+	log.Debug(logger, "Created S3 client", "client", s3svc)
 
 	var sqsResolver sqs.EndpointResolverFunc = func(region string, options sqs.EndpointResolverOptions) (aws.Endpoint, error) {
 		return cfg.EndpointResolverWithOptions.ResolveEndpoint("sqs", cfg.Region)
@@ -81,7 +77,7 @@ func buildClients(cfg aws.Config) (S3API, SQSAPI, error) {
 		o.EndpointResolver = sqsResolver
 	})
 
-	log.Debug(logger, sqssvc, "Created SQS client")
+	log.Debug(logger, "Created SQS client", "client", sqssvc)
 
 	return s3svc, sqssvc, nil
 

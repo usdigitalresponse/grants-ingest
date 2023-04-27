@@ -76,3 +76,8 @@ variable "grants_source_data_bucket_name" {
   description = "Name of the S3 bucket used to store grants source data."
   type        = string
 }
+
+variable "destination_queue_name" {
+  description = "Name of the SQS queue where file URL's will be enqueued for processing."
+  type        = string
+}

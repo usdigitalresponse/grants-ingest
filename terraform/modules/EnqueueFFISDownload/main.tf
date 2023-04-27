@@ -20,6 +20,10 @@ data "aws_s3_bucket" "source_data" {
   bucket = var.grants_source_data_bucket_name
 }
 
+data "aws_sqs_queue" "ffis_downloads" {
+  name = var.destination_queue_name
+}
+
 module "lambda_execution_policy" {
   source  = "cloudposse/iam-policy/aws"
   version = "0.4.0"
@@ -38,7 +42,7 @@ module "lambda_execution_policy" {
       effect  = "Allow"
       actions = ["sqs:SendMessage"]
       resources = [
-        aws_sqs_queue.ffis_downloads.arn,
+        data.aws_sqs_queue.ffis_downloads.arn,
       ]
     }
   }
@@ -51,7 +55,7 @@ resource "aws_s3_bucket_notification" "default" {
     lambda_function_arn = module.lambda_function.lambda_function_arn
     events              = ["s3:ObjectCreated:*"]
     filter_prefix       = "sources/"
-    filter_suffix       = "ffis/raw.eml"
+    filter_suffix       = "/ffis/raw.eml"
   }
 }
 
@@ -86,16 +90,13 @@ module "lambda_function" {
   s3_bucket                 = var.lambda_artifact_bucket
   s3_server_side_encryption = "AES256"
 
-  timeout     = 300 # 5 minutes, in seconds
-  memory_size = 1024
+  timeout     = 30 # seconds
+  memory_size = 128
   environment_variables = merge(var.additional_environment_variables, {
-    DD_TRACE_RATE_LIMIT    = "1000"
-    DD_TAGS                = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
-    DOWNLOAD_CHUNK_LIMIT   = "20"
-    FFIS_SQS_QUEUE_NAME    = aws_sqs_queue.ffis_downloads.name
-    LOG_LEVEL              = var.log_level
-    MAX_CONCURRENT_UPLOADS = "10"
-    S3_USE_PATH_STYLE      = "true"
+    DD_TAGS            = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
+    FFIS_SQS_QUEUE_URL = data.aws_sqs_queue.ffis_downloads.id
+    LOG_LEVEL          = var.log_level
+    S3_USE_PATH_STYLE  = "true"
   })
 
   allowed_triggers = {

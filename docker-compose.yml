@@ -9,7 +9,10 @@ services:
       - DEBUG=${DEBUG-}
       - DOCKER_HOST=unix:///var/run/docker.sock
       - AWS_DEFAULT_REGION=${AWS_REGION:-us-west-2}
-      - DEFAULT_REGION=${AWS_REGION:-us-west-2}
+      - LOCALSTACK_HOST=localstack
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - PROVIDER_OVERRIDE_LAMBDA=legacy}
     networks:
       - app
     volumes:

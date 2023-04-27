@@ -19,10 +19,6 @@ import (
 )
 
 type SQSAPI interface {
-	GetQueueUrl(ctx context.Context,
-		params *sqs.GetQueueUrlInput,
-		optFns ...func(*sqs.Options)) (*sqs.GetQueueUrlOutput, error)
-
 	SendMessage(ctx context.Context,
 		params *sqs.SendMessageInput,
 		optFns ...func(*sqs.Options)) (*sqs.SendMessageOutput, error)
@@ -34,19 +30,23 @@ type S3API interface {
 		optFns ...func(*s3.Options)) (*s3.GetObjectOutput, error)
 }
 
-func handleS3EventWithConfig(cfg aws.Config, ctx context.Context, s3Event events.S3Event, s3client S3API, sqsclient SQSAPI) error {
+func handleS3Event(ctx context.Context, s3Event events.S3Event, s3client S3API, sqsclient SQSAPI) error {
 	emailBody, err := getEmailFromS3Event(s3client, s3Event, ctx)
 	if err != nil {
 		return err
 	}
-
+	defer emailBody.Close()
+	plaintext, err := plaintextMIMEFromEmailBody(emailBody)
+	if err != nil {
+		return err
+	}
 	// Parse the URL from the email body
-	url, err := parseURLFromEmailBody(emailBody)
+	url, err := parseURLFromEmailBody(plaintext)
 	if err != nil {
 		return err
 	}
 
-	log.Info(logger, url, "Parsed URL from email body")
+	log.Info(logger, "Parsed URL from email body", "url", url)
 
 	// Enqueue the URL for download
 	err = enqueueURLForDownload(url, sqsclient, ctx)
@@ -57,9 +57,8 @@ func handleS3EventWithConfig(cfg aws.Config, ctx context.Context, s3Event events
 	return nil
 }
 
-func plaintextMIMEFromEmailBody(email string) (string, error) {
-	reader := strings.NewReader(email)
-	msg, err := mail.ReadMessage(reader)
+func plaintextMIMEFromEmailBody(email io.Reader) (string, error) {
+	msg, err := mail.ReadMessage(email)
 	if err != nil {
 		return "", err
 	}
@@ -92,12 +91,8 @@ func plaintextMIMEFromEmailBody(email string) (string, error) {
 	return "", fmt.Errorf("no text/plain part found")
 }
 
-func parseURLFromEmailBody(email string) (string, error) {
-	plaintext, err := plaintextMIMEFromEmailBody(email)
-	if err != nil {
-		return "", err
-	}
-	patternRegex := regexp.MustCompile(urlPattern)
+func parseURLFromEmailBody(plaintext string) (string, error) {
+	patternRegex := regexp.MustCompile(env.URLPattern)
 	matches := patternRegex.FindStringSubmatch(plaintext)
 	if len(matches) == 0 {
 		return "", fmt.Errorf("no matches found")
@@ -108,57 +103,32 @@ func parseURLFromEmailBody(email string) (string, error) {
 	return matches[0], nil
 }
 
-func getQueueUrl(queueName string, client SQSAPI, ctx context.Context) (*string, error) {
-	result, err := client.GetQueueUrl(ctx, &sqs.GetQueueUrlInput{
-		QueueName: aws.String(queueName),
-	},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return result.QueueUrl, nil
-
-}
-
 func enqueueURLForDownload(url string, client SQSAPI, ctx context.Context) error {
-	queueUrl, err := getQueueUrl(destinationQueue, client, ctx)
-	if err != nil {
-		return err
-	}
-	log.Info(logger, *queueUrl, "Got SQS queue URL")
-
 	message := sqs.SendMessageInput{
 		MessageBody: aws.String(url),
-		QueueUrl:    aws.String(*queueUrl),
+		QueueUrl:    aws.String(env.DestinationQueueURL),
 	}
 	output, err := client.SendMessage(ctx, &message)
 
 	if err != nil {
 		return err
 	}
-	log.Info(logger, *output.MessageId, "Sent SQS message")
+	log.Info(logger, "Sent SQS message", "messageId", *output.MessageId)
 	return nil
 }
 
-func getEmailFromS3Event(s3client S3API, s3Event events.S3Event, ctx context.Context) (string, error) {
+func getEmailFromS3Event(s3client S3API, s3Event events.S3Event, ctx context.Context) (io.ReadCloser, error) {
 	bucket := s3Event.Records[0].S3.Bucket.Name
-	log.Debug(logger, bucket, "Reading from bucket")
+	log.Debug(logger, "Reading from bucket", "bucket", bucket)
 	uploadedFile := s3Event.Records[0].S3.Object.Key
-	log.Info(logger, uploadedFile, "New email file")
+	log.Info(logger, "New email file", "file", uploadedFile)
 	// Get the email body
 	resp, err := s3client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(uploadedFile),
 	})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	defer resp.Body.Close()
-	buf := new(bytes.Buffer)
-	_, err = buf.ReadFrom(resp.Body)
-	if err != nil {
-		return "", err
-	}
-	emailBody := buf.String()
-	return emailBody, nil
+	return resp.Body, nil
 }
