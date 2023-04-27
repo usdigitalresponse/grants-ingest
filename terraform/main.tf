@@ -131,7 +131,7 @@ module "grants_source_data_bucket" {
   sse_algorithm                = "AES256"
   allow_ssl_requests_only      = true
   allow_encrypted_uploads_only = true
-  source_policy_documents      = []
+  source_policy_documents      = [data.aws_iam_policy_document.ses_source_data_s3_access.json]
 
   lifecycle_configuration_rules = [
     {
@@ -231,9 +231,9 @@ resource "aws_dynamodb_contributor_insights" "grants_prepared_dynamodb_main" {
 
 resource "aws_ses_receipt_rule" "ffis_ingest" {
   depends_on = [
-    aws_iam_policy.ses_source_data_s3_access
+    module.grants_source_data_bucket
   ]
-  name          = "ffis_ingest-${var.environment}"
+  name          = "${var.namespace}-ffis_ingest"
   rule_set_name = "ffis_ingest-rule-set"
   recipients    = [var.ffis_ingest_email_address]
   enabled       = true
@@ -247,32 +247,35 @@ resource "aws_ses_receipt_rule" "ffis_ingest" {
   }
 }
 
-resource "aws_iam_policy" "ses_source_data_s3_access" {
-  name        = "ses_source_data_s3_access"
-  path        = "/"
-  description = "Allows SES to putObject into Grants source data bucket"
+data "aws_iam_policy_document" "ses_source_data_s3_access" {
+  statement {
+    sid = "AllowFFISEmailDeliveryFromSES"
+    principals {
+      type        = "Service"
+      identifiers = ["ses.amazonaws.com"]
+    }
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Principal = {
-          Service = "ses.amazonaws.com"
-        }
-        Action = [
-          "s3:PutObject",
-        ]
-        Effect   = "Allow"
-        Resource = "${module.grants_source_data_bucket.bucket_id}/ses/*"
-        Condition = {
-          StringEquals = {
-            "AWS:SourceArn"     = "arn:aws:ses:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:receipt-rule-set/ffis_ingest-rule-set:receipt-rule/ffis_ingest-${var.environment}"
-            "AWS:SourceAccount" = data.aws_caller_identity.current.account_id
-          }
-        }
-      },
+    actions = [
+      "s3:PutObject",
     ]
-  })
+
+    resources = ["${module.grants_source_data_bucket.bucket_arn}/ses/*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceArn"
+      values = [
+        "arn:aws:ses:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:receipt-rule-set/ffis_ingest-rule-set:receipt-rule/${var.namespace}-ffis_ingest"
+      ]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceAccount"
+      values = [
+        data.aws_caller_identity.current.account_id
+      ]
+    }
+  }
 }
 
 // Lambda defaults
