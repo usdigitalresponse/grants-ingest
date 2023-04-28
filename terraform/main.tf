@@ -235,6 +235,10 @@ resource "aws_ses_receipt_rule_set" "ffis_ingest" {
   rule_set_name = "${var.namespace}-ffis_ingest"
 }
 
+resource "aws_ses_active_receipt_rule_set" "active" {
+  rule_set_name = aws_ses_receipt_rule_set.ffis_ingest.rule_set_name
+}
+
 resource "aws_ses_receipt_rule" "ffis_ingest" {
   depends_on = [
     module.email_delivery_bucket
