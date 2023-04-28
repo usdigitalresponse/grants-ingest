@@ -181,11 +181,11 @@ module "grants_prepared_data_bucket" {
   ]
 }
 
-module "ffis_source_data_bucket" {
+module "email_delivery_bucket" {
   source  = "cloudposse/s3-bucket/aws"
   version = "3.0.0"
   context = module.s3_label.context
-  name    = "ffis_source_data"
+  name    = "email_delivery"
 
   acl                          = "private"
   versioning_enabled           = true
@@ -202,7 +202,7 @@ module "ffis_source_data_bucket" {
       abort_incomplete_multipart_upload_days = 1
       transition                             = [{ days = null }]
       expiration                             = { days = 30 }
-      noncurrent_version_transition          = []
+      noncurrent_version_transition          = [{ days = null }]
       noncurrent_version_expiration          = { days = null }
     }
   ]
@@ -237,7 +237,7 @@ resource "aws_ses_receipt_rule_set" "ffis_ingest" {
 
 resource "aws_ses_receipt_rule" "ffis_ingest" {
   depends_on = [
-    module.ffis_source_data_bucket
+    module.email_delivery_bucket
   ]
   name          = "${var.namespace}-ffis_ingest"
   rule_set_name = aws_ses_receipt_rule_set.ffis_ingest.rule_set_name
@@ -247,7 +247,7 @@ resource "aws_ses_receipt_rule" "ffis_ingest" {
   tls_policy    = "Require"
 
   s3_action {
-    bucket_name       = module.ffis_source_data_bucket.bucket_id
+    bucket_name       = module.email_delivery_bucket.bucket_id
     position          = 1
     object_key_prefix = "ses/ffis_ingest/new"
   }
@@ -265,7 +265,7 @@ data "aws_iam_policy_document" "ses_source_data_s3_access" {
       "s3:PutObject",
     ]
 
-    resources = ["${module.ffis_source_data_bucket.bucket_arn}/ses/*"]
+    resources = ["${module.email_delivery_bucket.bucket_arn}/ses/*"]
 
     condition {
       test     = "StringEquals"
