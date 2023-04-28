@@ -51,3 +51,6 @@ cover.html
 # Environment variable files
 .env
 .envrc
+
+# Localstack
+volume/
