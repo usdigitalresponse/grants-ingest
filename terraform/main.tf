@@ -220,6 +220,8 @@ resource "aws_ses_receipt_rule" "ffis_ingest" {
     position          = 1
     object_key_prefix = "ses/ffis_ingest/new"
   }
+
+  count = var.version_identifier == "dev" ? 0 : 1
 }
 
 resource "aws_sqs_queue" "ffis_downloads" {

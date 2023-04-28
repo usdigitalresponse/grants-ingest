@@ -30,28 +30,35 @@ type S3API interface {
 		optFns ...func(*s3.Options)) (*s3.GetObjectOutput, error)
 }
 
+// error constants
+var (
+	ErrNoMatchesFound = fmt.Errorf("no matches found")
+	ErrMultipleFound  = fmt.Errorf("multiple matches found")
+	ErrNoPlaintext    = fmt.Errorf("no plaintext mime part found")
+)
+
 func handleS3Event(ctx context.Context, s3Event events.S3Event, s3client S3API, sqsclient SQSAPI) error {
 	emailBody, err := getEmailFromS3Event(s3client, s3Event, ctx)
 	if err != nil {
-		return log.Errorf("Error reading email from S3", err)
+		return log.Errorf(logger, "Error reading email from S3", err)
 	}
 	defer emailBody.Close()
 	plaintext, err := plaintextMIMEFromEmailBody(emailBody)
 	if err != nil {
-		return log.Errorf("Missing plaintext mime part from email body", err)
+		return log.Errorf(logger, "Missing plaintext mime part from email body", err)
 	}
 	// Parse the URL from the email body
 	url, err := parseURLFromEmailBody(plaintext)
 	if err != nil {
-		return log.Errorf("Download URL could not be located in email plaintext", err)
+		return log.Errorf(logger, "Download URL could not be located in email plaintext", err)
 	}
 
 	log.Info(logger, "Parsed URL from email body", "url", url)
 
 	// Enqueue the URL for download
-	err = enqueueURLForDownload(url, sqsclient, ctx)
+	err = enqueueURLForDownload(ctx, url, sqsclient)
 	if err != nil {
-		return log.Errorf("Failed to enqueue parsed URL", err)
+		return log.Errorf(logger, "Failed to enqueue parsed URL", err)
 	}
 
 	return nil
@@ -88,17 +95,16 @@ func plaintextMIMEFromEmailBody(email io.Reader) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("no text/plain part found")
+	return "", ErrNoPlaintext
 }
 
 func parseURLFromEmailBody(plaintext string) (string, error) {
 	patternRegex := regexp.MustCompile(env.URLPattern)
-	matches := patternRegex.FindStringSubmatch(plaintext)
+	matches := patternRegex.FindAllString(plaintext, -1)
 	if len(matches) == 0 {
-		return "", fmt.Errorf("no matches found")
-	}
-	if len(matches) > 1 {
-		return "", fmt.Errorf("multiple matches found")
+		return "", ErrNoMatchesFound
+	} else if len(matches) > 1 {
+		return "", ErrMultipleFound
 	}
 	return matches[0], nil
 }
@@ -120,7 +126,7 @@ func enqueueURLForDownload(ctx context.Context, url string, client SQSAPI) error
 func getEmailFromS3Event(s3client S3API, s3Event events.S3Event, ctx context.Context) (io.ReadCloser, error) {
 	bucket := s3Event.Records[0].S3.Bucket.Name
 	uploadedFile := s3Event.Records[0].S3.Object.Key
-	logger := log.With(logger, "bucket", bucket, "key", key)
+	logger := log.With(logger, "bucket", bucket, "key", uploadedFile)
 	log.Debug(logger, "Reading from bucket")
 	// Get the email body
 	resp, err := s3client.GetObject(ctx, &s3.GetObjectInput{

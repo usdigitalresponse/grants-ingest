@@ -5,6 +5,7 @@ import (
 	"context"
 	"io"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -47,10 +48,12 @@ func TestHandleS3Event(t *testing.T) {
 	env.URLPattern = "https://mcusercontent.com/.+\\.xlsx"
 	var tests = []struct {
 		emailFixture, expectedURL string
+		expectedError             error
 	}{
-		{"good.eml", "https://mcusercontent.com/123456/files/file-01.xlsx"},
-		{"missing.eml", ""},
-		{"multiple.eml", ""},
+		{"good.eml", "https://mcusercontent.com/123456/files/file-01.xlsx", nil},
+		{"missing.eml", "", ErrNoMatchesFound},
+		{"multiple.eml", "", ErrMultipleFound},
+		{"no-plaintext.eml", "", ErrNoPlaintext},
 	}
 
 	for _, test := range tests {
@@ -90,6 +93,10 @@ func TestHandleS3Event(t *testing.T) {
 				// parse expected bad message
 				if mocksqs.message == nil && test.expectedURL != "" {
 					t.Errorf("Expected message for %s to be empty", test.emailFixture)
+				}
+				// error message can be wrapped, so we need to check for the substring
+				if !strings.Contains(err.Error(), test.expectedError.Error()) {
+					t.Errorf("Expected error %v, got %v", test.expectedError, err)
 				}
 			}
 		})
