@@ -258,6 +258,10 @@ resource "aws_dynamodb_contributor_insights" "grants_prepared_dynamodb_main" {
   table_name = module.grants_prepared_dynamodb_table.table_name
 }
 
+resource "aws_ses_receipt_rule_set" "ffis_ingest" {
+  rule_set_name = "${var.namespace}-ffis_ingest"
+}
+
 resource "aws_ses_receipt_rule" "ffis_ingest" {
   depends_on = [
     module.email_delivery_bucket
