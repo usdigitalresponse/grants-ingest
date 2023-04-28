@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	goLog "log"
+	"os"
 
 	ddlambda "github.com/DataDog/datadog-lambda-go"
 	goenv "github.com/Netflix/go-env"
