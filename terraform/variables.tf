@@ -194,3 +194,9 @@ variable "dynamodb_contributor_insights_enabled" {
   type        = bool
   default     = true
 }
+
+variable "ses_active_receipt_rule_set_enabled" {
+  description = "If false, prevents SES receipt rule set from being set to active. This should only be false in local development."
+  type        = bool
+  default     = true
+}
