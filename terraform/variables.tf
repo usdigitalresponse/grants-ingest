@@ -188,3 +188,9 @@ variable "ffis_ingest_email_address" {
   description = "Email address used to receive FFIS digests and save them to S3"
   default     = "ffis-ingest@grants.usdigitalresponse.org"
 }
+
+variable "ses_active_receipt_rule_set_enabled" {
+  description = "If false, uses CloudWatch Events to schedule Lambda execution. This should only be false in local development."
+  type        = bool
+  default     = true
+}
