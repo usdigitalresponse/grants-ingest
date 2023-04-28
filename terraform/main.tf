@@ -226,6 +226,8 @@ module "grants_prepared_dynamodb_table" {
 }
 
 resource "aws_dynamodb_contributor_insights" "grants_prepared_dynamodb_main" {
+  count = var.dynamodb_contributor_insights_enabled ? 1 : 0
+
   table_name = module.grants_prepared_dynamodb_table.table_name
 }
 

@@ -188,3 +188,9 @@ variable "ffis_ingest_email_address" {
   description = "Email address used to receive FFIS digests and save them to S3"
   default     = "ffis-ingest@grants.usdigitalresponse.org"
 }
+
+variable "dynamodb_contributor_insights_enabled" {
+  description = "If false, disable DynamoDB contributor insights in CloudWatch. This should only be false in local development."
+  type        = bool
+  default     = true
+}
