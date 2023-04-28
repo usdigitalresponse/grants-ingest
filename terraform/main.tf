@@ -124,7 +124,7 @@ module "grants_source_data_bucket" {
   sse_algorithm                = "AES256"
   allow_ssl_requests_only      = true
   allow_encrypted_uploads_only = true
-  source_policy_documents      = [data.aws_iam_policy_document.ses_source_data_s3_access.json]
+  source_policy_documents      = []
 
   lifecycle_configuration_rules = [
     {
@@ -181,6 +181,33 @@ module "grants_prepared_data_bucket" {
   ]
 }
 
+module "email_delivery_bucket" {
+  source  = "cloudposse/s3-bucket/aws"
+  version = "3.0.0"
+  context = module.s3_label.context
+  name    = "email_delivery"
+
+  acl                          = "private"
+  versioning_enabled           = true
+  sse_algorithm                = "AES256"
+  allow_ssl_requests_only      = true
+  allow_encrypted_uploads_only = false
+  source_policy_documents      = [data.aws_iam_policy_document.ses_source_data_s3_access.json]
+
+  lifecycle_configuration_rules = [
+    {
+      enabled                                = true
+      id                                     = "rule-1"
+      filter_and                             = null
+      abort_incomplete_multipart_upload_days = 1
+      transition                             = [{ days = null }]
+      expiration                             = { days = 30 }
+      noncurrent_version_transition          = [{ days = null }]
+      noncurrent_version_expiration          = { days = null }
+    }
+  ]
+}
+
 resource "aws_scheduler_schedule_group" "default" {
   count = var.eventbridge_scheduler_enabled ? 1 : 0
 
@@ -204,19 +231,23 @@ data "aws_iam_policy_document" "read_datadog_api_key_secret" {
   }
 }
 
+resource "aws_ses_receipt_rule_set" "ffis_ingest" {
+  rule_set_name = "${var.namespace}-ffis_ingest"
+}
+
 resource "aws_ses_receipt_rule" "ffis_ingest" {
   depends_on = [
-    module.grants_source_data_bucket
+    module.email_delivery_bucket
   ]
   name          = "${var.namespace}-ffis_ingest"
-  rule_set_name = "ffis_ingest-rule-set"
+  rule_set_name = aws_ses_receipt_rule_set.ffis_ingest.rule_set_name
   recipients    = [var.ffis_ingest_email_address]
   enabled       = true
   scan_enabled  = true
   tls_policy    = "Require"
 
   s3_action {
-    bucket_name       = module.grants_source_data_bucket.bucket_id
+    bucket_name       = module.email_delivery_bucket.bucket_id
     position          = 1
     object_key_prefix = "ses/ffis_ingest/new"
   }
@@ -247,13 +278,13 @@ data "aws_iam_policy_document" "ses_source_data_s3_access" {
       "s3:PutObject",
     ]
 
-    resources = ["${module.grants_source_data_bucket.bucket_arn}/ses/*"]
+    resources = ["${module.email_delivery_bucket.bucket_arn}/ses/*"]
 
     condition {
       test     = "StringEquals"
       variable = "AWS:SourceArn"
       values = [
-        "arn:aws:ses:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:receipt-rule-set/ffis_ingest-rule-set:receipt-rule/${var.namespace}-ffis_ingest"
+        "arn:aws:ses:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:receipt-rule-set/${var.namespace}-ffis_ingest:receipt-rule/${var.namespace}-ffis_ingest"
       ]
     }
     condition {
