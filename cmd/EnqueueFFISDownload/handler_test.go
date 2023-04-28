@@ -54,43 +54,45 @@ func TestHandleS3Event(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		content, err := os.ReadFile("./fixtures/" + test.emailFixture)
-		if err != nil {
-			t.Errorf("Error opening file: %v", err)
-		}
-		mocks3, mocksqs := getMockClients()
-		mocks3.content = string(content)
-		ctx := context.Background()
-		s3Event := events.S3Event{
-			Records: []events.S3EventRecord{
-				{
-					S3: events.S3Entity{
-						Bucket: events.S3Bucket{
-							Name: "test-bucket",
-						},
-						Object: events.S3Object{
-							Key: "test/email/file.eml",
+		t.Run(test.emailFixture, func(t *testing.T) {
+			content, err := os.ReadFile("./fixtures/" + test.emailFixture)
+			if err != nil {
+				t.Errorf("Error opening file: %v", err)
+			}
+			mocks3, mocksqs := getMockClients()
+			mocks3.content = string(content)
+			ctx := context.Background()
+			s3Event := events.S3Event{
+				Records: []events.S3EventRecord{
+					{
+						S3: events.S3Entity{
+							Bucket: events.S3Bucket{
+								Name: "test-bucket",
+							},
+							Object: events.S3Object{
+								Key: "test/email/file.eml",
+							},
 						},
 					},
 				},
-			},
-		}
+			}
 
-		err = handleS3Event(ctx, s3Event, mocks3, mocksqs)
+			err = handleS3Event(ctx, s3Event, mocks3, mocksqs)
 
-		if test.expectedURL != "" {
-			if err != nil {
-				t.Errorf("Error parsing S3 event: %v", err)
+			if test.expectedURL != "" {
+				if err != nil {
+					t.Errorf("Error parsing S3 event: %v", err)
+				}
+				if *mocksqs.message != test.expectedURL {
+					t.Errorf("Expected message %v, got %v", test.expectedURL, mocksqs.message)
+				}
+			} else {
+				// parse expected bad message
+				if mocksqs.message == nil && test.expectedURL != "" {
+					t.Errorf("Expected message for %s to be empty", test.emailFixture)
+				}
 			}
-			if *mocksqs.message != test.expectedURL {
-				t.Errorf("Expected message %v, got %v", test.expectedURL, mocksqs.message)
-			}
-		} else {
-			// parse expected bad message
-			if mocksqs.message == nil && test.expectedURL != "" {
-				t.Errorf("Expected message for %s to be empty", test.emailFixture)
-			}
-		}
+		})
 	}
 }
 

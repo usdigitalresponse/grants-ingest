@@ -33,17 +33,17 @@ type S3API interface {
 func handleS3Event(ctx context.Context, s3Event events.S3Event, s3client S3API, sqsclient SQSAPI) error {
 	emailBody, err := getEmailFromS3Event(s3client, s3Event, ctx)
 	if err != nil {
-		return err
+		return log.Errorf("Error reading email from S3", err)
 	}
 	defer emailBody.Close()
 	plaintext, err := plaintextMIMEFromEmailBody(emailBody)
 	if err != nil {
-		return err
+		return log.Errorf("Missing plaintext mime part from email body", err)
 	}
 	// Parse the URL from the email body
 	url, err := parseURLFromEmailBody(plaintext)
 	if err != nil {
-		return err
+		return log.Errorf("Download URL could not be located in email plaintext", err)
 	}
 
 	log.Info(logger, "Parsed URL from email body", "url", url)
@@ -51,7 +51,7 @@ func handleS3Event(ctx context.Context, s3Event events.S3Event, s3client S3API, 
 	// Enqueue the URL for download
 	err = enqueueURLForDownload(url, sqsclient, ctx)
 	if err != nil {
-		return err
+		return log.Errorf("Failed to enqueue parsed URL", err)
 	}
 
 	return nil
@@ -103,7 +103,7 @@ func parseURLFromEmailBody(plaintext string) (string, error) {
 	return matches[0], nil
 }
 
-func enqueueURLForDownload(url string, client SQSAPI, ctx context.Context) error {
+func enqueueURLForDownload(ctx context.Context, url string, client SQSAPI) error {
 	message := sqs.SendMessageInput{
 		MessageBody: aws.String(url),
 		QueueUrl:    aws.String(env.DestinationQueueURL),
@@ -119,9 +119,9 @@ func enqueueURLForDownload(url string, client SQSAPI, ctx context.Context) error
 
 func getEmailFromS3Event(s3client S3API, s3Event events.S3Event, ctx context.Context) (io.ReadCloser, error) {
 	bucket := s3Event.Records[0].S3.Bucket.Name
-	log.Debug(logger, "Reading from bucket", "bucket", bucket)
 	uploadedFile := s3Event.Records[0].S3.Object.Key
-	log.Info(logger, "New email file", "file", uploadedFile)
+	logger := log.With(logger, "bucket", bucket, "key", key)
+	log.Debug(logger, "Reading from bucket")
 	// Get the email body
 	resp, err := s3client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
@@ -130,5 +130,6 @@ func getEmailFromS3Event(s3client S3API, s3Event events.S3Event, ctx context.Con
 	if err != nil {
 		return nil, err
 	}
+	log.Info(logger, "Retrieved new email file")
 	return resp.Body, nil
 }
