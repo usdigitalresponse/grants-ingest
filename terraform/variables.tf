@@ -190,7 +190,7 @@ variable "ffis_ingest_email_address" {
 }
 
 variable "ses_active_receipt_rule_set_enabled" {
-  description = "If false, uses CloudWatch Events to schedule Lambda execution. This should only be false in local development."
+  description = "If false, prevents SES receipt rule set from being set to active. This should only be false in local development."
   type        = bool
   default     = true
 }
