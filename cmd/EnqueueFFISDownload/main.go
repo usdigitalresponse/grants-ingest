@@ -74,7 +74,9 @@ func buildClients(cfg aws.Config) (S3API, SQSAPI, error) {
 	sqssvc := sqs.NewFromConfig(cfg, func(o *sqs.Options) {
 		// the logic in internal/awsHelpers/config doesn't affect the endpoint for SQS, and this is
 		// needed so that localstack will work
-		o.EndpointResolver = sqsResolver
+		if _, isSet := os.LookupEnv("LOCALSTACK_HOSTNAME"); isSet {
+			o.EndpointResolver = sqsResolver
+		}
 	})
 
 	log.Debug(logger, "Created SQS client", "client", sqssvc)
