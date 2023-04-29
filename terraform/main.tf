@@ -338,7 +338,7 @@ locals {
   ])
 }
 
-resource "aws_s3_bucket_notification" "bucket_notification" {
+resource "aws_s3_bucket_notification" "grant_source_data" {
   bucket = module.grants_source_data_bucket.bucket_id
 
   lambda_function {
