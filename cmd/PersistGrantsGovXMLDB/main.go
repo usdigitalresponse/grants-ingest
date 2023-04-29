@@ -1,14 +1,8 @@
-// Package main compiles to an AWS Lambda handler binary that, when invoked, streams an XML file
-// conforming to the OpportunityDetail-V1.0 schema documented by Grants.gov from a source S3 object
-// identified by the S3:ObjectCreated:* invocation event payload. While reading the XML source data,
-// each contained grant opportunity is split into an individual object that is conditionally uploaded
-// to an S3 bucket identified by the GRANTS_PREPARED_DATA_BUCKET_NAME environment variable.
-// The conditional upload criteria is based on the following:
-//
-//   - If no object representing the source data is already present in the destination S3 bucket,
-//     then it is always uploaded.
-//   - If a destination object already, it will be replaced if the source data was updated more
-//     recently than the destination object's creation timestamp.
+// Package main compiles to an AWS Lambda handler binary that, when invoked, reads an XML file
+// that contains an OpportunityDetail-V1.0 object from a source S3 object identified by the
+// S3:ObjectCreated:* invocation event payload. While reading the XML data, each tag/value is
+// uploaded to a DynamoDB table identified by the GRANTS_PREPARED_DYNAMODB_NAME
+// environment variable with the primary hash key (grant_id) being the OpportunityID value.
 package main
 
 import (

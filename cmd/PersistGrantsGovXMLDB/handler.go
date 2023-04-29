@@ -22,9 +22,8 @@ const (
 type opportunity grantsgov.OpportunitySynopsisDetail_1_0
 
 // handleS3Event handles events representing S3 bucket notifications of type "ObjectCreated:*"
-// for XML DB extracts saved from Grants.gov. The XML data from the source S3 object provided
-// by each event record is read from S3. Grant opportunity records are extracted from the XML
-// and uploaded to a "prepared data" destination bucket as individual S3 objects.
+// for XML DB extracts saved from Grants.gov and split into separate files via the SplitGrantsGovXMLDB Lambda.
+// The XML data from the source S3 object provided represents an individual grant opportunity.
 // Returns an error that represents any and all errors accumulated during the invocation,
 // either while handling a source object or while processing its contents; an error may indicate
 // a partial or complete invocation failure.
