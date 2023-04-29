@@ -41,26 +41,10 @@ module "lambda_execution_policy" {
       effect = "Allow"
       actions = [
         "dynamodb:ListTables",
-        "dynamodb:BatchGetItem",
-        "dynamodb:GetItem",
-        "dynamodb:Query",
-        "dynamodb:Scan",
-        "dynamodb:BatchWriteItem",
-        "dynamodb:PutItem",
         "dynamodb:UpdateItem"
       ]
       resources = [var.grants_prepared_dynamodb_table_arn]
     }
-  }
-}
-
-resource "aws_s3_bucket_notification" "default" {
-  bucket = data.aws_s3_bucket.prepared_data.id
-
-  lambda_function {
-    lambda_function_arn = module.lambda_function.lambda_function_arn
-    events              = ["s3:ObjectCreated:*"]
-    filter_suffix       = "/grants.gov/v2.xml"
   }
 }
 

@@ -388,6 +388,20 @@ resource "aws_s3_bucket_notification" "grant_source_data" {
   ]
 }
 
+resource "aws_s3_bucket_notification" "grant_prepared_data" {
+  bucket = module.grants_prepared_data_bucket.bucket_id
+
+  lambda_function {
+    lambda_function_arn = module.PersistGrantsGovXMLDB.lambda_function_arn
+    events              = ["s3:ObjectCreated:*"]
+    filter_suffix       = "/grants.gov/v2.xml"
+  }
+
+  depends_on = [
+    module.PersistGrantsGovXMLDB
+  ]
+}
+
 // Modules providing Lambda functions
 module "DownloadGrantsGovDB" {
   source = "./modules/DownloadGrantsGovDB"
