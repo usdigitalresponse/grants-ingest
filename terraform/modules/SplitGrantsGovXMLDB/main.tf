@@ -60,17 +60,6 @@ module "lambda_execution_policy" {
   }
 }
 
-resource "aws_s3_bucket_notification" "default" {
-  bucket = data.aws_s3_bucket.source_data.id
-
-  lambda_function {
-    lambda_function_arn = module.lambda_function.lambda_function_arn
-    events              = ["s3:ObjectCreated:*"]
-    filter_prefix       = "sources/"
-    filter_suffix       = "/grants.gov/extract.xml"
-  }
-}
-
 module "lambda_function" {
   source  = "terraform-aws-modules/lambda/aws"
   version = "4.12.1"
