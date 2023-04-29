@@ -338,6 +338,29 @@ locals {
   ])
 }
 
+resource "aws_s3_bucket_notification" "grant_source_data" {
+  bucket = module.grants_source_data_bucket.bucket_id
+
+  lambda_function {
+    lambda_function_arn = module.SplitGrantsGovXMLDB.lambda_function_arn
+    events              = ["s3:ObjectCreated:*"]
+    filter_prefix       = "sources/"
+    filter_suffix       = "/grants.gov/extract.xml"
+  }
+
+  lambda_function {
+    lambda_function_arn = module.EnqueueFFISDownload.lambda_function_arn
+    events              = ["s3:ObjectCreated:*"]
+    filter_prefix       = "sources/"
+    filter_suffix       = "/ffis/raw.eml"
+  }
+
+  depends_on = [
+    module.SplitGrantsGovXMLDB,
+    module.EnqueueFFISDownload,
+  ]
+}
+
 // Modules providing Lambda functions
 module "DownloadGrantsGovDB" {
   source = "./modules/DownloadGrantsGovDB"
