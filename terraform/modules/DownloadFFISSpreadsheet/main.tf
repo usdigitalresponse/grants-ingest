@@ -83,10 +83,22 @@ module "lambda_function" {
   memory_size = 128
   environment_variables = merge(var.additional_environment_variables, {
     DD_TAGS            = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
-    FFIS_SQS_QUEUE_URL = data.aws_sqs_queue.ffis_downloads.id
+    TARGET_BUCKET_NAME = data.aws_sqs_queue.ffis_downloads.id
     LOG_LEVEL          = var.log_level
     S3_USE_PATH_STYLE  = "true"
   })
+
+  event_source_mapping = {
+    sqs = {
+      enabled = true
+      batch_size = 1
+      maximum_batching_window_in_seconds = 20
+      event_source_arn = data.aws_sqs_queue.ffis_downloads.arn
+      scaling_config = {
+        maximum_concurrency = 1
+      }
+    }
+  }
 
   allowed_triggers = {
     SQSQueueNotification = {
