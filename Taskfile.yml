@@ -110,6 +110,7 @@ tasks:
       - build-DownloadGrantsGovDB
       - build-SplitGrantsGovXMLDB
       - build-EnqueueFFISDownload
+      - build-DownloadFFISSpreadsheet
 
   build-DownloadGrantsGovDB:
     desc: Compiles DownloadGrantsGovDB
@@ -131,3 +132,10 @@ tasks:
       - task: build-lambda
         vars:
           LAMBDA_CMD: EnqueueFFISDownload
+
+  build-DownloadFFISSpreadsheet:
+    desc: Compiles DownloadFFISSpreadsheet
+    cmds:
+      - task: build-lambda
+        vars:
+          LAMBDA_CMD: DownloadFFISSpreadsheet

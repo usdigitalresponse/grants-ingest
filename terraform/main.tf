@@ -423,3 +423,26 @@ module "EnqueueFFISDownload" {
     aws_sqs_queue.ffis_downloads,
   ]
 }
+
+module "DownloadFFISSpreadsheet" {
+  source                                       = "./modules/DownloadFFISSpreadsheet"
+  namespace                                    = var.namespace
+  function_name                                = "DownloadFFISSpreadsheet"
+  permissions_boundary_arn                     = local.permissions_boundary_arn
+  lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
+  log_retention_in_days                        = var.lambda_default_log_retention_in_days
+  log_level                                    = var.lambda_default_log_level
+  lambda_code_path                             = local.lambda_code_path
+  lambda_arch                                  = var.lambda_arch
+  additional_environment_variables             = local.lambda_environment_variables
+  additional_lambda_execution_policy_documents = local.lambda_execution_policies
+  lambda_layer_arns                            = local.lambda_layer_arns
+
+  source_queue_name                            = aws_sqs_queue.ffis_downloads.name
+  download_target_bucket_name                  = module.grants_source_data_bucket.bucket_id
+
+  depends_on = [
+    module.grants_source_data_bucket,
+    aws_sqs_queue.ffis_downloads,
+  ]
+}
