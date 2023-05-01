@@ -181,6 +181,33 @@ module "grants_prepared_data_bucket" {
   ]
 }
 
+module "email_delivery_bucket" {
+  source  = "cloudposse/s3-bucket/aws"
+  version = "3.0.0"
+  context = module.s3_label.context
+  name    = "email_delivery"
+
+  acl                          = "private"
+  versioning_enabled           = true
+  sse_algorithm                = "AES256"
+  allow_ssl_requests_only      = true
+  allow_encrypted_uploads_only = false
+  source_policy_documents      = [data.aws_iam_policy_document.ses_source_data_s3_access.json]
+
+  lifecycle_configuration_rules = [
+    {
+      enabled                                = true
+      id                                     = "rule-1"
+      filter_and                             = null
+      abort_incomplete_multipart_upload_days = 1
+      transition                             = [{ days = null }]
+      expiration                             = { days = 30 }
+      noncurrent_version_transition          = [{ days = null }]
+      noncurrent_version_expiration          = { days = null }
+    }
+  ]
+}
+
 resource "aws_scheduler_schedule_group" "default" {
   count = var.eventbridge_scheduler_enabled ? 1 : 0
 
@@ -201,6 +228,77 @@ data "aws_iam_policy_document" "read_datadog_api_key_secret" {
     effect    = "Allow"
     actions   = ["secretsmanager:GetSecretValue"]
     resources = [data.aws_ssm_parameter.datadog_api_key_secret_arn[0].value]
+  }
+}
+
+resource "aws_ses_receipt_rule_set" "ffis_ingest" {
+  rule_set_name = "${var.namespace}-ffis_ingest"
+}
+
+resource "aws_ses_active_receipt_rule_set" "active" {
+  count = var.ses_active_receipt_rule_set_enabled ? 1 : 0
+
+  rule_set_name = aws_ses_receipt_rule_set.ffis_ingest.rule_set_name
+}
+
+resource "aws_ses_receipt_rule" "ffis_ingest" {
+  depends_on = [
+    module.email_delivery_bucket
+  ]
+  name          = "${var.namespace}-ffis_ingest"
+  rule_set_name = aws_ses_receipt_rule_set.ffis_ingest.rule_set_name
+  recipients    = [var.ffis_ingest_email_address]
+  enabled       = true
+  scan_enabled  = true
+  tls_policy    = "Require"
+
+  s3_action {
+    bucket_name       = module.email_delivery_bucket.bucket_id
+    position          = 1
+    object_key_prefix = "ses/ffis_ingest/new"
+  }
+
+}
+
+resource "aws_sqs_queue" "ffis_downloads" {
+  name = "ffis_downloads"
+
+  delay_seconds              = 0
+  visibility_timeout_seconds = 15 * 60
+  receive_wait_time_seconds  = 20
+  message_retention_seconds  = 5 * 60 * 60 * 24 # 5 days
+  max_message_size           = 1024             # 1 KB
+  sqs_managed_sse_enabled    = true
+}
+
+data "aws_iam_policy_document" "ses_source_data_s3_access" {
+  statement {
+    sid = "AllowFFISEmailDeliveryFromSES"
+    principals {
+      type        = "Service"
+      identifiers = ["ses.amazonaws.com"]
+    }
+
+    actions = [
+      "s3:PutObject",
+    ]
+
+    resources = ["${module.email_delivery_bucket.bucket_arn}/ses/*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceArn"
+      values = [
+        "arn:aws:ses:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:receipt-rule-set/${var.namespace}-ffis_ingest:receipt-rule/${var.namespace}-ffis_ingest"
+      ]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceAccount"
+      values = [
+        data.aws_caller_identity.current.account_id
+      ]
+    }
   }
 }
 
@@ -238,6 +336,29 @@ locals {
   lambda_layer_arns = compact([
     var.datadog_enabled ? local.datadog_extension_layer_arn : "",
   ])
+}
+
+resource "aws_s3_bucket_notification" "grant_source_data" {
+  bucket = module.grants_source_data_bucket.bucket_id
+
+  lambda_function {
+    lambda_function_arn = module.SplitGrantsGovXMLDB.lambda_function_arn
+    events              = ["s3:ObjectCreated:*"]
+    filter_prefix       = "sources/"
+    filter_suffix       = "/grants.gov/extract.xml"
+  }
+
+  lambda_function {
+    lambda_function_arn = module.EnqueueFFISDownload.lambda_function_arn
+    events              = ["s3:ObjectCreated:*"]
+    filter_prefix       = "sources/"
+    filter_suffix       = "/ffis/raw.eml"
+  }
+
+  depends_on = [
+    module.SplitGrantsGovXMLDB,
+    module.EnqueueFFISDownload,
+  ]
 }
 
 // Modules providing Lambda functions
@@ -278,4 +399,27 @@ module "SplitGrantsGovXMLDB" {
 
   grants_source_data_bucket_name   = module.grants_source_data_bucket.bucket_id
   grants_prepared_data_bucket_name = module.grants_prepared_data_bucket.bucket_id
+}
+
+module "EnqueueFFISDownload" {
+  source                                       = "./modules/EnqueueFFISDownload"
+  namespace                                    = var.namespace
+  function_name                                = "EnqueueFFISDownload"
+  permissions_boundary_arn                     = local.permissions_boundary_arn
+  lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
+  log_retention_in_days                        = var.lambda_default_log_retention_in_days
+  log_level                                    = var.lambda_default_log_level
+  lambda_code_path                             = local.lambda_code_path
+  lambda_arch                                  = var.lambda_arch
+  additional_environment_variables             = local.lambda_environment_variables
+  additional_lambda_execution_policy_documents = local.lambda_execution_policies
+  lambda_layer_arns                            = local.lambda_layer_arns
+  destination_queue_name                       = aws_sqs_queue.ffis_downloads.name
+
+  grants_source_data_bucket_name = module.grants_source_data_bucket.bucket_id
+
+  depends_on = [
+    module.grants_source_data_bucket,
+    aws_sqs_queue.ffis_downloads,
+  ]
 }

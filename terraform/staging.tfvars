@@ -5,6 +5,7 @@ datadog_enabled                       = true
 lambda_default_log_retention_in_days  = 30
 lambda_default_log_level              = "INFO"
 datadog_draft                         = true
+ffis_ingest_email_address             = "ffis-ingest@staging.grants.usdr.dev"
 
 // Only defined in staging
 datadog_metrics_metadata = {
