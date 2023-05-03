@@ -19,7 +19,7 @@ import (
 
 // error constants
 var (
-	ErrDownloadFailed = fmt.Errorf("Error downloading file")
+	ErrDownloadFailed = fmt.Errorf("error downloading file")
 )
 
 type S3UploaderAPI interface {
