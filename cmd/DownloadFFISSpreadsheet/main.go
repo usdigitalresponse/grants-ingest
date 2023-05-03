@@ -8,11 +8,13 @@ import (
 	"context"
 	"fmt"
 	goLog "log"
+	"net/http"
 
 	ddlambda "github.com/DataDog/datadog-lambda-go"
 	goenv "github.com/Netflix/go-env"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	s3manager "github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/usdigitalresponse/grants-ingest/internal/awsHelpers"
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
@@ -53,14 +55,7 @@ func main() {
 		s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
 			o.UsePathStyle = env.UsePathStyleS3Opt
 		})
-
-		sqsClient, err := awsHelpers.GetSQSClient(ctx)
-		if err != nil {
-			return fmt.Errorf("could not create AWS clients: %w", err)
-		}
-		if err != nil {
-			return fmt.Errorf("could not create AWS clients: %w", err)
-		}
-		return handleSQSEvent(ctx, sqsEvent, s3Client, sqsClient)
+		httpClient := http.Client{}
+		return handleSQSEvent(ctx, sqsEvent, s3manager.NewUploader(s3Client), &httpClient)
 	}, nil))
 }

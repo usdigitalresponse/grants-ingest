@@ -6,45 +6,33 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	s3manager "github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 
-	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
 	ffis "github.com/usdigitalresponse/grants-ingest/pkg/grantsSchemas/ffis"
 )
 
-type SQSAPI interface {
-	ReceiveMessage(ctx context.Context,
-		params *sqs.ReceiveMessageInput,
-		optFns ...func(*sqs.Options)) (*sqs.ReceiveMessageOutput, error)
-}
+// error constants
+var (
+	ErrDownloadFailed = fmt.Errorf("Error downloading file")
+)
 
-type S3API interface {
-	PutObject(ctx context.Context,
+type S3UploaderAPI interface {
+	Upload(ctx context.Context,
 		params *s3.PutObjectInput,
-		optFns ...func(*s3.Options)) (*s3.PutObjectOutput, error)
-
-	CreateMultipartUpload(ctx context.Context,
-		params *s3.CreateMultipartUploadInput,
-		optFns ...func(*s3.Options)) (*s3.CreateMultipartUploadOutput, error)
-	AbortMultipartUpload(ctx context.Context,
-		params *s3.AbortMultipartUploadInput,
-		optFns ...func(*s3.Options)) (*s3.AbortMultipartUploadOutput, error)
-
-	CompleteMultipartUpload(ctx context.Context,
-		params *s3.CompleteMultipartUploadInput,
-		optFns ...func(*s3.Options)) (*s3.CompleteMultipartUploadOutput, error)
-
-	UploadPart(ctx context.Context,
-		params *s3.UploadPartInput,
-		optFns ...func(*s3.Options)) (*s3.UploadPartOutput, error)
+		optFns ...func(*s3manager.Uploader)) (*s3manager.UploadOutput, error)
 }
 
-func handleSQSEvent(ctx context.Context, sqsEvent events.SQSEvent, s3client S3API, sqsclient SQSAPI) error {
+type HTTPClientAPI interface {
+	Get(url string) (resp *http.Response, err error)
+}
+
+func handleSQSEvent(ctx context.Context, sqsEvent events.SQSEvent, s3Uploader S3UploaderAPI, httpClient HTTPClientAPI) error {
 	msg := sqsEvent.Records[0].Body
 	log.Info(logger, "Received message", "message", msg)
 	var ffisMessage ffis.FFISMessageDownload
@@ -52,31 +40,33 @@ func handleSQSEvent(ctx context.Context, sqsEvent events.SQSEvent, s3client S3AP
 	if err != nil {
 		return fmt.Errorf("error unmarshalling SQS message: %w", err)
 	}
-
-	fileStr, err := parseSQSMessage(ffisMessage)
+	fileStr, err := downloadFile(ffisMessage, httpClient)
 	if err != nil {
 		return fmt.Errorf("error parsing SQS message: %w", err)
 	}
 	defer fileStr.Close()
-	err = writeToS3(ctx, s3client, fileStr, ffisMessage.SourceFileKey)
+	err = writeToS3(ctx, s3Uploader, fileStr, ffisMessage.SourceFileKey)
 	return err
 }
 
-func parseSQSMessage(msg ffis.FFISMessageDownload) (stream io.ReadCloser, err error) {
-	httpClient := http.Client{}
+func downloadFile(msg ffis.FFISMessageDownload, httpClient HTTPClientAPI) (stream io.ReadCloser, err error) {
 	resp, err := httpClient.Get(msg.DownloadURL)
 	if err != nil {
 		return nil, fmt.Errorf("error downloading file: %w", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("error downloading file: %w", ErrDownloadFailed)
 	}
 	log.Debug(logger, "Downloaded file", "url", msg.DownloadURL)
 	return resp.Body, nil
 }
 
-func writeToS3(ctx context.Context, s3client S3API, fileStr io.ReadCloser, sourceKey string) error {
+func writeToS3(ctx context.Context, s3Uploader S3UploaderAPI, fileStr io.ReadCloser, sourceKey string) error {
+	destinationKey := strings.Replace(sourceKey, "ffis/raw.eml", "ffis/download.xlsx", 1)
 	log.Info(logger, "Writing to S3", "sourceKey", sourceKey, "destinationBucket", env.DestinationBucket)
-	_, err := s3manager.NewUploader(s3client).Upload(ctx, &s3.PutObjectInput{
+	_, err := s3Uploader.Upload(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(env.DestinationBucket),
-		Key:    aws.String("ffis/test.xlsx"), // TODO
+		Key:    &destinationKey,
 		Body:   fileStr,
 	})
 	return err
