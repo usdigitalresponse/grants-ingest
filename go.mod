@@ -18,7 +18,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/johannesboyne/gofakes3 v0.0.0-20230310080033-c0edf658332b
 	github.com/stretchr/testify v1.8.2
-	gopkg.in/DataDog/dd-trace-go.v1 v1.50.0
+	gopkg.in/DataDog/dd-trace-go.v1 v1.50.1
 )
 
 require (
