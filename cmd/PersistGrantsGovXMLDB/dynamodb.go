@@ -36,9 +36,6 @@ func UpdateDynamoDBItem(ctx context.Context, c DynamoDBUpdateItemAPI, table stri
 
 func buildKey(o opportunity) (map[string]types.AttributeValue, error) {
 	oid, err := attributevalue.Marshal(o.OpportunityID)
-	if err != nil {
-		return nil, err
-	}
 
 	return map[string]types.AttributeValue{"grant_id": oid}, err
 }

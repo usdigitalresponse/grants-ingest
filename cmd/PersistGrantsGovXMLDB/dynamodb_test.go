@@ -61,13 +61,15 @@ func TestUploadDynamoDBItem(t *testing.T) {
 					return &dynamodb.UpdateItemOutput{}, testError
 				})
 			},
-			nil,
+			testError,
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			err := UpdateDynamoDBItem(context.TODO(), tt.client(t), testTableName, testOpportunity)
 			if tt.expErr != nil {
 				assert.EqualError(t, err, tt.expErr.Error())
+			} else {
+				assert.NoError(t, err)
 			}
 		})
 	}
