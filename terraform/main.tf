@@ -438,8 +438,8 @@ module "DownloadFFISSpreadsheet" {
   additional_lambda_execution_policy_documents = local.lambda_execution_policies
   lambda_layer_arns                            = local.lambda_layer_arns
 
-  source_queue_name                            = aws_sqs_queue.ffis_downloads.name
-  download_target_bucket_name                  = module.grants_source_data_bucket.bucket_id
+  source_queue_name           = aws_sqs_queue.ffis_downloads.name
+  download_target_bucket_name = module.grants_source_data_bucket.bucket_id
 
   depends_on = [
     module.grants_source_data_bucket,

@@ -90,10 +90,10 @@ module "lambda_function" {
 
   event_source_mapping = {
     sqs = {
-      enabled = true
-      batch_size = 1
+      enabled                            = true
+      batch_size                         = 1
       maximum_batching_window_in_seconds = 20
-      event_source_arn = data.aws_sqs_queue.ffis_downloads.arn
+      event_source_arn                   = data.aws_sqs_queue.ffis_downloads.arn
       scaling_config = {
         maximum_concurrency = 1
       }
