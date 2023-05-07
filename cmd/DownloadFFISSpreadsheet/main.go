@@ -19,6 +19,7 @@ import (
 	"github.com/usdigitalresponse/grants-ingest/internal/awsHelpers"
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
 	awstrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/aws/aws-sdk-go-v2/aws"
+	httptrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/net/http"
 )
 
 type Environment struct {
@@ -56,7 +57,7 @@ func main() {
 			o.UsePathStyle = env.UsePathStyleS3Opt
 		})
 		httpClient := &http.Client{}
-		httptrace.WrapClient(http.DefaultClient)
+		httptrace.WrapClient(httpClient)
 		return handleSQSEvent(ctx, sqsEvent, s3manager.NewUploader(s3Client), httpClient)
 	}, nil))
 }
