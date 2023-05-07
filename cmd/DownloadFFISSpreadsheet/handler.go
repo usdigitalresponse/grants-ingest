@@ -66,7 +66,7 @@ func writeToS3(ctx context.Context, s3Uploader S3UploaderAPI, fileStr io.ReadClo
 	log.Info(logger, "Writing to S3", "sourceKey", sourceKey, "destinationBucket", env.DestinationBucket, "destinationKey", destinationKey)
 	_, err := s3Uploader.Upload(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(env.DestinationBucket),
-		Key:    &destinationKey,
+		Key:    aws.String(destinationKey),
 		Body:   fileStr,
 	})
 	return err

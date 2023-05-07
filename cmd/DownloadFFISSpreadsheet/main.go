@@ -55,7 +55,8 @@ func main() {
 		s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
 			o.UsePathStyle = env.UsePathStyleS3Opt
 		})
-		httpClient := http.Client{}
-		return handleSQSEvent(ctx, sqsEvent, s3manager.NewUploader(s3Client), &httpClient)
+		httpClient := &http.Client{}
+		httptrace.WrapClient(http.DefaultClient)
+		return handleSQSEvent(ctx, sqsEvent, s3manager.NewUploader(s3Client), httpClient)
 	}, nil))
 }
