@@ -9,6 +9,7 @@ import (
 	"fmt"
 	goLog "log"
 	"net/http"
+	"time"
 
 	ddlambda "github.com/DataDog/datadog-lambda-go"
 	goenv "github.com/Netflix/go-env"
@@ -23,10 +24,11 @@ import (
 )
 
 type Environment struct {
-	LogLevel          string `env:"LOG_LEVEL,default=INFO"`
-	UsePathStyleS3Opt bool   `env:"S3_USE_PATH_STYLE,default=false"`
-	DestinationBucket string `env:"TARGET_BUCKET_NAME,required=true"`
-	Extras            goenv.EnvSet
+	LogLevel           string        `env:"LOG_LEVEL,default=INFO"`
+	UsePathStyleS3Opt  bool          `env:"S3_USE_PATH_STYLE,default=false"`
+	DestinationBucket  string        `env:"TARGET_BUCKET_NAME,required=true"`
+	MaxDownloadBackoff time.Duration `env:"MAX_DOWNLOAD_BACKOFF,default=20s"`
+	Extras             goenv.EnvSet
 }
 
 var (

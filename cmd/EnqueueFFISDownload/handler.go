@@ -17,7 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
-	ffis "github.com/usdigitalresponse/grants-ingest/pkg/grantsSchemas/ffis"
+	"github.com/usdigitalresponse/grants-ingest/pkg/grantsSchemas/ffis"
 )
 
 type SQSAPI interface {

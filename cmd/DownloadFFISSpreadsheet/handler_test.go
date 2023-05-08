@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	s3manager "github.com/aws/aws-sdk-go-v2/feature/s3/manager"
@@ -40,7 +41,7 @@ type MockHTTP struct {
 	statusCode    int
 }
 
-func (mockHTTP *MockHTTP) Get(url string) (resp *http.Response, err error) {
+func (mockHTTP *MockHTTP) Do(req *http.Request) (resp *http.Response, err error) {
 	bodyReaderClose := io.NopCloser(bytes.NewReader(mockHTTP.testContent))
 	mockStatusCode := http.StatusOK
 	if mockHTTP.statusCode != 0 {
@@ -51,6 +52,7 @@ func (mockHTTP *MockHTTP) Get(url string) (resp *http.Response, err error) {
 
 func TestHandleS3Event(t *testing.T) {
 	logger = log.NewNopLogger()
+	env.MaxDownloadBackoff = 100 * time.Millisecond
 	var tests = []struct {
 		name               string
 		message            ffis.FFISMessageDownload

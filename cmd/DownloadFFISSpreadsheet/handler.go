@@ -7,14 +7,19 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
+
+	"github.com/cenkalti/backoff/v4"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 
 	"github.com/aws/aws-lambda-go/events"
 	s3manager "github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
-	ffis "github.com/usdigitalresponse/grants-ingest/pkg/grantsSchemas/ffis"
+	"github.com/usdigitalresponse/grants-ingest/pkg/grantsSchemas/ffis"
 )
 
 // error constants
@@ -29,7 +34,7 @@ type S3UploaderAPI interface {
 }
 
 type HTTPClientAPI interface {
-	Get(url string) (resp *http.Response, err error)
+	Do(req *http.Request) (*http.Response, error)
 }
 
 func handleSQSEvent(ctx context.Context, sqsEvent events.SQSEvent, s3Uploader S3UploaderAPI, httpClient HTTPClientAPI) error {
@@ -40,17 +45,17 @@ func handleSQSEvent(ctx context.Context, sqsEvent events.SQSEvent, s3Uploader S3
 	if err != nil {
 		return fmt.Errorf("error unmarshalling SQS message: %w", err)
 	}
-	fileStr, err := downloadFile(ffisMessage, httpClient)
+	fileStream, err := downloadFile(ctx, ffisMessage, httpClient)
 	if err != nil {
 		return fmt.Errorf("error parsing SQS message: %w", err)
 	}
-	defer fileStr.Close()
-	err = writeToS3(ctx, s3Uploader, fileStr, ffisMessage.SourceFileKey)
+	defer fileStream.Close()
+	err = writeToS3(ctx, s3Uploader, fileStream, ffisMessage.SourceFileKey)
 	return err
 }
 
-func downloadFile(msg ffis.FFISMessageDownload, httpClient HTTPClientAPI) (stream io.ReadCloser, err error) {
-	resp, err := httpClient.Get(msg.DownloadURL)
+func downloadFile(ctx context.Context, msg ffis.FFISMessageDownload, httpClient HTTPClientAPI) (stream io.ReadCloser, err error) {
+	resp, err := startDownload(ctx, httpClient, msg.DownloadURL)
 	if err != nil {
 		return nil, fmt.Errorf("error downloading file: %w", err)
 	}
@@ -61,13 +66,40 @@ func downloadFile(msg ffis.FFISMessageDownload, httpClient HTTPClientAPI) (strea
 	return resp.Body, nil
 }
 
-func writeToS3(ctx context.Context, s3Uploader S3UploaderAPI, fileStr io.ReadCloser, sourceKey string) error {
+// startDownload starts a new download request and returns the response.
+// Failed requests retry until env.MaxDownloadBackoff elapses.
+// Returns a non-nil error if the request either could not be initialized or never succeeded.
+func startDownload(ctx context.Context, httpClient HTTPClientAPI, url string) (resp *http.Response, err error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	b := backoff.NewExponentialBackOff()
+	b.MaxElapsedTime = env.MaxDownloadBackoff
+	attempt := 1
+	span, spanCtx := tracer.StartSpanFromContext(ctx, "download.start")
+	err = backoff.RetryNotify(func() (err error) {
+		println("attempt", attempt)
+		attemptSpan, _ := tracer.StartSpanFromContext(spanCtx, fmt.Sprintf("attempt.%d", attempt))
+		resp, err = httpClient.Do(req)
+		attemptSpan.Finish(tracer.WithError(err))
+		return err
+	}, b, func(error, time.Duration) { attempt++ })
+	span.Finish(tracer.WithError(err))
+	return resp, err
+}
+
+// writeToS3 writes the contents of fileStr to the S3 bucket provied by the
+// S3UploaderAPI interface.
+func writeToS3(ctx context.Context, s3Uploader S3UploaderAPI, fileStream io.ReadCloser, sourceKey string) error {
 	destinationKey := strings.Replace(sourceKey, "ffis/raw.eml", "ffis/download.xlsx", 1)
 	log.Info(logger, "Writing to S3", "sourceKey", sourceKey, "destinationBucket", env.DestinationBucket, "destinationKey", destinationKey)
 	_, err := s3Uploader.Upload(ctx, &s3.PutObjectInput{
-		Bucket: aws.String(env.DestinationBucket),
-		Key:    aws.String(destinationKey),
-		Body:   fileStr,
+		Bucket:               aws.String(env.DestinationBucket),
+		Key:                  aws.String(destinationKey),
+		Body:                 fileStream,
+		ServerSideEncryption: types.ServerSideEncryptionAes256,
 	})
 	return err
 }
