@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"mime"
@@ -16,6 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
+	"github.com/usdigitalresponse/grants-ingest/pkg/grantsSchemas/ffis"
 )
 
 type SQSAPI interface {
@@ -38,7 +40,8 @@ var (
 )
 
 func handleS3Event(ctx context.Context, s3Event events.S3Event, s3client S3API, sqsclient SQSAPI) error {
-	emailBody, err := getEmailFromS3Event(s3client, s3Event, ctx)
+	uploadedFile := s3Event.Records[0].S3.Object.Key
+	emailBody, err := getEmailFromS3Event(ctx, s3client, s3Event, uploadedFile)
 	if err != nil {
 		return log.Errorf(logger, "Error reading email from S3", err)
 	}
@@ -56,7 +59,7 @@ func handleS3Event(ctx context.Context, s3Event events.S3Event, s3client S3API, 
 	log.Info(logger, "Parsed URL from email body", "url", url)
 
 	// Enqueue the URL for download
-	err = enqueueURLForDownload(ctx, url, sqsclient)
+	err = enqueueURLForDownload(ctx, sqsclient, url, uploadedFile)
 	if err != nil {
 		return log.Errorf(logger, "Failed to enqueue parsed URL", err)
 	}
@@ -109,11 +112,21 @@ func parseURLFromEmailBody(plaintext string) (string, error) {
 	return matches[0], nil
 }
 
-func enqueueURLForDownload(ctx context.Context, url string, client SQSAPI) error {
+func enqueueURLForDownload(ctx context.Context, client SQSAPI, url string, fileKey string) error {
+	messageObj := ffis.FFISMessageDownload{
+		DownloadURL:   url,
+		SourceFileKey: fileKey,
+	}
+	serializedMessage, err := json.Marshal(messageObj)
+	if err != nil {
+		return err
+	}
+
 	message := sqs.SendMessageInput{
-		MessageBody: aws.String(url),
+		MessageBody: aws.String(string(serializedMessage)),
 		QueueUrl:    aws.String(env.DestinationQueueURL),
 	}
+
 	output, err := client.SendMessage(ctx, &message)
 
 	if err != nil {
@@ -123,15 +136,15 @@ func enqueueURLForDownload(ctx context.Context, url string, client SQSAPI) error
 	return nil
 }
 
-func getEmailFromS3Event(s3client S3API, s3Event events.S3Event, ctx context.Context) (io.ReadCloser, error) {
+func getEmailFromS3Event(ctx context.Context, s3client S3API, s3Event events.S3Event, uploadedFileName string) (io.ReadCloser, error) {
 	bucket := s3Event.Records[0].S3.Bucket.Name
-	uploadedFile := s3Event.Records[0].S3.Object.Key
-	logger := log.With(logger, "bucket", bucket, "key", uploadedFile)
+
+	logger := log.With(logger, "bucket", bucket, "key", uploadedFileName)
 	log.Debug(logger, "Reading from bucket")
 	// Get the email body
 	resp, err := s3client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
-		Key:    aws.String(uploadedFile),
+		Key:    aws.String(uploadedFileName),
 	})
 	if err != nil {
 		return nil, err
