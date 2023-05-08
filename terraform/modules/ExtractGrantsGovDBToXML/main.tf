@@ -42,6 +42,14 @@ module "lambda_execution_policy" {
         "${data.aws_s3_bucket.source_data.arn}/sources/*/*/*/grants.gov/extract.xml"
       ]
     }
+    AllowS3UploadTemporaryData = {
+      effect  = "Allow"
+      actions = ["s3:PutObject"]
+      resources = [
+        # Path: tmp/YYYY/mm/dd/grants.gov/extract.xml
+        "${data.aws_s3_bucket.source_data.arn}/tmp/*/*/*/grants.gov/extract.xml"
+      ]
+    }
   }
 }
 

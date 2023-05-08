@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -15,7 +16,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/go-kit/log"
-	"github.com/hashicorp/go-multierror"
 	"github.com/johannesboyne/gofakes3"
 	"github.com/johannesboyne/gofakes3/backend/s3mem"
 	"github.com/stretchr/testify/assert"
@@ -66,8 +66,9 @@ func setupS3ForTesting(t *testing.T, sourceBucketName string) (*s3.Client, aws.C
 	// to support requests to http://<bucketname>.127.0.0.1:32947/...
 	client := s3.NewFromConfig(cfg, func(o *s3.Options) { o.UsePathStyle = true })
 	ctx := context.TODO()
-	bucketsToCreate := []string{sourceBucketName, env.DestinationBucket}
+	bucketsToCreate := []string{sourceBucketName, env.GrantsDataBucket}
 	for _, bucketName := range bucketsToCreate {
+		fmt.Println(bucketName)
 		_, err := client.CreateBucket(ctx, &s3.CreateBucketInput{Bucket: aws.String(bucketName)})
 		if err != nil {
 			return client, cfg, err
@@ -79,9 +80,7 @@ func setupS3ForTesting(t *testing.T, sourceBucketName string) (*s3.Client, aws.C
 func TestLambdaInvocationScenarios(t *testing.T) {
 	setupLambdaEnvForTesting(t)
 
-	t.Run("First test", func(t *testing.T) {
-		fmt.Printf("%+v\n", t)
-		setupLambdaEnvForTesting(t)
+	t.Run("Wrong source bucket raises an error", func(t *testing.T) {
 		_, cfg, err := setupS3ForTesting(t, "source-bucket")
 		require.NoError(t, err)
 
@@ -90,19 +89,30 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 		err = handleS3EventWithConfig(cfg, ctx, events.S3Event{
 			Records: []events.S3EventRecord{
 				{S3: events.S3Entity{
-					Bucket: events.S3Bucket{Name: "source-bucket"},
+					Bucket: events.S3Bucket{Name: "not-source-bucket"},
 					Object: events.S3Object{Key: "does/not/matter"},
 				}},
 			},
 		})
 		require.Error(t, err)
-		if errs, ok := err.(*multierror.Error); ok {
-			for _, wrapped := range errs.WrappedErrors() {
-				assert.ErrorIs(t, wrapped, context.Canceled,
-					"context.Canceled missing in accumulated error's chain")
-			}
-		} else {
-			require.Fail(t, "Invocation error could not be interpreted as *multierror.Error")
-		}
+		assert.Equal(t, errors.New("will not process any s3 events that belong to other buckets"), err)
+	})
+
+	t.Run("Wrong file ending raises an error", func(t *testing.T) {
+		_, cfg, err := setupS3ForTesting(t, "source-bucket")
+		require.NoError(t, err)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		err = handleS3EventWithConfig(cfg, ctx, events.S3Event{
+			Records: []events.S3EventRecord{
+				{S3: events.S3Entity{
+					Bucket: events.S3Bucket{Name: "test-destination-bucket"},
+					Object: events.S3Object{Key: "source/2023/01/01/invalid.zip"},
+				}},
+			},
+		})
+		require.Error(t, err)
+		assert.Equal(t, errors.New("will not process any files that are not archive.zip"), err)
 	})
 }

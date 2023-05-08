@@ -18,7 +18,7 @@ import (
 type Environment struct {
 	LogLevel             string `env:"LOG_LEVEL,default=INFO"`
 	DownloadChunkLimit   int64  `env:"DOWNLOAD_CHUNK_LIMIT,default=10"`
-	DestinationBucket    string `env:"GRANTS_SOURCE_DATA_BUCKET_NAME,required=true"`
+	GrantsDataBucket     string `env:"GRANTS_SOURCE_DATA_BUCKET_NAME,required=true"`
 	MaxConcurrentUploads int    `env:"MAX_CONCURRENT_UPLOADS,default=1"`
 	UsePathStyleS3Opt    bool   `env:"S3_USE_PATH_STYLE,default=false"`
 	Extras               goenv.EnvSet
@@ -45,7 +45,7 @@ func main() {
 			return fmt.Errorf("could not create AWS SDK config: %w", err)
 		}
 		awstrace.AppendMiddleware(&cfg)
-		log.Debug(logger, "Starting Lambda")
+		log.Debug(logger, "Starting Lambda inner")
 		return handleS3EventWithConfig(cfg, ctx, s3Event)
 	}, nil))
 }
