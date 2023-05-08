@@ -80,7 +80,6 @@ func startDownload(ctx context.Context, httpClient HTTPClientAPI, url string) (r
 	attempt := 1
 	span, spanCtx := tracer.StartSpanFromContext(ctx, "download.start")
 	err = backoff.RetryNotify(func() (err error) {
-		println("attempt", attempt)
 		attemptSpan, _ := tracer.StartSpanFromContext(spanCtx, fmt.Sprintf("attempt.%d", attempt))
 		resp, err = httpClient.Do(req)
 		attemptSpan.Finish(tracer.WithError(err))
