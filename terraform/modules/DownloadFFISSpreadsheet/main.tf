@@ -40,7 +40,7 @@ module "lambda_execution_policy" {
     }
     AllowSQSGet = {
       effect  = "Allow"
-      actions = ["sqs:ReceiveMessage"]
+      actions = ["sqs:ReceiveMessage", "sqs:DeleteMessage"]
       resources = [
         data.aws_sqs_queue.ffis_downloads.arn,
       ]
