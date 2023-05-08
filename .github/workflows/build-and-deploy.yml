@@ -59,6 +59,8 @@ jobs:
         uses: arduino/setup-task@v1
         with:
           version: 3.x
+      - name: Pre-build
+        run: task build
       - name: Get project TF version
         id: get_version
         run: echo "TF_VERSION=$(cat .terraform-version | tr -d '[:space:]')" | tee -a $GITHUB_OUTPUT
