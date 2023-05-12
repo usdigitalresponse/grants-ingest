@@ -6,13 +6,13 @@ require (
 	github.com/DataDog/datadog-lambda-go v1.9.0
 	github.com/Netflix/go-env v0.0.0-20220526054621-78278af1949d
 	github.com/aws/aws-lambda-go v1.41.0
-	github.com/aws/aws-sdk-go v1.44.168
+	github.com/aws/aws-sdk-go v1.44.262
 	github.com/aws/aws-sdk-go-v2 v1.18.0
-	github.com/aws/aws-sdk-go-v2/config v1.18.23
-	github.com/aws/aws-sdk-go-v2/credentials v1.13.22
+	github.com/aws/aws-sdk-go-v2/config v1.18.25
+	github.com/aws/aws-sdk-go-v2/credentials v1.13.24
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.10.23
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.4.50
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.65
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.67
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.19.6
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.33.1
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.22.0
@@ -21,7 +21,6 @@ require (
 	github.com/go-kit/log v0.2.1
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/johannesboyne/gofakes3 v0.0.0-20230310080033-c0edf658332b
-	github.com/krolaw/zipstream v0.0.0-20180621105154-0a2661891f94
 	github.com/stretchr/testify v1.8.2
 	gopkg.in/DataDog/dd-trace-go.v1 v1.50.1
 )
@@ -51,7 +50,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/kms v1.19.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.12.10 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.14.10 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.18.11 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.19.0 // indirect
 	github.com/aws/aws-xray-sdk-go v1.8.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect

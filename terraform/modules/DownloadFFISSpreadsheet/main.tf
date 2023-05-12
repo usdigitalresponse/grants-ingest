@@ -102,6 +102,7 @@ module "lambda_function" {
 
   allowed_triggers = {
     SQSQueueNotification = {
+      principal     = "sqs.amazonaws.com"
       sqs_queue_arn = data.aws_sqs_queue.ffis_downloads.arn
       batch_size    = 1
     }
