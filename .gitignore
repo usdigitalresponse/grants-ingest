@@ -5,6 +5,9 @@
 *.so
 *.dylib
 
+# MacOS
+.DS_Store
+
 # IDE settings
 .idea/
 .vscode/
