@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"os"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/go-kit/log"
+	"github.com/usdigitalresponse/grants-ingest/pkg/grantsSchemas/ffis"
 )
 
 type MockS3 struct {
@@ -64,6 +66,7 @@ func TestHandleS3Event(t *testing.T) {
 			}
 			mocks3, mocksqs := getMockClients()
 			mocks3.content = string(content)
+			s3FileKey := "test/email/file.eml"
 			ctx := context.Background()
 			s3Event := events.S3Event{
 				Records: []events.S3EventRecord{
@@ -73,7 +76,7 @@ func TestHandleS3Event(t *testing.T) {
 								Name: "test-bucket",
 							},
 							Object: events.S3Object{
-								Key: "test/email/file.eml",
+								Key: s3FileKey,
 							},
 						},
 					},
@@ -83,11 +86,19 @@ func TestHandleS3Event(t *testing.T) {
 			err = handleS3Event(ctx, s3Event, mocks3, mocksqs)
 
 			if test.expectedURL != "" {
+				var message ffis.FFISMessageDownload
 				if err != nil {
 					t.Errorf("Error parsing S3 event: %v", err)
 				}
-				if *mocksqs.message != test.expectedURL {
-					t.Errorf("Expected message %v, got %v", test.expectedURL, mocksqs.message)
+				err = json.Unmarshal([]byte(*mocksqs.message), &message)
+				if err != nil {
+					t.Errorf("Error parsing SQS message: %v", err)
+				}
+				if message.DownloadURL != test.expectedURL {
+					t.Errorf("Expected message %v, got %v", test.expectedURL, message.DownloadURL)
+				}
+				if message.SourceFileKey != s3FileKey {
+					t.Errorf("Expected message %v, got %v", s3FileKey, message.SourceFileKey)
 				}
 			} else {
 				// parse expected bad message
