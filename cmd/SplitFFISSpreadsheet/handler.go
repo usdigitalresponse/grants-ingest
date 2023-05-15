@@ -58,8 +58,6 @@ func handleS3EventWithConfig(cfg aws.Config, ctx context.Context, s3Event events
 			logger := log.With(logger, "event_name", record.EventName, "record_index", i,
 				"source_bucket", sourceBucket, "source_object_key", sourceKey)
 
-			log.Info(logger, "Splitting ffis.org spreadsheet into individual JSON grant records")
-
 			log.Info(logger, "Downloading ffis.org spreadsheet from S3")
 
 			resp, err := s3svc.GetObject(recordCtx, &s3.GetObjectInput{

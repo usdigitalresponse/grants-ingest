@@ -383,7 +383,7 @@ resource "aws_s3_bucket_notification" "grant_source_data" {
   }
 
   lambda_function {
-    lambda_function_arn = module.EnqueueFFISDownload.lambda_function_arn
+    lambda_function_arn = module.SplitFFISSpreadsheet.lambda_function_arn
     events              = ["s3:ObjectCreated:*"]
     filter_prefix       = "sources/"
     filter_suffix       = "/ffis/download.xlsx"
@@ -392,6 +392,7 @@ resource "aws_s3_bucket_notification" "grant_source_data" {
   depends_on = [
     module.SplitGrantsGovXMLDB,
     module.EnqueueFFISDownload,
+    module.SplitFFISSpreadsheet,
   ]
 }
 
