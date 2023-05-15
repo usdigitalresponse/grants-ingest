@@ -76,3 +76,13 @@ variable "grants_source_data_bucket_name" {
   description = "Name of the S3 bucket used to store grants source data."
   type        = string
 }
+
+variable "grants_prepared_dynamodb_table_name" {
+  description = "Name of the DynamoDB table used to persist grants prepared data."
+  type        = string
+}
+
+variable "grants_prepared_dynamodb_table_arn" {
+  description = "ARN of the DynamoDB table used to persist grants prepared data."
+  type        = string
+}

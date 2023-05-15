@@ -194,3 +194,9 @@ variable "ses_active_receipt_rule_set_enabled" {
   type        = bool
   default     = true
 }
+
+variable "dynamodb_contributor_insights_enabled" {
+  description = "If false, disable DynamoDB contributor insights in CloudWatch. This should only be false in local development."
+  type        = bool
+  default     = true
+}

@@ -31,14 +31,22 @@ module "lambda_execution_policy" {
   iam_source_policy_documents = var.additional_lambda_execution_policy_documents
   iam_policy_statements = {
     AllowS3DownloadSourceData = {
-      effect  = "Allow"
-      actions = ["s3:GetObject"]
+      effect = "Allow"
+      actions = ["s3:GetObject",
+      "s3:ListBucket"]
       resources = [
         # Path: sources/YYYY/mm/dd//ffis.org/v1.json
         "${data.aws_s3_bucket.source_data.arn}/sources/*/*/*/ffis.org/v1.json"
       ]
     }
-    //TODO dynamo db
+    AllowDynamoDBPreparedData = {
+      effect = "Allow"
+      actions = [
+        "dynamodb:ListTables",
+        "dynamodb:UpdateItem"
+      ]
+      resources = [var.grants_prepared_dynamodb_table_arn]
+    }
   }
 }
 
@@ -76,9 +84,10 @@ module "lambda_function" {
   timeout     = 30 # seconds
   memory_size = 128
   environment_variables = merge(var.additional_environment_variables, {
-    DD_TAGS           = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
-    LOG_LEVEL         = var.log_level
-    S3_USE_PATH_STYLE = "true"
+    DD_TAGS                       = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
+    LOG_LEVEL                     = var.log_level
+    S3_USE_PATH_STYLE             = "true"
+    GRANTS_PREPARED_DYNAMODB_NAME = var.grants_prepared_dynamodb_table_name
   })
 
   allowed_triggers = {

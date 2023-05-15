@@ -231,6 +231,26 @@ data "aws_iam_policy_document" "read_datadog_api_key_secret" {
   }
 }
 
+module "grants_prepared_dynamodb_table" {
+  source  = "cloudposse/dynamodb/aws"
+  version = "0.32.0"
+  context = module.this.context
+
+  name                          = "prepareddata"
+  hash_key                      = "grant_id"
+  table_class                   = "STANDARD"
+  enable_streams                = true
+  stream_view_type              = "NEW_AND_OLD_IMAGES"
+  enable_point_in_time_recovery = true
+  enable_encryption             = true
+}
+
+resource "aws_dynamodb_contributor_insights" "grants_prepared_dynamodb_main" {
+  count = var.dynamodb_contributor_insights_enabled ? 1 : 0
+
+  table_name = module.grants_prepared_dynamodb_table.table_name
+}
+
 resource "aws_ses_receipt_rule_set" "ffis_ingest" {
   rule_set_name = "${var.namespace}-ffis_ingest"
 }
@@ -355,9 +375,17 @@ resource "aws_s3_bucket_notification" "grant_source_data" {
     filter_suffix       = "/ffis/raw.eml"
   }
 
+  lambda_function {
+    lambda_function_arn = module.PersistFFISData.lambda_function_arn
+    events              = ["s3:ObjectCreated:*"]
+    filter_prefix       = "sources/"
+    filter_suffix       = "/ffis.org/v1.json"
+  }
+
   depends_on = [
     module.SplitGrantsGovXMLDB,
     module.EnqueueFFISDownload,
+    module.PersistFFISData,
   ]
 }
 
@@ -461,7 +489,9 @@ module "PersistFFISData" {
   additional_lambda_execution_policy_documents = local.lambda_execution_policies
   lambda_layer_arns                            = local.lambda_layer_arns
 
-  grants_source_data_bucket_name = module.grants_source_data_bucket.bucket_id
+  grants_source_data_bucket_name      = module.grants_source_data_bucket.bucket_id
+  grants_prepared_dynamodb_table_name = module.grants_prepared_dynamodb_table.table_name
+  grants_prepared_dynamodb_table_arn  = module.grants_prepared_dynamodb_table.table_arn
 
   depends_on = [
     module.grants_source_data_bucket,
