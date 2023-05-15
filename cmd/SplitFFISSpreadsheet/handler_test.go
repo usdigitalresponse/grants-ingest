@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strconv"
 	"testing"
 	"time"
 
@@ -30,10 +31,9 @@ import (
 
 func TestOpportunityS3ObjectKey(t *testing.T) {
 	opp := opportunity{
-		GrantID:   123456,
-		OppNumber: "ABC-0003065",
+		GrantID: 123456,
 	}
-	assert.Equal(t, opp.S3ObjectKey(), "123456/ABC-0003065/ffis.org/v1.json")
+	assert.Equal(t, opp.S3ObjectKey(), "123/123456/ffis.org/v1.json")
 }
 
 func setupLambdaEnvForTesting(t *testing.T) {
@@ -142,7 +142,7 @@ func TestLambaInvocation(t *testing.T) {
 		})
 		require.NoError(t, invocationErr)
 
-		key := fmt.Sprintf("%d/%s/ffis.org/v1.json", expectedOpp.GrantID, expectedOpp.OppNumber)
+		key := fmt.Sprintf("%s/%d/ffis.org/v1.json", strconv.FormatInt(expectedOpp.GrantID, 10)[:3], expectedOpp.GrantID)
 
 		resp, err := s3client.GetObject(context.TODO(), &s3.GetObjectInput{
 			Bucket: aws.String(env.DestinationBucket),

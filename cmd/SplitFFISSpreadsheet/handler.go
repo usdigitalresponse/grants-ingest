@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -23,7 +24,8 @@ type opportunity ffis.FFISFundingOpportunity
 
 // S3ObjectKey returns a string to use as the object key when saving the opportunity to an S3 bucket.
 func (o *opportunity) S3ObjectKey() string {
-	return fmt.Sprintf("%d/%s/ffis.org/v1.json", o.GrantID, o.OppNumber)
+	firstThree := strconv.FormatInt(o.GrantID, 10)[:3]
+	return fmt.Sprintf("%s/%d/ffis.org/v1.json", firstThree, o.GrantID)
 }
 
 // handleS3Event handles events representing S3 bucket notifications of type "ObjectCreated:*"
