@@ -74,7 +74,10 @@ func handleS3EventWithConfig(cfg aws.Config, ctx context.Context, s3Event events
 
 			defer resp.Body.Close()
 
-			parsedOpportunities, err := parseXLSXFile(resp.Body)
+			log.Info(logger, "Parsing excel file")
+
+			parsedOpportunities, err := parseXLSXFile(resp.Body, logger)
+
 			if err != nil {
 				log.Error(logger, "Error parsing excel file: ", err)
 				return err
@@ -123,7 +126,7 @@ func handleS3EventWithConfig(cfg aws.Config, ctx context.Context, s3Event events
 	return nil
 }
 
-// processOpportunities
+// processOpportunities consumes opportunities from the channel and uploads them to S3.
 func processOpportunities(ctx context.Context, svc *s3.Client, ch <-chan opportunity) (errs error) {
 	span, ctx := tracer.StartSpanFromContext(ctx, "processing.worker")
 
@@ -166,7 +169,7 @@ func processOpportunities(ctx context.Context, svc *s3.Client, ch <-chan opportu
 	}
 }
 
-// processOpportunity
+// processOpportunity marshals the opportunity to JSON and uploads it to S3.
 func processOpportunity(ctx context.Context, svc S3ReadWriteObjectAPI, opp opportunity) error {
 	logger := log.With(logger,
 		"opportunity_id", opp.GrantID, "opportunity_number", opp.OppNumber)

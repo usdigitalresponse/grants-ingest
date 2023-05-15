@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-kit/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/usdigitalresponse/grants-ingest/pkg/grantsSchemas/ffis"
 )
@@ -13,7 +14,10 @@ func TestParseXLSXFile_good(t *testing.T) {
 	excelFixture, err := os.Open("fixtures/example_spreadsheet.xlsx")
 	assert.NoError(t, err, "Error opening spreadsheet fixture")
 
-	opportunities, err := parseXLSXFile(excelFixture)
+	// Ignore logging in this test
+	logger = log.NewNopLogger()
+
+	opportunities, err := parseXLSXFile(excelFixture, logger)
 	assert.NoError(t, err)
 	assert.NotNil(t, opportunities)
 
