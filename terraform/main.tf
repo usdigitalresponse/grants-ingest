@@ -44,8 +44,15 @@ data "aws_partition" "current" {}
 data "aws_caller_identity" "current" {}
 
 locals {
-  lambda_code_path         = coalesce(var.lambda_code_path, "${path.module}/..")
-  permissions_boundary_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/${var.permissions_boundary_policy_name}"
+  lambda_code_path = coalesce(var.lambda_code_path, "${path.module}/..")
+  permissions_boundary_arn = !can(coalesce(var.permissions_boundary_policy_name)) ? null : join(":", [
+    "arn",
+    data.aws_partition.current.id,
+    "iam",
+    "",
+    data.aws_caller_identity.current.account_id,
+    "policy/${var.permissions_boundary_policy_name}"
+  ])
 
   datadog_extension_layer_arn = join(":", [
     "arn",
@@ -389,6 +396,20 @@ resource "aws_s3_bucket_notification" "grant_source_data" {
   ]
 }
 
+resource "aws_s3_bucket_notification" "grant_prepared_data" {
+  bucket = module.grants_prepared_data_bucket.bucket_id
+
+  lambda_function {
+    lambda_function_arn = module.PersistGrantsGovXMLDB.lambda_function_arn
+    events              = ["s3:ObjectCreated:*"]
+    filter_suffix       = "/grants.gov/v2.xml"
+  }
+
+  depends_on = [
+    module.PersistGrantsGovXMLDB
+  ]
+}
+
 // Modules providing Lambda functions
 module "DownloadGrantsGovDB" {
   source = "./modules/DownloadGrantsGovDB"
@@ -450,6 +471,26 @@ module "EnqueueFFISDownload" {
     module.grants_source_data_bucket,
     aws_sqs_queue.ffis_downloads,
   ]
+}
+
+module "PersistGrantsGovXMLDB" {
+  source = "./modules/PersistGrantsGovXMLDB"
+
+  namespace                                    = var.namespace
+  function_name                                = "PersistGrantsGovXMLDB"
+  permissions_boundary_arn                     = local.permissions_boundary_arn
+  lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
+  log_retention_in_days                        = var.lambda_default_log_retention_in_days
+  log_level                                    = var.lambda_default_log_level
+  lambda_code_path                             = local.lambda_code_path
+  lambda_arch                                  = var.lambda_arch
+  additional_environment_variables             = local.lambda_environment_variables
+  additional_lambda_execution_policy_documents = local.lambda_execution_policies
+  lambda_layer_arns                            = local.lambda_layer_arns
+
+  grants_prepared_data_bucket_name    = module.grants_prepared_data_bucket.bucket_id
+  grants_prepared_dynamodb_table_name = module.grants_prepared_dynamodb_table.table_name
+  grants_prepared_dynamodb_table_arn  = module.grants_prepared_dynamodb_table.table_arn
 }
 
 module "DownloadFFISSpreadsheet" {
