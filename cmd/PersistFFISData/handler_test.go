@@ -30,8 +30,8 @@ func (mocks3 *MockS3) GetObject(ctx context.Context,
 func TestParseFFISData(t *testing.T) {
 	logger = log.NewNopLogger()
 	var tests = []struct {
-		jsonFixture, expectedBill, expectedOpporunity string
-		expectedError                                 error
+		jsonFixture, expectedBill, expectedOpportunity string
+		expectedError                                  error
 	}{
 		{"standard.json", "HR 1234", "HR001", nil},
 		{"extra-fields.json", "HR 5678", "HR002", nil},
@@ -62,8 +62,8 @@ func TestParseFFISData(t *testing.T) {
 				if ffisData.Bill != test.expectedBill {
 					t.Errorf("Expected bill %s, got %s", test.expectedBill, ffisData.Bill)
 				}
-				if ffisData.OpportunityNumber != test.expectedOpporunity {
-					t.Errorf("Expected opportunity number %s, got %s", test.expectedOpporunity, ffisData.OpportunityNumber)
+				if ffisData.OppNumber != test.expectedOpportunity {
+					t.Errorf("Expected opportunity number %s, got %s", test.expectedOpportunity, ffisData.OppNumber)
 				}
 			}
 
