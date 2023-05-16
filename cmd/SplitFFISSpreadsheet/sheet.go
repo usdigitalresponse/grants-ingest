@@ -60,13 +60,11 @@ func parseXLSXFile(r io.Reader, logger log.Logger) ([]ffis.FFISFundingOpportunit
 	// is a column header, like "CFDA", "Opportunity Title", etc.
 	foundHeaders := false
 
-	// The sheet has rows as categories that we want to assign to
-	// each opportunity underneath that category, so we re-assign this
+	// The sheet has rows as bills that we want to assign to
+	// each opportunity underneath that bill, so we use this
 	// as we iterate through the rows. This could be something like
 	// "Inflation Reduction Act".
-	//
-	// TODO: Is this the right name for this metadata?
-	opportunityCategory := ""
+	bill := ""
 
 rowLoop:
 	for rowIndex, row := range rows {
@@ -106,9 +104,9 @@ rowLoop:
 				}
 
 				// If we don't match a CFDA number and the row isn't blank, we
-				// assume it's an opportunity category and continue
+				// assume it's a bill and continue
 				if !r.MatchString(cell) {
-					opportunityCategory = cell
+					bill = cell
 					continue rowLoop
 				}
 			}
@@ -198,8 +196,8 @@ rowLoop:
 				opportunity.Match = parseEligibility(cell)
 			}
 
-			// We will use the most recent category
-			opportunity.OppCategory = opportunityCategory
+			// We will use the most recent bill
+			opportunity.Bill = bill
 		}
 
 		// Only add valid opportunities

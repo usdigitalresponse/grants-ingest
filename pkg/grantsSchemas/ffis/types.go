@@ -11,6 +11,7 @@ type FFISMessageDownload struct {
 // Represents a funding opportunity sourced from an FFIS spreadsheet
 type FFISFundingOpportunity struct {
 	Agency           string                 `json:"opportunity_agency"` // eg. Forest Service
+	Bill             string                 `json:"bill"`               // eg. Inflation Reduction Act
 	CFDA             string                 `json:"cfda"`               // eg. 11.525
 	DueDate          time.Time              `json:"due_date"`
 	Eligibility      FFISFundingEligibility `json:"eligibility"`
@@ -18,9 +19,8 @@ type FFISFundingOpportunity struct {
 	ExpectedAwards   string                 `json:"expected_awards"`   // eg. 10 or N/A
 	GrantID          int64                  `json:"grant_id"`          // eg. 347509
 	Match            bool                   `json:"match"`
-	OppCategory      string                 `json:"opportunity_category"` // eg. Inflation Reduction Act
-	OppNumber        string                 `json:"opportunity_number"`   // eg. USDA-FS-2020-01
-	OppTitle         string                 `json:"opportunity_title"`    // eg. "FY 2020 Community Connect Grant Program"
+	OppNumber        string                 `json:"opportunity_number"` // eg. USDA-FS-2020-01
+	OppTitle         string                 `json:"opportunity_title"`  // eg. "FY 2020 Community Connect Grant Program"
 }
 
 // Elegibility for FFIS funding opportunities as presented in FFIS spreadsheets

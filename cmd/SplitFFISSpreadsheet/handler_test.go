@@ -116,8 +116,8 @@ func TestLambaInvocation(t *testing.T) {
 			NonProfits:      true,
 			Other:           false,
 		},
-		Match:       false,
-		OppCategory: "Infrastructure Investment and Jobs Act",
+		Match: false,
+		Bill:  "Infrastructure Investment and Jobs Act",
 	}
 	date, _ := time.Parse("1/2/2006", "5/11/2023")
 	expectedOpp.DueDate = date
