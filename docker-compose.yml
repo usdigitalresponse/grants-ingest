@@ -12,6 +12,7 @@ services:
       - LOCALSTACK_HOST=localstack
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
+      - DYNAMODB_SHARE_DB=1
     networks:
       - app
     volumes:
