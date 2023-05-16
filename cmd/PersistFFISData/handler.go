@@ -32,12 +32,12 @@ func handleS3Event(ctx context.Context, s3Event events.S3Event, s3client S3API) 
 	if err != nil {
 		return err
 	}
-	println(ffisData[0].Bill)
+	println(ffisData.Bill)
 	return nil
 }
 
-func parseFFISData(ctx context.Context, uploadedFile string, s3client S3API) ([]ffis.FFISSourceData, error) {
-	var ffisData []ffis.FFISSourceData
+func parseFFISData(ctx context.Context, uploadedFile string, s3client S3API) (ffis.FFISSourceData, error) {
+	var ffisData ffis.FFISSourceData
 	// get the file from S3
 	s3obj, err := s3client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String("usdr-ffis"),
@@ -54,13 +54,11 @@ func parseFFISData(ctx context.Context, uploadedFile string, s3client S3API) ([]
 	}
 
 	// validate the data
-	for _, data := range ffisData {
-		if data.Bill == "" {
-			return ffisData, log.Errorf(logger, "Error parsing FFIS data", ErrMissingBill)
-		}
-		if data.OpportunityNumber == "" {
-			return ffisData, log.Errorf(logger, "Error parsing FFIS data", ErrMissingOppNumber)
-		}
+	if ffisData.Bill == "" {
+		return ffisData, log.Errorf(logger, "Error parsing FFIS data", ErrMissingBill)
+	}
+	if ffisData.OpportunityNumber == "" {
+		return ffisData, log.Errorf(logger, "Error parsing FFIS data", ErrMissingOppNumber)
 	}
 
 	return ffisData, nil

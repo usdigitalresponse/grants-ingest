@@ -58,7 +58,7 @@ func TestParseFFISData(t *testing.T) {
 				if test.expectedError != nil {
 					t.Errorf("Expected error %v, got nil", test.expectedError)
 				}
-				ffisData := results[0]
+				ffisData := results
 				if ffisData.Bill != test.expectedBill {
 					t.Errorf("Expected bill %s, got %s", test.expectedBill, ffisData.Bill)
 				}

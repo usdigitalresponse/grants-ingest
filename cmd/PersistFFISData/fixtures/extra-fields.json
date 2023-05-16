@@ -1,7 +1,5 @@
-[
-  {
-    "bill": "HR 5678",
-    "opportunityNumber": "HR002",
-    "someOtherId": "1234"
-  }
-]
+{
+  "bill": "HR 5678",
+  "opportunityNumber": "HR002",
+  "someOtherId": "1234"
+}
