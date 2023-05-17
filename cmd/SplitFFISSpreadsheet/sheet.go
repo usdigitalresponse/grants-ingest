@@ -38,6 +38,14 @@ func parseXLSXFile(r io.Reader, logger log.Logger) ([]ffis.FFISFundingOpportunit
 		return nil, err
 	}
 
+	// Used to test if a cell is a CFDA number. Apparently
+	// this is a consistent CFDA format based on this page:
+	// https://grantsgovprod.wordpress.com/2018/06/04/what-is-a-cfda-number-2/
+	cfdaRegex, err := regexp.Compile(`^[0-9]{2}\.[0-9]{3}$`)
+	if err != nil {
+		return nil, err
+	}
+
 	defer func() {
 		if err := xlFile.Close(); err != nil {
 			log.Error(logger, "Error closing excel file", err)
@@ -53,6 +61,9 @@ func parseXLSXFile(r io.Reader, logger log.Logger) ([]ffis.FFISFundingOpportunit
 	if err != nil {
 		return nil, err
 	}
+
+	sendMetric("spreadsheet.row_count", float64(len(rows)))
+	log.Info(logger, "Parsing spreadsheet, total rows", len(rows))
 
 	var opportunities []ffis.FFISFundingOpportunity
 
@@ -94,18 +105,9 @@ rowLoop:
 					continue rowLoop
 				}
 
-				// Test if the cell is a CFDA number, otherwise
-				// we can assume if it has content it's a category. Apparently
-				// this is a consistent CFDA format based on this page:
-				// https://grantsgovprod.wordpress.com/2018/06/04/what-is-a-cfda-number-2/
-				r, err := regexp.Compile(`^[0-9]{2}\.[0-9]{3}$`)
-				if err != nil {
-					return nil, err
-				}
-
 				// If we don't match a CFDA number and the row isn't blank, we
 				// assume it's a bill and continue
-				if !r.MatchString(cell) {
+				if !cfdaRegex.MatchString(cell) {
 					bill = cell
 					continue rowLoop
 				}
@@ -130,7 +132,7 @@ rowLoop:
 				// If we can't parse the funding amount, just skip the column
 				if err != nil {
 					log.Warn(logger, "Error parsing estimated funding", err)
-					sendMetric('spreadsheet.cell_parsing_errors', 1)
+					sendMetric("spreadsheet.cell_parsing_errors", 1)
 					continue
 				}
 				opportunity.EstimatedFunding = num
@@ -144,6 +146,7 @@ rowLoop:
 				cellAxis, err := excelize.CoordinatesToCellName(colIndex+1, rowIndex+1)
 				if err != nil {
 					log.Warn(logger, "Error parsing cell axis for grant ID", err)
+					sendMetric("spreadsheet.cell_parsing_errors", 1)
 					continue
 				}
 
@@ -151,6 +154,7 @@ rowLoop:
 				if err != nil {
 					// log this, it is not worth aborting the whole extraction for
 					log.Warn(logger, "Error getting cell hyperlink for grant ID", err)
+					sendMetric("spreadsheet.cell_parsing_errors", 1)
 					continue
 				}
 
@@ -160,6 +164,7 @@ rowLoop:
 					url, err := url.Parse(target)
 					if err != nil {
 						log.Warn(logger, "Error parsing link for grant ID", err)
+						sendMetric("spreadsheet.cell_parsing_errors", 1)
 						continue
 					}
 
@@ -167,6 +172,7 @@ rowLoop:
 					oppID, err := strconv.ParseInt(url.Query().Get("oppId"), 10, 64)
 					if err != nil {
 						log.Warn(logger, "Error parsing opportunity ID", err)
+						sendMetric("spreadsheet.cell_parsing_errors", 1)
 						continue
 					}
 
