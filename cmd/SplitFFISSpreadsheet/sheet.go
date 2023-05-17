@@ -196,6 +196,7 @@ rowLoop:
 				t, err := time.Parse("1-2-06", cell)
 				if err != nil {
 					log.Warn(logger, "Error parsing date", err)
+					sendMetric("spreadsheet.cell_parsing_errors", 1)
 					continue
 				}
 				opportunity.DueDate = t
