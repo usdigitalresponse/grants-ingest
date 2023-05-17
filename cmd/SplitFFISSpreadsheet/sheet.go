@@ -63,7 +63,7 @@ func parseXLSXFile(r io.Reader, logger log.Logger) ([]ffis.FFISFundingOpportunit
 	}
 
 	sendMetric("spreadsheet.row_count", float64(len(rows)))
-	log.Info(logger, "Parsing spreadsheet, total rows", len(rows))
+	log.Info(logger, "Parsing spreadsheet", "total_rows", len(rows))
 
 	var opportunities []ffis.FFISFundingOpportunity
 

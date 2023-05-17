@@ -78,7 +78,7 @@ func handleS3EventWithConfig(cfg aws.Config, ctx context.Context, s3Event events
 
 			parsedOpportunities, err := parseXLSXFile(resp.Body, logger)
 
-			log.Info(logger, "Spreadsheet parsed, total opportunities", len(parsedOpportunities))
+			log.Info(logger, "Spreadsheet parsed", "total_opportunties", len(parsedOpportunities))
 
 			if err != nil {
 				log.Error(logger, "Error parsing excel file", err)
