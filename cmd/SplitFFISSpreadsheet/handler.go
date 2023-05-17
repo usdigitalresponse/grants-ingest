@@ -78,6 +78,8 @@ func handleS3EventWithConfig(cfg aws.Config, ctx context.Context, s3Event events
 
 			parsedOpportunities, err := parseXLSXFile(resp.Body, logger)
 
+			log.Info(logger, "Spreadsheet parsed, total opportunities", len(parsedOpportunities))
+
 			if err != nil {
 				log.Error(logger, "Error parsing excel file", err)
 				return err
@@ -171,8 +173,8 @@ func processOpportunities(ctx context.Context, svc *s3.Client, ch <-chan opportu
 
 // processOpportunity marshals the opportunity to JSON and uploads it to S3.
 func processOpportunity(ctx context.Context, svc S3PutObjectAPI, opp opportunity) error {
-    key := opp.S3ObjectKey()
-    
+	key := opp.S3ObjectKey()
+
 	logger := log.With(logger,
 		"opportunity_id", opp.GrantID, "opportunity_number", opp.OppNumber,
 		"bucket", env.DestinationBucket, "key", key)
