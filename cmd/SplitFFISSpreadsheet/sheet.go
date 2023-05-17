@@ -130,6 +130,7 @@ rowLoop:
 				// If we can't parse the funding amount, just skip the column
 				if err != nil {
 					log.Warn(logger, "Error parsing estimated funding", err)
+					sendMetric('spreadsheet.cell_parsing_errors', 1)
 					continue
 				}
 				opportunity.EstimatedFunding = num
