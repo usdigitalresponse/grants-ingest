@@ -386,7 +386,7 @@ resource "aws_s3_bucket_notification" "grant_source_data" {
     lambda_function_arn = module.PersistFFISData.lambda_function_arn
     events              = ["s3:ObjectCreated:*"]
     filter_prefix       = "sources/"
-    filter_suffix       = "/ffis.org/v1.json"
+    filter_suffix       = "/ffis/v1.json"
   }
 
   lambda_function {

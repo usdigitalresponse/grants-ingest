@@ -24,7 +24,7 @@ var (
 	ErrMissingOppNumber = fmt.Errorf("opportunity missing from FFIS data")
 )
 
-func handleS3Event(ctx context.Context, s3Event events.S3Event, s3client S3API) error {
+func handleS3Event(ctx context.Context, s3Event events.S3Event, s3client S3API, dbapi DynamoDBUpdateItemAPI) error {
 	uploadedFile := s3Event.Records[0].S3.Object.Key
 	log.Info(logger, "Received S3 event", "uploadedFile", uploadedFile)
 	// parse the file contents into JSON
@@ -32,8 +32,8 @@ func handleS3Event(ctx context.Context, s3Event events.S3Event, s3client S3API) 
 	if err != nil {
 		return err
 	}
-	println(ffisData.Bill)
-	return nil
+	err = UpdateDynamoDBItem(ctx, dbapi, "prepareddata", opportunity(ffisData))
+	return err
 }
 
 func parseFFISData(ctx context.Context, uploadedFile string, s3client S3API) (ffis.FFISFundingOpportunity, error) {

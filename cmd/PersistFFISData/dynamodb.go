@@ -24,18 +24,25 @@ func UpdateDynamoDBItem(ctx context.Context, c DynamoDBUpdateItemAPI, table stri
 		return err
 	}
 	expr, err := buildUpdateExpression(opp, map[string]string{
-		"OppNumber": "opportunity_number",
+		"Bill": "bill",
 	})
 	if err != nil {
 		return err
 	}
+	// println(*expr.Update())
+	// println(expr.Names())
+	// println(expr.Values())
+	for k, v := range expr.Values() {
+		println(k, v)
+	}
+	println(*expr.Update())
 	_, err = c.UpdateItem(ctx, &dynamodb.UpdateItemInput{
 		TableName:                 aws.String(table),
 		Key:                       key,
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
 		UpdateExpression:          expr.Update(),
-		ReturnValues:              types.ReturnValueUpdatedNew,
+		ReturnValues:              types.ReturnValueNone,
 	})
 	return err
 }
@@ -43,7 +50,7 @@ func UpdateDynamoDBItem(ctx context.Context, c DynamoDBUpdateItemAPI, table stri
 func buildKey(o opportunity) (map[string]types.AttributeValue, error) {
 	oid, err := attributevalue.Marshal(o.OppNumber)
 
-	return map[string]types.AttributeValue{"grant_number": oid}, err
+	return map[string]types.AttributeValue{"opportunity_number": oid}, err
 }
 
 func buildUpdateExpression(o opportunity, attrs map[string]string) (expression.Expression, error) {
@@ -56,6 +63,5 @@ func buildUpdateExpression(o opportunity, attrs map[string]string) (expression.E
 	for oppKey, tableKey := range attrs {
 		update = update.Set(expression.Name(tableKey), expression.Value(oppAttr[oppKey]))
 	}
-
 	return expression.NewBuilder().WithUpdate(update).Build()
 }

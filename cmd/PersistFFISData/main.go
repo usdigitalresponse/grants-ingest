@@ -13,6 +13,7 @@ import (
 	goenv "github.com/Netflix/go-env"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/usdigitalresponse/grants-ingest/internal/awsHelpers"
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
@@ -54,6 +55,8 @@ func main() {
 			o.UsePathStyle = env.UsePathStyleS3Opt
 		})
 
-		return handleS3Event(ctx, s3Event, s3Client)
+		dynamodbSvc := dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {})
+
+		return handleS3Event(ctx, s3Event, s3Client, dynamodbSvc)
 	}, nil))
 }
