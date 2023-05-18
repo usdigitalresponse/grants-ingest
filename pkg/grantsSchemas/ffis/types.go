@@ -2,7 +2,7 @@ package ffis
 
 import "time"
 
-// FFISMessageDownload is the message payload for FFIS download operations
+// message payload for FFIS download operations
 type FFISMessageDownload struct {
 	SourceFileKey string `json:"sourceFileKey"`
 	DownloadURL   string `json:"downloadUrl"`

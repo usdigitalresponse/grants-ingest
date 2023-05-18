@@ -389,10 +389,18 @@ resource "aws_s3_bucket_notification" "grant_source_data" {
     filter_suffix       = "/ffis.org/v1.json"
   }
 
+  lambda_function {
+    lambda_function_arn = module.SplitFFISSpreadsheet.lambda_function_arn
+    events              = ["s3:ObjectCreated:*"]
+    filter_prefix       = "sources/"
+    filter_suffix       = "/ffis/download.xlsx"
+  }
+
   depends_on = [
     module.SplitGrantsGovXMLDB,
     module.EnqueueFFISDownload,
     module.PersistFFISData,
+    module.SplitFFISSpreadsheet,
   ]
 }
 
@@ -516,10 +524,17 @@ module "DownloadFFISSpreadsheet" {
   ]
 }
 
+<<<<<<< HEAD
 module "PersistFFISData" {
   source                                       = "./modules/PersistFFISData"
   namespace                                    = var.namespace
   function_name                                = "PersistFFISData"
+=======
+module "SplitFFISSpreadsheet" {
+  source                                       = "./modules/SplitFFISSpreadsheet"
+  namespace                                    = var.namespace
+  function_name                                = "SplitFFISSpreadsheet"
+>>>>>>> origin/main
   permissions_boundary_arn                     = local.permissions_boundary_arn
   lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
   log_retention_in_days                        = var.lambda_default_log_retention_in_days
@@ -530,11 +545,21 @@ module "PersistFFISData" {
   additional_lambda_execution_policy_documents = local.lambda_execution_policies
   lambda_layer_arns                            = local.lambda_layer_arns
 
+<<<<<<< HEAD
   grants_source_data_bucket_name      = module.grants_source_data_bucket.bucket_id
   grants_prepared_dynamodb_table_name = module.grants_prepared_dynamodb_table.table_name
   grants_prepared_dynamodb_table_arn  = module.grants_prepared_dynamodb_table.table_arn
 
   depends_on = [
     module.grants_source_data_bucket,
+=======
+  grants_source_data_bucket_name   = module.grants_source_data_bucket.bucket_id
+  grants_prepared_data_bucket_name = module.grants_prepared_data_bucket.bucket_id
+
+  depends_on = [
+    module.grants_source_data_bucket,
+    module.grants_prepared_data_bucket,
+    aws_sqs_queue.ffis_downloads,
+>>>>>>> origin/main
   ]
 }
