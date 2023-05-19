@@ -449,6 +449,7 @@ func TestProcessOpportunity(t *testing.T) {
 				return nil, fmt.Errorf("some PutObject error")
 			}),
 		}
+		fmt.Printf("%T", s3Client)
 		err := processOpportunity(context.TODO(), s3Client, testOpportunity)
 		assert.ErrorContains(t, err, "Error uploading prepared grant opportunity to S3")
 	})

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"archive/zip"
 	"context"
 	"errors"
 	"fmt"
@@ -17,17 +16,8 @@ import (
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
 )
 
-const (
-	MB                         = int64(1024 * 1024)
-	GRANT_OPPORTUNITY_XML_NAME = "OpportunitySynopsisDetail_1_0"
-)
-
 type PipeWriter struct {
 	io.Writer
-}
-
-type NewDataReader struct {
-	*zipstream.Reader
 }
 
 type UploadResult struct {
@@ -35,23 +25,15 @@ type UploadResult struct {
 	err              error
 }
 
-func (r NewDataReader) NextR() (*zip.FileHeader, error) {
-	fmt.Println("           Reading")
-	return r.Next()
-}
-
 func (w PipeWriter) WriteAt(p []byte, offset int64) (n int, err error) {
 	fmt.Println("Writing", offset)
 	return w.Write(p)
 }
 
-func FileUploadStream(ctx context.Context, uploader *manager.Uploader, wg *sync.WaitGroup, pipeReader *io.PipeReader, objectKey string, uploadResult chan<- UploadResult) {
+func FileUploadStream(ctx context.Context, uploader *manager.Uploader, pipeReader io.Reader, objectKey string, uploadResult chan<- UploadResult) {
 	data := zipstream.NewReader(pipeReader)
-	defer wg.Done()
 
-	new_data := NewDataReader{data}
-
-	header, data_err := new_data.NextR()
+	header, data_err := data.Next()
 
 	if data_err != nil {
 		fmt.Printf("Something went wrong %v", data_err)
@@ -67,7 +49,7 @@ func FileUploadStream(ctx context.Context, uploader *manager.Uploader, wg *sync.
 	_, err := uploader.Upload(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(env.GrantsDataBucket),
 		Key:    aws.String("tmp/" + objectKey + header.Name),
-		Body:   new_data,
+		Body:   data,
 	})
 
 	if err != nil {
@@ -75,7 +57,7 @@ func FileUploadStream(ctx context.Context, uploader *manager.Uploader, wg *sync.
 		return
 	}
 
-	secondHeader, secondDataErr := new_data.NextR()
+	secondHeader, secondDataErr := data.Next()
 	if secondDataErr != io.EOF {
 		uploadResult <- UploadResult{aws.String(""), fmt.Errorf("expected an end of file error instead received %v", secondDataErr)}
 		return
@@ -89,9 +71,8 @@ func FileUploadStream(ctx context.Context, uploader *manager.Uploader, wg *sync.
 	uploadResult <- UploadResult{aws.String("tmp/" + objectKey + header.Name), nil}
 }
 
-func FileDownloadStream(ctx context.Context, downloader *manager.Downloader, wg *sync.WaitGroup, pipeWriter *io.PipeWriter, objectKey string) {
+func FileDownloadStream(ctx context.Context, downloader *manager.Downloader, pipeWriter *io.PipeWriter, objectKey string) {
 	defer pipeWriter.Close()
-	// defer wg.Done()
 
 	_, err := downloader.Download(ctx, PipeWriter{pipeWriter}, &s3.GetObjectInput{
 		Bucket: aws.String(env.GrantsDataBucket),
@@ -103,7 +84,6 @@ func FileDownloadStream(ctx context.Context, downloader *manager.Downloader, wg 
 	}
 
 	fmt.Println("Downloader is done.")
-	wg.Done()
 }
 
 func ManageStreamingDownloadUpload(cfg aws.Config, objectKey string) {
@@ -120,10 +100,13 @@ func ManageStreamingDownloadUpload(cfg aws.Config, objectKey string) {
 	pipeReader, pipeWriter := io.Pipe()
 
 	wg := sync.WaitGroup{}
-	wg.Add(2)
+	wg.Add(1)
 	uploadResult := make(chan UploadResult)
-	go FileUploadStream(context.TODO(), uploader, &wg, pipeReader, objectKey, uploadResult)
-	FileDownloadStream(context.TODO(), downloader, &wg, pipeWriter, objectKey)
+	go func() {
+		defer wg.Done()
+		FileUploadStream(context.TODO(), uploader, pipeReader, objectKey, uploadResult)
+	}()
+	FileDownloadStream(context.TODO(), downloader, pipeWriter, objectKey)
 	wg.Wait()
 
 	result := <-uploadResult
@@ -163,6 +146,16 @@ func ManageStreamingDownloadUpload(cfg aws.Config, objectKey string) {
 	}
 }
 
+/*
+For local testing use the following event payload.
+Note: you may need to change the bucket and file name as you see fit based on what is available in your local environemnt.
+
+	awslocal lambda invoke \
+	    --region=us-west-2 \
+	    --function-name grants-ingest-ExtractGrantsGovDBToXML \
+	    --payload $(printf '{"Records": [{"eventVersion": "2.0","eventSource": "aws:s3","awsRegion": "us-west-2","eventTime": "1970-01-01T00:00:00.123Z","eventName": "ObjectCreated:Put","userIdentity": {"principalId": "EXAMPLE"},"requestParameters": {"sourceIPAddress": "127.0.0.1"},"responseElements": {"x-amz-request-id": "C3D13FE58DE4C810","x-amz-id-2": "FMyUVURIY8/IgAtTv8xRjskZQpcIZ9KG4V5Wp6S7S/JRWeUWerMUE5JgHvANOjpD"},"s3": {"s3SchemaVersion": "1.0","configurationId": "testConfigRule","bucket": {"name": “ADD_GRANTS_DATA_BUCKET_NAME,”ownerIdentity": {"principalId": "EXAMPLE"},"arn": "arn:aws:s3:::mybucket"},"object": {"key": “archive.zip”,”size": 1024,"versionId": "version","eTag": "d41d8cd98f00b204e9800998ecf8427e","sequencer": "Happy Sequencer"}}}]}' | base64) \
+	    /dev/stdout
+*/
 func handleS3EventWithConfig(cfg aws.Config, ctx context.Context, s3Event events.S3Event) error {
 
 	for _, record := range s3Event.Records {
@@ -173,14 +166,10 @@ func handleS3EventWithConfig(cfg aws.Config, ctx context.Context, s3Event events
 
 		if record.S3.Bucket.Name != env.GrantsDataBucket {
 			return errors.New("will not process any s3 events that belong to other buckets")
-			//log.Info(logger, "Will not process any s3 events that belong to other buckets")
-			// continue
 		}
 
 		if !(strings.HasSuffix(record.S3.Object.Key, "archive.zip")) {
 			return errors.New("will not process any files that are not archive.zip")
-			// log.Info(logger, " Will not process any files that are not archive.zip")
-			// continue
 		}
 
 		ManageStreamingDownloadUpload(cfg, record.S3.Object.Key)
