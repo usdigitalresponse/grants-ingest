@@ -25,7 +25,7 @@ func UpdateOpportunity(ctx context.Context, c DynamoDBUpdateItemAPI, table strin
 		return err
 	}
 
-	update := expression.Set(expression.Name("bill"), expression.Value(opp.Bill))
+	update := expression.Set(expression.Name("Bill"), expression.Value(opp.Bill))
 
 	expr, err := expression.NewBuilder().WithUpdate(update).Build()
 	if err != nil {
