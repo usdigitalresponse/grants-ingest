@@ -109,6 +109,10 @@ tasks:
     deps:
       - build-DownloadGrantsGovDB
       - build-SplitGrantsGovXMLDB
+      - build-EnqueueFFISDownload
+      - build-PersistGrantsGovXMLDB
+      - build-DownloadFFISSpreadsheet
+      - build-SplitFFISSpreadsheet
       - build-ExtractGrantsGovDBToXML
 
   build-DownloadGrantsGovDB:
@@ -124,10 +128,38 @@ tasks:
       - task: build-lambda
         vars:
           LAMBDA_CMD: SplitGrantsGovXMLDB
-  
+
   build-ExtractGrantsGovDBToXML:
     desc: Complies ExtractGrantsGovDBToXML
     cmds:
       - task: build-lambda
         vars:
           LAMBDA_CMD: ExtractGrantsGovDBToXML
+
+  build-EnqueueFFISDownload:
+    desc: Compiles EnqueueFFISDownload
+    cmds:
+      - task: build-lambda
+        vars:
+          LAMBDA_CMD: EnqueueFFISDownload
+
+  build-PersistGrantsGovXMLDB:
+    desc: Compiles PersistGrantsGovXMLDB
+    cmds:
+      - task: build-lambda
+        vars:
+          LAMBDA_CMD: PersistGrantsGovXMLDB
+
+  build-DownloadFFISSpreadsheet:
+    desc: Compiles DownloadFFISSpreadsheet
+    cmds:
+      - task: build-lambda
+        vars:
+          LAMBDA_CMD: DownloadFFISSpreadsheet
+
+  build-SplitFFISSpreadsheet:
+    desc: Compiles SplitFFISSpreadsheet
+    cmds:
+      - task: build-lambda
+        vars:
+          LAMBDA_CMD: SplitFFISSpreadsheet

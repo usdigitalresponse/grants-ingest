@@ -16,12 +16,12 @@ locals {
   )
 }
 
-data "aws_s3_bucket" "source_data" {
-  bucket = var.grants_source_data_bucket_name
+data "aws_s3_bucket" "download_target" {
+  bucket = var.download_target_bucket_name
 }
 
-data "aws_s3_bucket" "prepared_data" {
-  bucket = var.grants_prepared_data_bucket_name
+data "aws_sqs_queue" "ffis_downloads" {
+  name = var.source_queue_name
 }
 
 module "lambda_execution_policy" {
@@ -30,31 +30,19 @@ module "lambda_execution_policy" {
 
   iam_source_policy_documents = var.additional_lambda_execution_policy_documents
   iam_policy_statements = {
-    AllowS3DownloadSourceData = {
-      effect  = "Allow"
-      actions = ["s3:GetObject"]
-      resources = [
-        # Path: sources/YYYY/mm/dd/grants.gov/extract.xml
-        "${data.aws_s3_bucket.source_data.arn}/sources/*/*/*/grants.gov/extract.xml"
-      ]
-    }
-    AllowInspectS3PreparedData = {
-      effect = "Allow"
-      actions = [
-        "s3:GetObject",
-        "s3:ListBucket"
-      ]
-      resources = [
-        data.aws_s3_bucket.prepared_data.arn,
-        "${data.aws_s3_bucket.prepared_data.arn}/*/*/grants.gov/v2.xml"
-      ]
-    }
-    AllowS3UploadPreparedData = {
+    AllowS3DownloadWrite = {
       effect  = "Allow"
       actions = ["s3:PutObject"]
       resources = [
-        # Path: <first 3 digits of grant ID>/<grant id>/grants.gov/v2.xml
-        "${data.aws_s3_bucket.prepared_data.arn}/*/*/grants.gov/v2.xml"
+        # Path: /sources/YYYY/mm/dd/ffis/download.xlsx
+        "${data.aws_s3_bucket.download_target.arn}/sources/*/*/*/ffis/download.xlsx"
+      ]
+    }
+    AllowSQSGet = {
+      effect  = "Allow"
+      actions = ["sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:GetQueueAttributes"]
+      resources = [
+        data.aws_sqs_queue.ffis_downloads.arn,
       ]
     }
   }
@@ -65,7 +53,7 @@ module "lambda_function" {
   version = "4.12.1"
 
   function_name = "${var.namespace}-${var.function_name}"
-  description   = "Creates per-grant XML data files from a source Grants.gov XML DB extract."
+  description   = "Downloads FFIS XLSX files and saves to S3"
 
   role_permissions_boundary         = var.permissions_boundary_arn
   attach_cloudwatch_logs_policy     = true
@@ -82,8 +70,8 @@ module "lambda_function" {
   source_path = [{
     path = var.lambda_code_path
     commands = [
-      "task build-SplitGrantsGovXMLDB",
-      "cd bin/SplitGrantsGovXMLDB",
+      "task build-DownloadFFISSpreadsheet",
+      "cd bin/DownloadFFISSpreadsheet",
       ":zip",
     ],
   }]
@@ -91,22 +79,32 @@ module "lambda_function" {
   s3_bucket                 = var.lambda_artifact_bucket
   s3_server_side_encryption = "AES256"
 
-  timeout     = 300 # 5 minutes, in seconds
-  memory_size = 1024
+  timeout     = 30 # seconds
+  memory_size = 128
   environment_variables = merge(var.additional_environment_variables, {
-    DD_TRACE_RATE_LIMIT              = "1000"
-    DD_TAGS                          = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
-    DOWNLOAD_CHUNK_LIMIT             = "20"
-    GRANTS_PREPARED_DATA_BUCKET_NAME = data.aws_s3_bucket.prepared_data.id
-    LOG_LEVEL                        = var.log_level
-    MAX_CONCURRENT_UPLOADS           = "10"
-    S3_USE_PATH_STYLE                = "true"
+    DD_TAGS            = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
+    TARGET_BUCKET_NAME = data.aws_s3_bucket.download_target.id
+    LOG_LEVEL          = var.log_level
+    S3_USE_PATH_STYLE  = "true"
   })
 
+  event_source_mapping = {
+    sqs = {
+      enabled                            = true
+      batch_size                         = 1
+      maximum_batching_window_in_seconds = 20
+      event_source_arn                   = data.aws_sqs_queue.ffis_downloads.arn
+      scaling_config = {
+        maximum_concurrency = 1
+      }
+    }
+  }
+
   allowed_triggers = {
-    S3BucketNotification = {
-      principal  = "s3.amazonaws.com"
-      source_arn = data.aws_s3_bucket.source_data.arn
+    SQSQueueNotification = {
+      principal     = "sqs.amazonaws.com"
+      sqs_queue_arn = data.aws_sqs_queue.ffis_downloads.arn
+      batch_size    = 1
     }
   }
 }

@@ -20,8 +20,8 @@ data "aws_s3_bucket" "source_data" {
   bucket = var.grants_source_data_bucket_name
 }
 
-data "aws_s3_bucket" "prepared_data" {
-  bucket = var.grants_prepared_data_bucket_name
+data "aws_sqs_queue" "ffis_downloads" {
+  name = var.destination_queue_name
 }
 
 module "lambda_execution_policy" {
@@ -34,27 +34,15 @@ module "lambda_execution_policy" {
       effect  = "Allow"
       actions = ["s3:GetObject"]
       resources = [
-        # Path: sources/YYYY/mm/dd/grants.gov/extract.xml
-        "${data.aws_s3_bucket.source_data.arn}/sources/*/*/*/grants.gov/extract.xml"
+        # Path: sources/YYYY/mm/dd/ffis/raw.eml
+        "${data.aws_s3_bucket.source_data.arn}/sources/*/*/*/ffis/raw.eml"
       ]
     }
-    AllowInspectS3PreparedData = {
-      effect = "Allow"
-      actions = [
-        "s3:GetObject",
-        "s3:ListBucket"
-      ]
-      resources = [
-        data.aws_s3_bucket.prepared_data.arn,
-        "${data.aws_s3_bucket.prepared_data.arn}/*/*/grants.gov/v2.xml"
-      ]
-    }
-    AllowS3UploadPreparedData = {
+    AllowSQSPublish = {
       effect  = "Allow"
-      actions = ["s3:PutObject"]
+      actions = ["sqs:SendMessage"]
       resources = [
-        # Path: <first 3 digits of grant ID>/<grant id>/grants.gov/v2.xml
-        "${data.aws_s3_bucket.prepared_data.arn}/*/*/grants.gov/v2.xml"
+        data.aws_sqs_queue.ffis_downloads.arn,
       ]
     }
   }
@@ -65,7 +53,7 @@ module "lambda_function" {
   version = "4.12.1"
 
   function_name = "${var.namespace}-${var.function_name}"
-  description   = "Creates per-grant XML data files from a source Grants.gov XML DB extract."
+  description   = "Enqueues FFIS XLSX files for download"
 
   role_permissions_boundary         = var.permissions_boundary_arn
   attach_cloudwatch_logs_policy     = true
@@ -82,8 +70,8 @@ module "lambda_function" {
   source_path = [{
     path = var.lambda_code_path
     commands = [
-      "task build-SplitGrantsGovXMLDB",
-      "cd bin/SplitGrantsGovXMLDB",
+      "task build-EnqueueFFISDownload",
+      "cd bin/EnqueueFFISDownload",
       ":zip",
     ],
   }]
@@ -91,16 +79,13 @@ module "lambda_function" {
   s3_bucket                 = var.lambda_artifact_bucket
   s3_server_side_encryption = "AES256"
 
-  timeout     = 300 # 5 minutes, in seconds
-  memory_size = 1024
+  timeout     = 30 # seconds
+  memory_size = 128
   environment_variables = merge(var.additional_environment_variables, {
-    DD_TRACE_RATE_LIMIT              = "1000"
-    DD_TAGS                          = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
-    DOWNLOAD_CHUNK_LIMIT             = "20"
-    GRANTS_PREPARED_DATA_BUCKET_NAME = data.aws_s3_bucket.prepared_data.id
-    LOG_LEVEL                        = var.log_level
-    MAX_CONCURRENT_UPLOADS           = "10"
-    S3_USE_PATH_STYLE                = "true"
+    DD_TAGS            = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
+    FFIS_SQS_QUEUE_URL = data.aws_sqs_queue.ffis_downloads.id
+    LOG_LEVEL          = var.log_level
+    S3_USE_PATH_STYLE  = "true"
   })
 
   allowed_triggers = {

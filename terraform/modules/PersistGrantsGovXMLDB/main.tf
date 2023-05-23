@@ -16,10 +16,6 @@ locals {
   )
 }
 
-data "aws_s3_bucket" "source_data" {
-  bucket = var.grants_source_data_bucket_name
-}
-
 data "aws_s3_bucket" "prepared_data" {
   bucket = var.grants_prepared_data_bucket_name
 }
@@ -30,14 +26,6 @@ module "lambda_execution_policy" {
 
   iam_source_policy_documents = var.additional_lambda_execution_policy_documents
   iam_policy_statements = {
-    AllowS3DownloadSourceData = {
-      effect  = "Allow"
-      actions = ["s3:GetObject"]
-      resources = [
-        # Path: sources/YYYY/mm/dd/grants.gov/extract.xml
-        "${data.aws_s3_bucket.source_data.arn}/sources/*/*/*/grants.gov/extract.xml"
-      ]
-    }
     AllowInspectS3PreparedData = {
       effect = "Allow"
       actions = [
@@ -49,13 +37,13 @@ module "lambda_execution_policy" {
         "${data.aws_s3_bucket.prepared_data.arn}/*/*/grants.gov/v2.xml"
       ]
     }
-    AllowS3UploadPreparedData = {
-      effect  = "Allow"
-      actions = ["s3:PutObject"]
-      resources = [
-        # Path: <first 3 digits of grant ID>/<grant id>/grants.gov/v2.xml
-        "${data.aws_s3_bucket.prepared_data.arn}/*/*/grants.gov/v2.xml"
+    AllowDynamoDBPreparedData = {
+      effect = "Allow"
+      actions = [
+        "dynamodb:ListTables",
+        "dynamodb:UpdateItem"
       ]
+      resources = [var.grants_prepared_dynamodb_table_arn]
     }
   }
 }
@@ -65,7 +53,7 @@ module "lambda_function" {
   version = "4.12.1"
 
   function_name = "${var.namespace}-${var.function_name}"
-  description   = "Creates per-grant XML data files from a source Grants.gov XML DB extract."
+  description   = "Persists data from a prepared Grants.gov XML DB extract to DynamoDB."
 
   role_permissions_boundary         = var.permissions_boundary_arn
   attach_cloudwatch_logs_policy     = true
@@ -82,8 +70,8 @@ module "lambda_function" {
   source_path = [{
     path = var.lambda_code_path
     commands = [
-      "task build-SplitGrantsGovXMLDB",
-      "cd bin/SplitGrantsGovXMLDB",
+      "task build-PersistGrantsGovXMLDB",
+      "cd bin/PersistGrantsGovXMLDB",
       ":zip",
     ],
   }]
@@ -91,22 +79,18 @@ module "lambda_function" {
   s3_bucket                 = var.lambda_artifact_bucket
   s3_server_side_encryption = "AES256"
 
-  timeout     = 300 # 5 minutes, in seconds
-  memory_size = 1024
+  timeout = 30
   environment_variables = merge(var.additional_environment_variables, {
-    DD_TRACE_RATE_LIMIT              = "1000"
-    DD_TAGS                          = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
-    DOWNLOAD_CHUNK_LIMIT             = "20"
-    GRANTS_PREPARED_DATA_BUCKET_NAME = data.aws_s3_bucket.prepared_data.id
-    LOG_LEVEL                        = var.log_level
-    MAX_CONCURRENT_UPLOADS           = "10"
-    S3_USE_PATH_STYLE                = "true"
+    DD_TAGS                       = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
+    GRANTS_PREPARED_DYNAMODB_NAME = var.grants_prepared_dynamodb_table_name
+    LOG_LEVEL                     = var.log_level
+    S3_USE_PATH_STYLE             = "true"
   })
 
   allowed_triggers = {
     S3BucketNotification = {
       principal  = "s3.amazonaws.com"
-      source_arn = data.aws_s3_bucket.source_data.arn
+      source_arn = data.aws_s3_bucket.prepared_data.arn
     }
   }
 }

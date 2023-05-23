@@ -5,6 +5,9 @@
 *.so
 *.dylib
 
+# MacOS
+.DS_Store
+
 # IDE settings
 .idea/
 .vscode/
@@ -51,3 +54,6 @@ cover.html
 # Environment variable files
 .env
 .envrc
+
+# Localstack
+volume/

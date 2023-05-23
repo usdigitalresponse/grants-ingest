@@ -34,8 +34,8 @@ module "lambda_execution_policy" {
       effect  = "Allow"
       actions = ["s3:GetObject"]
       resources = [
-        # Path: sources/YYYY/mm/dd/grants.gov/extract.xml
-        "${data.aws_s3_bucket.source_data.arn}/sources/*/*/*/grants.gov/extract.xml"
+        # This path is set by the DownloadFFISSpreadsheet module
+        "${data.aws_s3_bucket.source_data.arn}/sources/*/*/*/ffis/download.xlsx"
       ]
     }
     AllowInspectS3PreparedData = {
@@ -46,15 +46,14 @@ module "lambda_execution_policy" {
       ]
       resources = [
         data.aws_s3_bucket.prepared_data.arn,
-        "${data.aws_s3_bucket.prepared_data.arn}/*/*/grants.gov/v2.xml"
+        "${data.aws_s3_bucket.prepared_data.arn}/*/*/ffis.org/v1.json"
       ]
     }
     AllowS3UploadPreparedData = {
       effect  = "Allow"
       actions = ["s3:PutObject"]
       resources = [
-        # Path: <first 3 digits of grant ID>/<grant id>/grants.gov/v2.xml
-        "${data.aws_s3_bucket.prepared_data.arn}/*/*/grants.gov/v2.xml"
+        "${data.aws_s3_bucket.prepared_data.arn}/*/*/ffis.org/v1.json"
       ]
     }
   }
@@ -65,7 +64,7 @@ module "lambda_function" {
   version = "4.12.1"
 
   function_name = "${var.namespace}-${var.function_name}"
-  description   = "Creates per-grant XML data files from a source Grants.gov XML DB extract."
+  description   = "Creates per-grant JSON representation of an FFIS Spreadsheet"
 
   role_permissions_boundary         = var.permissions_boundary_arn
   attach_cloudwatch_logs_policy     = true
@@ -82,8 +81,8 @@ module "lambda_function" {
   source_path = [{
     path = var.lambda_code_path
     commands = [
-      "task build-SplitGrantsGovXMLDB",
-      "cd bin/SplitGrantsGovXMLDB",
+      "task build-SplitFFISSpreadsheet",
+      "cd bin/SplitFFISSpreadsheet",
       ":zip",
     ],
   }]
