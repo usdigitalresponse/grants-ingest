@@ -20,27 +20,29 @@ type S3API interface {
 
 // error constants
 var (
-	ErrMissingBill      = fmt.Errorf("bill missing from FFIS data")
-	ErrMissingOppNumber = fmt.Errorf("opportunity missing from FFIS data")
+	ErrMissingBill    = fmt.Errorf("bill missing from FFIS data")
+	ErrMissingGrantID = fmt.Errorf("grant id missing from FFIS data")
 )
 
 func handleS3Event(ctx context.Context, s3Event events.S3Event, s3client S3API, dbapi DynamoDBUpdateItemAPI) error {
 	uploadedFile := s3Event.Records[0].S3.Object.Key
+	bucket := s3Event.Records[0].S3.Bucket.Name
 	log.Info(logger, "Received S3 event", "uploadedFile", uploadedFile)
 	// parse the file contents into JSON
-	ffisData, err := parseFFISData(ctx, uploadedFile, s3client)
+	ffisData, err := parseFFISData(ctx, bucket, uploadedFile, s3client)
 	if err != nil {
 		return err
 	}
-	err = UpdateOpportunity(ctx, dbapi, "prepareddata", opportunity(ffisData))
+	err = UpdateOpportunity(ctx, dbapi, env.DestinationTable, opportunity(ffisData))
 	return err
 }
 
-func parseFFISData(ctx context.Context, uploadedFile string, s3client S3API) (ffis.FFISFundingOpportunity, error) {
+func parseFFISData(ctx context.Context, bucket string, uploadedFile string, s3client S3API) (ffis.FFISFundingOpportunity, error) {
 	var ffisData ffis.FFISFundingOpportunity
+
 	// get the file from S3
 	s3obj, err := s3client.GetObject(ctx, &s3.GetObjectInput{
-		Bucket: aws.String("usdr-ffis"),
+		Bucket: aws.String(bucket),
 		Key:    aws.String(uploadedFile),
 	})
 	if err != nil {
@@ -57,8 +59,8 @@ func parseFFISData(ctx context.Context, uploadedFile string, s3client S3API) (ff
 	if ffisData.Bill == "" {
 		return ffisData, log.Errorf(logger, "Error parsing FFIS data", ErrMissingBill)
 	}
-	if ffisData.OppNumber == "" {
-		return ffisData, log.Errorf(logger, "Error parsing FFIS data", ErrMissingOppNumber)
+	if ffisData.GrantID == 0 {
+		return ffisData, log.Errorf(logger, "Error parsing FFIS data", ErrMissingGrantID)
 	}
 
 	return ffisData, nil

@@ -30,14 +30,15 @@ func (mocks3 *MockS3) GetObject(ctx context.Context,
 func TestParseFFISData(t *testing.T) {
 	logger = log.NewNopLogger()
 	var tests = []struct {
-		jsonFixture, expectedBill, expectedOpportunity string
-		expectedError                                  error
+		jsonFixture, expectedBill string
+		expectedGrantId           int64
+		expectedError             error
 	}{
-		{"standard.json", "HR 1234", "HR001", nil},
-		{"extra-fields.json", "HR 5678", "HR002", nil},
-		{"malformed.json", "", "", fmt.Errorf("Error parsing FFIS data")},
-		{"missing-fields-bill.json", "", "", ErrMissingBill},
-		{"missing-fields-opp.json", "", "", ErrMissingOppNumber},
+		{"standard.json", "HR 1234", 123, nil},
+		{"extra-fields.json", "HR 5678", 1234, nil},
+		{"malformed.json", "", 0, fmt.Errorf("Error parsing FFIS data")},
+		{"missing-fields-bill.json", "", 0, ErrMissingBill},
+		{"missing-fields-grant.json", "", 0, ErrMissingGrantID},
 	}
 	for _, test := range tests {
 		t.Run(test.jsonFixture, func(t *testing.T) {
@@ -47,7 +48,7 @@ func TestParseFFISData(t *testing.T) {
 			}
 			mocks3 := getMockClients()
 			mocks3.content = string(content)
-			results, err := parseFFISData(context.Background(), "test", mocks3)
+			results, err := parseFFISData(context.Background(), "test", "bucket", mocks3)
 			if err != nil {
 				if test.expectedError == nil {
 					t.Errorf("Unexpected error: %v", err)
@@ -62,8 +63,8 @@ func TestParseFFISData(t *testing.T) {
 				if ffisData.Bill != test.expectedBill {
 					t.Errorf("Expected bill %s, got %s", test.expectedBill, ffisData.Bill)
 				}
-				if ffisData.OppNumber != test.expectedOpportunity {
-					t.Errorf("Expected opportunity number %s, got %s", test.expectedOpportunity, ffisData.OppNumber)
+				if ffisData.GrantID != test.expectedGrantId {
+					t.Errorf("Expected grant id %v, got %v", test.expectedGrantId, ffisData.GrantID)
 				}
 			}
 

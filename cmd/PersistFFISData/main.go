@@ -22,6 +22,7 @@ import (
 
 type Environment struct {
 	LogLevel          string `env:"LOG_LEVEL,default=INFO"`
+	DestinationTable  string `env:"GRANTS_PREPARED_DYNAMODB_NAME,required=true"`
 	UsePathStyleS3Opt bool   `env:"S3_USE_PATH_STYLE,default=false"`
 	Extras            goenv.EnvSet
 }

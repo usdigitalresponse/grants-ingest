@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -51,9 +52,9 @@ func TestUpsertDynamoDB(t *testing.T) {
 			if *passedParams.TableName != tableName {
 				t.Errorf("Expected table name %v, got %v", tableName, *passedParams.TableName)
 			}
-			key := make(map[string]int64)
+			key := make(map[string]string)
 			attributevalue.UnmarshalMap(passedParams.Key, &key)
-			if key["grant_id"] != test.grantId {
+			if key["grant_id"] != strconv.FormatInt(test.grantId, 10) {
 				t.Errorf("Expected grant_id %v, got %v", test.grantId, key["grant_id"])
 			}
 			values := make(map[string]string)

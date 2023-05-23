@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -43,7 +44,9 @@ func UpdateOpportunity(ctx context.Context, c DynamoDBUpdateItemAPI, table strin
 }
 
 func buildKey(o opportunity) (map[string]types.AttributeValue, error) {
-	grant_id, err := attributevalue.Marshal(o.GrantID)
+	//convert int64 to string
+	grantIDStr := strconv.FormatInt(o.GrantID, 10)
+	grantIDKey, err := attributevalue.Marshal(grantIDStr)
 
-	return map[string]types.AttributeValue{"grant_id": grant_id}, err
+	return map[string]types.AttributeValue{"grant_id": grantIDKey}, err
 }
