@@ -16,12 +16,10 @@ import (
 )
 
 type Environment struct {
-	LogLevel             string `env:"LOG_LEVEL,default=INFO"`
-	DownloadChunkLimit   int64  `env:"DOWNLOAD_CHUNK_LIMIT,default=10"`
-	GrantsDataBucket     string `env:"GRANTS_SOURCE_DATA_BUCKET_NAME,required=true"`
-	MaxConcurrentUploads int    `env:"MAX_CONCURRENT_UPLOADS,default=1"`
-	UsePathStyleS3Opt    bool   `env:"S3_USE_PATH_STYLE,default=false"`
-	Extras               goenv.EnvSet
+	LogLevel          string `env:"LOG_LEVEL,default=INFO"`
+	UsePathStyleS3Opt bool   `env:"S3_USE_PATH_STYLE,default=false"`
+	TmpKeyPrefix      string `env:"TMP_KEY_PREFIX,default=tmp"`
+	Extras            goenv.EnvSet
 }
 
 var (
