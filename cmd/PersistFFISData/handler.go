@@ -32,7 +32,7 @@ func handleS3Event(ctx context.Context, s3Event events.S3Event, s3client S3API, 
 	if err != nil {
 		return err
 	}
-	err = UpdateDynamoDBItem(ctx, dbapi, "prepareddata", opportunity(ffisData))
+	err = UpdateOpportunity(ctx, dbapi, "prepareddata", opportunity(ffisData))
 	return err
 }
 

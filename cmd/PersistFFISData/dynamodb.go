@@ -18,24 +18,19 @@ type DynamoDBUpdateItemAPI interface {
 
 type opportunity ffis.FFISFundingOpportunity
 
-func UpdateDynamoDBItem(ctx context.Context, c DynamoDBUpdateItemAPI, table string, opp opportunity) error {
+func UpdateOpportunity(ctx context.Context, c DynamoDBUpdateItemAPI, table string, opp opportunity) error {
 	key, err := buildKey(opp)
 	if err != nil {
 		return err
 	}
-	expr, err := buildUpdateExpression(opp, map[string]string{
-		"Bill": "bill",
-	})
+
+	update := expression.Set(expression.Name("bill"), expression.Value(opp.Bill))
+
+	expr, err := expression.NewBuilder().WithUpdate(update).Build()
 	if err != nil {
 		return err
 	}
-	// println(*expr.Update())
-	// println(expr.Names())
-	// println(expr.Values())
-	for k, v := range expr.Values() {
-		println(k, v)
-	}
-	println(*expr.Update())
+
 	_, err = c.UpdateItem(ctx, &dynamodb.UpdateItemInput{
 		TableName:                 aws.String(table),
 		Key:                       key,
@@ -48,20 +43,7 @@ func UpdateDynamoDBItem(ctx context.Context, c DynamoDBUpdateItemAPI, table stri
 }
 
 func buildKey(o opportunity) (map[string]types.AttributeValue, error) {
-	oid, err := attributevalue.Marshal(o.OppNumber)
+	grant_id, err := attributevalue.Marshal(o.GrantID)
 
-	return map[string]types.AttributeValue{"opportunity_number": oid}, err
-}
-
-func buildUpdateExpression(o opportunity, attrs map[string]string) (expression.Expression, error) {
-	oppAttr, err := attributevalue.MarshalMap(o)
-	if err != nil {
-		return expression.Expression{}, err
-	}
-
-	update := expression.UpdateBuilder{}
-	for oppKey, tableKey := range attrs {
-		update = update.Set(expression.Name(tableKey), expression.Value(oppAttr[oppKey]))
-	}
-	return expression.NewBuilder().WithUpdate(update).Build()
+	return map[string]types.AttributeValue{"grant_id": grant_id}, err
 }

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
 type mockDynamoDBUpdateItemAPI struct {
@@ -22,11 +22,12 @@ func (m *mockDynamoDBUpdateItemAPI) UpdateItem(ctx context.Context, params *dyna
 func TestUpsertDynamoDB(t *testing.T) {
 
 	var tests = []struct {
-		name, bill, opportunityNumber string
-		expectedError                 error
+		name, bill    string
+		grantId       int64
+		expectedError error
 	}{
-		{"standard", "HR 1234", "HR001", nil},
-		{"error updating", "HR 5678", "HR002", fmt.Errorf("Error updating DynamoDB")},
+		{"standard", "HR 1234", 123, nil},
+		{"error updating", "HR 5678", 456, fmt.Errorf("Error updating DynamoDB")},
 		//	{"", "", fmt.Errorf("Error parsing FFIS data")},
 		//	{"", "", ErrMissingBill},
 		//	{"", "", ErrMissingOppNumber},
@@ -36,11 +37,11 @@ func TestUpsertDynamoDB(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			tableName := "test-table"
 			opp := opportunity{
-				OppNumber: test.opportunityNumber,
-				Bill:      test.bill,
+				GrantID: test.grantId,
+				Bill:    test.bill,
 			}
 			mock := mockDynamoDBUpdateItemAPI{expectedError: test.expectedError}
-			result := UpdateDynamoDBItem(context.TODO(), &mock, tableName, opp)
+			result := UpdateOpportunity(context.TODO(), &mock, tableName, opp)
 
 			if result != test.expectedError {
 				t.Errorf("Expected error %v, got %v", test.expectedError, result)
@@ -48,14 +49,17 @@ func TestUpsertDynamoDB(t *testing.T) {
 
 			passedParams := mock.params
 			if *passedParams.TableName != tableName {
-				t.Errorf("Expected table name %v, got %v", tableName, mock.params.TableName)
+				t.Errorf("Expected table name %v, got %v", tableName, *passedParams.TableName)
 			}
-			if passedParams.Key["opportunity_number"].(*types.AttributeValueMemberS).Value != test.opportunityNumber {
-				t.Errorf("Expected opportunity number %v, got %v", test.opportunityNumber, passedParams.Key["grant_number"].(*types.AttributeValueMemberS).Value)
+			key := make(map[string]int64)
+			attributevalue.UnmarshalMap(passedParams.Key, &key)
+			if key["grant_id"] != test.grantId {
+				t.Errorf("Expected grant_id %v, got %v", test.grantId, key["grant_id"])
 			}
-			println(passedParams.ExpressionAttributeValues["bill"])
-			if passedParams.ExpressionAttributeValues["bill"].(*types.AttributeValueMemberS).Value != test.bill {
-				t.Errorf("Expected bill %v, got %v", test.bill, passedParams.ExpressionAttributeValues[":bill"].(*types.AttributeValueMemberS).Value)
+			values := make(map[string]string)
+			attributevalue.UnmarshalMap(passedParams.ExpressionAttributeValues, &values)
+			if values[":0"] != test.bill {
+				t.Errorf("Expected bill %v, got %v", test.bill, values[":0"])
 			}
 
 		})
