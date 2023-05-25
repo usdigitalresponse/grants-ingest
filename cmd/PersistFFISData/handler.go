@@ -63,5 +63,7 @@ func parseFFISData(ctx context.Context, bucket string, uploadedFile string, s3cl
 		return ffisData, log.Errorf(logger, "Error parsing FFIS data", ErrMissingGrantID)
 	}
 
+	log.Info(logger, "Parsed FFIS data", "grant_id", ffisData.GrantID, "bill", ffisData.Bill)
+
 	return ffisData, nil
 }

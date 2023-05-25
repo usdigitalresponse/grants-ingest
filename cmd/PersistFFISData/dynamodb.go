@@ -44,7 +44,6 @@ func UpdateOpportunity(ctx context.Context, c DynamoDBUpdateItemAPI, table strin
 }
 
 func buildKey(o opportunity) (map[string]types.AttributeValue, error) {
-	//convert int64 to string
 	grantIDStr := strconv.FormatInt(o.GrantID, 10)
 	grantIDKey, err := attributevalue.Marshal(grantIDStr)
 

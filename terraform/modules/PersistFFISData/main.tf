@@ -20,10 +20,6 @@ data "aws_s3_bucket" "source_data" {
   bucket = var.grants_source_data_bucket_name
 }
 
-# data "aws_dynamodb_table" "grants_data" {
-#   name = var.table_name
-# }
-
 module "lambda_execution_policy" {
   source  = "cloudposse/iam-policy/aws"
   version = "0.4.0"

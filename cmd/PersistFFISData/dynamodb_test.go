@@ -21,7 +21,6 @@ func (m *mockDynamoDBUpdateItemAPI) UpdateItem(ctx context.Context, params *dyna
 }
 
 func TestUpsertDynamoDB(t *testing.T) {
-
 	var tests = []struct {
 		name, bill    string
 		grantId       int64
@@ -29,9 +28,6 @@ func TestUpsertDynamoDB(t *testing.T) {
 	}{
 		{"standard", "HR 1234", 123, nil},
 		{"error updating", "HR 5678", 456, fmt.Errorf("Error updating DynamoDB")},
-		//	{"", "", fmt.Errorf("Error parsing FFIS data")},
-		//	{"", "", ErrMissingBill},
-		//	{"", "", ErrMissingOppNumber},
 	}
 
 	for _, test := range tests {
