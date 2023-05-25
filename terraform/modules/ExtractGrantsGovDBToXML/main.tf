@@ -14,6 +14,7 @@ locals {
     var.datadog_custom_tags,
     { handlername = lower(var.function_name), },
   )
+  s3_temporary_path_prefix = trim(var.s3_temporary_path_prefix, "/")
 }
 
 data "aws_s3_bucket" "source_data" {
@@ -35,32 +36,29 @@ module "lambda_execution_policy" {
       ]
     }
     AllowS3UploadSourceData = {
-      effect  = "Allow"
-      actions = ["s3:PutObject"]
+      effect = "Allow"
+      actions = [
+        "s3:PutObject",
+        "s3:PutObjectTagging",
+      ]
       resources = [
         # Path: sources/YYYY/mm/dd/grants.gov/extract.xml
         "${data.aws_s3_bucket.source_data.arn}/sources/*/*/*/grants.gov/extract.xml"
       ]
     }
-    AllowS3UploadTemporaryData = {
-      effect  = "Allow"
-      actions = ["s3:PutObject"]
+    AllowS3UploadAndMoveTemporaryData = {
+      effect = "Allow"
+      actions = [
+        "s3:DeleteObject",
+        "s3:GetObject",
+        "s3:GetObjectTagging",
+        "s3:PutObject",
+      ]
       resources = [
         # Path: tmp/YYYY/mm/dd/grants.gov/extract.xml
-        "${data.aws_s3_bucket.source_data.arn}/tmp/*/*/*/grants.gov/extract.xml"
+        "${data.aws_s3_bucket.source_data.arn}/${local.s3_temporary_path_prefix}/sources/*/*/*/grants.gov/extract.xml"
       ]
     }
-  }
-}
-
-resource "aws_s3_bucket_notification" "default" {
-  bucket = data.aws_s3_bucket.source_data.id
-
-  lambda_function {
-    lambda_function_arn = module.lambda_function.lambda_function_arn
-    events              = ["s3:ObjectCreated:*"]
-    filter_prefix       = "sources/"
-    filter_suffix       = "/grants.gov/archive.zip"
   }
 }
 
@@ -96,15 +94,11 @@ module "lambda_function" {
   s3_server_side_encryption = "AES256"
 
   timeout     = 300 # 5 minutes, in seconds
-  memory_size = 1024
+  memory_size = 256
   environment_variables = merge(var.additional_environment_variables, {
-    DD_TRACE_RATE_LIMIT              = "1000"
-    DD_TAGS                          = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
-    DOWNLOAD_CHUNK_LIMIT             = "20"
-    LOG_LEVEL                        = var.log_level
-    GRANTS_SOURCE_DATA_BUCKET_NAME   = data.aws_s3_bucket.source_data.id
-    MAX_CONCURRENT_UPLOADS           = "10"
-    S3_USE_PATH_STYLE                = "true"
+    DD_TAGS             = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
+    LOG_LEVEL           = var.log_level
+    TMP_KEY_PATH_PREFIX = local.s3_temporary_path_prefix
   })
 
   allowed_triggers = {

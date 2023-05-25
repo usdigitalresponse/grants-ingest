@@ -76,3 +76,8 @@ variable "grants_source_data_bucket_name" {
   description = "Name of the S3 bucket used to store grants source data."
   type        = string
 }
+
+variable "s3_temporary_path_prefix" {
+  description = "Path prefix for temporary S3 object keys"
+  type        = string
+}

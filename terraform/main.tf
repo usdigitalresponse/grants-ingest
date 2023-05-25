@@ -64,6 +64,8 @@ locals {
     format("Datadog-Extension%s", var.lambda_arch == "arm64" ? "-ARM" : ""),
     var.datadog_lambda_extension_version,
   ])
+
+  source_data_bucket_temp_storage_path_prefix = "tmp"
 }
 
 module "this" {
@@ -369,6 +371,13 @@ resource "aws_s3_bucket_notification" "grant_source_data" {
   bucket = module.grants_source_data_bucket.bucket_id
 
   lambda_function {
+    lambda_function_arn = module.ExtractGrantsGovDBToXML.lambda_function_arn
+    events              = ["s3:ObjectCreated:*"]
+    filter_prefix       = "sources/"
+    filter_suffix       = "/grants.gov/archive.zip"
+  }
+
+  lambda_function {
     lambda_function_arn = module.SplitGrantsGovXMLDB.lambda_function_arn
     events              = ["s3:ObjectCreated:*"]
     filter_prefix       = "sources/"
@@ -390,6 +399,7 @@ resource "aws_s3_bucket_notification" "grant_source_data" {
   }
 
   depends_on = [
+    module.ExtractGrantsGovDBToXML,
     module.SplitGrantsGovXMLDB,
     module.EnqueueFFISDownload,
     module.SplitFFISSpreadsheet,
@@ -555,5 +565,6 @@ module "ExtractGrantsGovDBToXML" {
   additional_lambda_execution_policy_documents = local.lambda_execution_policies
   lambda_layer_arns                            = local.lambda_layer_arns
 
-  grants_source_data_bucket_name   = module.grants_source_data_bucket.bucket_id
+  grants_source_data_bucket_name = module.grants_source_data_bucket.bucket_id
+  s3_temporary_path_prefix       = local.source_data_bucket_temp_storage_path_prefix
 }
