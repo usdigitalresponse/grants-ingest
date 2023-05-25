@@ -23,12 +23,12 @@ require (
 	github.com/johannesboyne/gofakes3 v0.0.0-20230506070712-04da935ef877
 	github.com/stretchr/testify v1.8.3
 	github.com/xuri/excelize/v2 v2.7.1
-	gopkg.in/DataDog/dd-trace-go.v1 v1.50.1
+	gopkg.in/DataDog/dd-trace-go.v1 v1.51.0
 )
 
 require (
 	github.com/DataDog/appsec-internal-go v1.0.0 // indirect
-	github.com/DataDog/datadog-agent/pkg/obfuscate v0.44.0 // indirect
+	github.com/DataDog/datadog-agent/pkg/obfuscate v0.45.0-rc.1 // indirect
 	github.com/DataDog/datadog-agent/pkg/remoteconfig/state v0.45.0-rc.4 // indirect
 	github.com/DataDog/datadog-go/v5 v5.3.0 // indirect
 	github.com/DataDog/go-libddwaf v1.2.0 // indirect
@@ -43,12 +43,16 @@ require (
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.34 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.0.25 // indirect
 	github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.14.11 // indirect
+	github.com/aws/aws-sdk-go-v2/service/eventbridge v1.18.9 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.11 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.28 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/endpoint-discovery v1.7.27 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.27 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.14.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/kinesis v1.17.10 // indirect
 	github.com/aws/aws-sdk-go-v2/service/kms v1.21.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sfn v1.17.9 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sns v1.20.8 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.12.10 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.14.10 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.19.0 // indirect
