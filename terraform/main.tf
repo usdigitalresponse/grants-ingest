@@ -137,9 +137,14 @@ module "grants_source_data_bucket" {
 
   lifecycle_configuration_rules = [
     {
-      enabled                                = true
-      id                                     = "rule-1"
-      filter_and                             = null
+      enabled = true
+      id      = "rule-1"
+      filter_and = {
+        object_size_greater_than = null
+        object_size_less_than    = null
+        prefix                   = null
+        tags                     = {}
+      }
       abort_incomplete_multipart_upload_days = 1
       transition                             = [{ days = null }]
       expiration                             = { days = null }
@@ -152,7 +157,23 @@ module "grants_source_data_bucket" {
       noncurrent_version_expiration = {
         days = 2557 # 7 years (includes 2 leap days)
       }
-    }
+    },
+    {
+      // Ensures "tmp/"-prefixed objects are deleted after 7 days
+      enabled = true
+      id      = "temporary-storage-cleanup"
+      filter_and = {
+        object_size_greater_than = null
+        object_size_less_than    = null
+        prefix                   = "${local.source_data_bucket_temp_storage_path_prefix}/"
+        tags                     = {}
+      }
+      abort_incomplete_multipart_upload_days = 1
+      transition                             = [{ days = null }]
+      expiration                             = { days = 7 }
+      noncurrent_version_transition          = [{ days = null }]
+      noncurrent_version_expiration          = { days = null }
+    },
   ]
 }
 
