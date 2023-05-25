@@ -414,6 +414,13 @@ resource "aws_s3_bucket_notification" "grant_source_data" {
   }
 
   lambda_function {
+    lambda_function_arn = module.PersistFFISData.lambda_function_arn
+    events              = ["s3:ObjectCreated:*"]
+    filter_prefix       = "sources/"
+    filter_suffix       = "/ffis/v1.json"
+  }
+
+  lambda_function {
     lambda_function_arn = module.SplitFFISSpreadsheet.lambda_function_arn
     events              = ["s3:ObjectCreated:*"]
     filter_prefix       = "sources/"
@@ -424,6 +431,7 @@ resource "aws_s3_bucket_notification" "grant_source_data" {
     module.ExtractGrantsGovDBToXML,
     module.SplitGrantsGovXMLDB,
     module.EnqueueFFISDownload,
+    module.PersistFFISData,
     module.SplitFFISSpreadsheet,
   ]
 }
@@ -572,6 +580,29 @@ module "SplitFFISSpreadsheet" {
   ]
 }
 
+module "PersistFFISData" {
+  source                                       = "./modules/PersistFFISData"
+  namespace                                    = var.namespace
+  function_name                                = "PersistFFISData"
+  permissions_boundary_arn                     = local.permissions_boundary_arn
+  lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
+  log_retention_in_days                        = var.lambda_default_log_retention_in_days
+  log_level                                    = var.lambda_default_log_level
+  lambda_code_path                             = local.lambda_code_path
+  lambda_arch                                  = var.lambda_arch
+  additional_environment_variables             = local.lambda_environment_variables
+  additional_lambda_execution_policy_documents = local.lambda_execution_policies
+  lambda_layer_arns                            = local.lambda_layer_arns
+
+  grants_source_data_bucket_name      = module.grants_source_data_bucket.bucket_id
+  grants_prepared_dynamodb_table_name = module.grants_prepared_dynamodb_table.table_name
+  grants_prepared_dynamodb_table_arn  = module.grants_prepared_dynamodb_table.table_arn
+
+  depends_on = [
+    module.grants_source_data_bucket,
+  ]
+}
+
 module "ExtractGrantsGovDBToXML" {
   source = "./modules/ExtractGrantsGovDBToXML"
 
@@ -589,4 +620,8 @@ module "ExtractGrantsGovDBToXML" {
 
   grants_source_data_bucket_name = module.grants_source_data_bucket.bucket_id
   s3_temporary_path_prefix       = local.source_data_bucket_temp_storage_path_prefix
+
+  depends_on = [
+    module.grants_source_data_bucket,
+  ]
 }

@@ -157,6 +157,13 @@ tasks:
         vars:
           LAMBDA_CMD: DownloadFFISSpreadsheet
 
+  build-PersistFFISData:
+    desc: Compiles PersistFFISData
+    cmds:
+      - task: build-lambda
+        vars:
+          LAMBDA_CMD: PersistFFISData
+          
   build-SplitFFISSpreadsheet:
     desc: Compiles SplitFFISSpreadsheet
     cmds:

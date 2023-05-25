@@ -50,7 +50,7 @@ func (mockHTTP *MockHTTP) Do(req *http.Request) (resp *http.Response, err error)
 	return &http.Response{Body: bodyReaderClose, StatusCode: mockStatusCode}, mockHTTP.responseError
 }
 
-func TestHandleS3Event(t *testing.T) {
+func TestHandleSQSEvent(t *testing.T) {
 	logger = log.NewNopLogger()
 	env.MaxDownloadBackoff = 100 * time.Millisecond
 	var tests = []struct {

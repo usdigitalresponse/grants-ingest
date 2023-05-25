@@ -13,5 +13,6 @@ output "lambda_functions" {
     module.EnqueueFFISDownload.lambda_function_name,
     module.DownloadFFISSpreadsheet.lambda_function_name,
     module.ExtractGrantsGovDBToXML.lambda_function_name,
+    module.PersistFFISData.lambda_function_name,
   ]
 }
