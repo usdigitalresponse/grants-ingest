@@ -16,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/usdigitalresponse/grants-ingest/internal/awsHelpers"
+	"github.com/usdigitalresponse/grants-ingest/internal/ddHelpers"
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
 	awstrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/aws/aws-sdk-go-v2/aws"
 )
@@ -28,8 +29,8 @@ type Environment struct {
 }
 
 var (
-	env    Environment
-	logger log.Logger
+	env        Environment
+	logger     log.Logger
 	sendMetric = ddHelpers.NewMetricSender("PersistFFISData", "source:ffis.org")
 )
 
