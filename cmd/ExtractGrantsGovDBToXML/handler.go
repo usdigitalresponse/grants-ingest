@@ -137,16 +137,15 @@ func moveS3Object(ctx context.Context, svc S3MoverAPIClient, bucket, oldKey, new
 	return nil
 }
 
-/*
-For local testing use the following event payload.
-Note: you may need to change the bucket and file name as you see fit based on what is available in your local environemnt.
-
-	awslocal lambda invoke \
-	    --region=us-west-2 \
-	    --function-name grants-ingest-ExtractGrantsGovDBToXML \
-	    --payload $(printf '{"Records": [{"eventVersion": "2.0","eventSource": "aws:s3","awsRegion": "us-west-2","eventTime": "1970-01-01T00:00:00.123Z","eventName": "ObjectCreated:Put","userIdentity": {"principalId": "EXAMPLE"},"requestParameters": {"sourceIPAddress": "127.0.0.1"},"responseElements": {"x-amz-request-id": "C3D13FE58DE4C810","x-amz-id-2": "FMyUVURIY8/IgAtTv8xRjskZQpcIZ9KG4V5Wp6S7S/JRWeUWerMUE5JgHvANOjpD"},"s3": {"s3SchemaVersion": "1.0","configurationId": "testConfigRule","bucket": {"name": “ADD_GRANTS_DATA_BUCKET_NAME,”ownerIdentity": {"principalId": "EXAMPLE"},"arn": "arn:aws:s3:::mybucket"},"object": {"key": “archive.zip”,”size": 1024,"versionId": "version","eTag": "d41d8cd98f00b204e9800998ecf8427e","sequencer": "Happy Sequencer"}}}]}' | base64) \
-	    /dev/stdout
-*/
+// For local testing use the following event payload.
+// Note: you may need to change the bucket and file name as you see fit based on what is available
+// in your local environemnt.
+//
+//	awslocal lambda invoke \
+//	  --region=us-west-2 \
+//	  --function-name grants-ingest-ExtractGrantsGovDBToXML \
+//	  --payload $(printf '{"Records":[{"s3":{"bucket":{"name":"grantsingest-tsh-grantssourcedata-456635181950-us-west-2"},"object":{"key":"archive.zip"}}}]}' | base64) \
+//	  /dev/stdout
 func handleS3Event(ctx context.Context, s3svc S3UploaderDownloaderMoverAPIClient, s3Event events.S3Event) error {
 	record := s3Event.Records[0]
 	bucket := record.S3.Bucket.Name
