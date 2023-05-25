@@ -33,6 +33,9 @@ func handleS3Event(ctx context.Context, s3Event events.S3Event, s3client S3API, 
 		return err
 	}
 	err = UpdateOpportunity(ctx, dbapi, env.DestinationTable, opportunity(ffisData))
+	if err == nil {
+		sendMetric("opportunity.saved", 1)
+	}
 	return err
 }
 
