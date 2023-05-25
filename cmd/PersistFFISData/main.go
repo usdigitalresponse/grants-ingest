@@ -30,7 +30,7 @@ type Environment struct {
 var (
 	env    Environment
 	logger log.Logger
-	// sendMetric       = ddHelpers.NewMetricSender("PersistFFISData", "source:grants.gov")
+	sendMetric = ddHelpers.NewMetricSender("PersistFFISData", "source:ffis.org")
 )
 
 func main() {
