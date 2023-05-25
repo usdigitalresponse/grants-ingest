@@ -64,6 +64,8 @@ locals {
     format("Datadog-Extension%s", var.lambda_arch == "arm64" ? "-ARM" : ""),
     var.datadog_lambda_extension_version,
   ])
+
+  source_data_bucket_temp_storage_path_prefix = "tmp"
 }
 
 module "this" {
@@ -135,9 +137,14 @@ module "grants_source_data_bucket" {
 
   lifecycle_configuration_rules = [
     {
-      enabled                                = true
-      id                                     = "rule-1"
-      filter_and                             = null
+      enabled = true
+      id      = "rule-1"
+      filter_and = {
+        object_size_greater_than = null
+        object_size_less_than    = null
+        prefix                   = null
+        tags                     = {}
+      }
       abort_incomplete_multipart_upload_days = 1
       transition                             = [{ days = null }]
       expiration                             = { days = null }
@@ -150,7 +157,23 @@ module "grants_source_data_bucket" {
       noncurrent_version_expiration = {
         days = 2557 # 7 years (includes 2 leap days)
       }
-    }
+    },
+    {
+      // Ensures "tmp/"-prefixed objects are deleted after 7 days
+      enabled = true
+      id      = "temporary-storage-cleanup"
+      filter_and = {
+        object_size_greater_than = null
+        object_size_less_than    = null
+        prefix                   = "${local.source_data_bucket_temp_storage_path_prefix}/"
+        tags                     = {}
+      }
+      abort_incomplete_multipart_upload_days = 1
+      transition                             = [{ days = null }]
+      expiration                             = { days = 7 }
+      noncurrent_version_transition          = [{ days = null }]
+      noncurrent_version_expiration          = { days = null }
+    },
   ]
 }
 
@@ -246,6 +269,7 @@ module "grants_prepared_dynamodb_table" {
   name                          = "prepareddata"
   hash_key                      = "grant_id"
   table_class                   = "STANDARD"
+  billing_mode                  = "PAY_PER_REQUEST"
   enable_streams                = true
   stream_view_type              = "NEW_AND_OLD_IMAGES"
   enable_point_in_time_recovery = true
@@ -369,6 +393,13 @@ resource "aws_s3_bucket_notification" "grant_source_data" {
   bucket = module.grants_source_data_bucket.bucket_id
 
   lambda_function {
+    lambda_function_arn = module.ExtractGrantsGovDBToXML.lambda_function_arn
+    events              = ["s3:ObjectCreated:*"]
+    filter_prefix       = "sources/"
+    filter_suffix       = "/grants.gov/archive.zip"
+  }
+
+  lambda_function {
     lambda_function_arn = module.SplitGrantsGovXMLDB.lambda_function_arn
     events              = ["s3:ObjectCreated:*"]
     filter_prefix       = "sources/"
@@ -397,6 +428,7 @@ resource "aws_s3_bucket_notification" "grant_source_data" {
   }
 
   depends_on = [
+    module.ExtractGrantsGovDBToXML,
     module.SplitGrantsGovXMLDB,
     module.EnqueueFFISDownload,
     module.PersistFFISData,
@@ -565,6 +597,29 @@ module "PersistFFISData" {
   grants_source_data_bucket_name      = module.grants_source_data_bucket.bucket_id
   grants_prepared_dynamodb_table_name = module.grants_prepared_dynamodb_table.table_name
   grants_prepared_dynamodb_table_arn  = module.grants_prepared_dynamodb_table.table_arn
+
+  depends_on = [
+    module.grants_source_data_bucket,
+  ]
+}
+
+module "ExtractGrantsGovDBToXML" {
+  source = "./modules/ExtractGrantsGovDBToXML"
+
+  namespace                                    = var.namespace
+  function_name                                = "ExtractGrantsGovDBToXML"
+  permissions_boundary_arn                     = local.permissions_boundary_arn
+  lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
+  log_retention_in_days                        = var.lambda_default_log_retention_in_days
+  log_level                                    = var.lambda_default_log_level
+  lambda_code_path                             = local.lambda_code_path
+  lambda_arch                                  = var.lambda_arch
+  additional_environment_variables             = local.lambda_environment_variables
+  additional_lambda_execution_policy_documents = local.lambda_execution_policies
+  lambda_layer_arns                            = local.lambda_layer_arns
+
+  grants_source_data_bucket_name = module.grants_source_data_bucket.bucket_id
+  s3_temporary_path_prefix       = local.source_data_bucket_temp_storage_path_prefix
 
   depends_on = [
     module.grants_source_data_bucket,

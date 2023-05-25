@@ -306,4 +306,90 @@ resource "datadog_dashboard" "service_dashboard" {
       }
     }
   }
+
+  widget {
+    group_definition {
+      title       = "ExtractGrantsGovDBToXML"
+      show_title  = true
+      layout_type = "ordered"
+
+      widget {
+        timeseries_definition {
+          title          = "Invocation Status"
+          show_legend    = true
+          legend_layout  = "horizontal"
+          legend_columns = ["sum"]
+
+          request {
+            display_type = "bars"
+
+            formula {
+              formula_expression = "invoke_success"
+              alias              = "Succeeded"
+            }
+            query {
+              metric_query {
+                name  = "invoke_success"
+                query = "sum:aws.lambda.invocations{$env,$service,$version,handlername:extractgrantsgovdbtoxml}.as_count()"
+              }
+            }
+
+            formula {
+              formula_expression = "invoke_failure"
+              alias              = "Failed"
+              style {
+                palette       = "warm"
+                palette_index = 5
+              }
+            }
+            query {
+              metric_query {
+                name  = "invoke_failure"
+                query = "sum:aws.lambda.errors{$env,$service,$version,handlername:extractgrantsgovdbtoxml}.as_count()"
+              }
+            }
+          }
+        }
+      }
+
+      widget {
+        timeseries_definition {
+          title          = "Invocation Duration"
+          show_legend    = true
+          legend_layout  = "horizontal"
+          legend_columns = ["sum"]
+
+          request {
+            display_type = "line"
+
+            formula {
+              formula_expression = "invoke_duration"
+              alias              = "Duration"
+            }
+            query {
+              metric_query {
+                name  = "invoke_duration"
+                query = "avg:aws.lambda.duration{$env,$service,$version,handlername:extractgrantsgovdbtoxml}"
+              }
+            }
+
+            formula {
+              formula_expression = "invoke_timeout"
+              alias              = "Timeout"
+              style {
+                palette       = "warm"
+                palette_index = 5
+              }
+            }
+            query {
+              metric_query {
+                name  = "invoke_timeout"
+                query = "avg:aws.lambda.timeout{$env,$service,$version,handlername:extractgrantsgovdbtoxml}"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 }
