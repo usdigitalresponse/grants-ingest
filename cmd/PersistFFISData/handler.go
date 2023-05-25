@@ -28,7 +28,6 @@ func handleS3Event(ctx context.Context, s3Event events.S3Event, s3client S3API, 
 	uploadedFile := s3Event.Records[0].S3.Object.Key
 	bucket := s3Event.Records[0].S3.Bucket.Name
 	log.Info(logger, "Received S3 event", "uploadedFile", uploadedFile)
-	// parse the file contents into JSON
 	ffisData, err := parseFFISData(ctx, bucket, uploadedFile, s3client)
 	if err != nil {
 		return err
