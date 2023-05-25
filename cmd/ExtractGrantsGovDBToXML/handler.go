@@ -12,23 +12,18 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/krolaw/zipstream"
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
 )
 
-type DummyWriterAt struct {
-	io.Writer
-}
-
-func (w DummyWriterAt) WriteAt(p []byte, offset int64) (n int, err error) {
-	return w.Write(p)
-}
-
-func FileUploadStream(ctx context.Context, svc *s3.Client, r io.Reader, bucket, key string) error {
+func fileUploadStream(ctx context.Context, m UploadManager, r io.Reader, bucket, key string) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
 
+	logger := log.With(logger, "bucket", bucket, "destination_key", key)
+	log.Debug(logger, "locating XML entry in zip stream")
 	data := zipstream.NewReader(r)
 	header, err := data.Next()
 	if err != nil {
@@ -38,20 +33,25 @@ func FileUploadStream(ctx context.Context, svc *s3.Client, r io.Reader, bucket, 
 		return fmt.Errorf("unexpected non-XML file in zip stream: %s", header.Name)
 	}
 
-	if _, err := manager.NewUploader(svc).Upload(ctx, &s3.PutObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String("tmp/" + key + header.Name),
-		Body:   data,
+	log.Debug(logger, "located start of XML file in zip stream; ready to upload")
+	if _, err := m.Upload(ctx, &s3.PutObjectInput{
+		Bucket:               aws.String(bucket),
+		Key:                  aws.String(key),
+		Body:                 data,
+		ServerSideEncryption: types.ServerSideEncryptionAes256,
 	}); err != nil {
-		log.Error(logger, "error uploading extracted XML to S3", err)
-		return err
+		return log.Errorf(logger, "error uploading extracted XML to S3", err)
 	}
+	log.Debug(logger, "finished uploading extracted XML file stream to s3")
+	sendMetric("xml.extracted", 1)
 
 	if err := ctx.Err(); err != nil {
 		return err
 	}
+
+	log.Debug(logger, "verifying zip archive is fully consumed")
 	if header, err := data.Next(); err != nil && err != io.EOF {
-		return fmt.Errorf("unexpected error advancing zip stream: %w", err)
+		return fmt.Errorf("error advancing to expected end of zip stream: %w", err)
 	} else if header != nil {
 		return fmt.Errorf("unexpected additional file in zip archive: %s", header.Name)
 	}
@@ -59,22 +59,24 @@ func FileUploadStream(ctx context.Context, svc *s3.Client, r io.Reader, bucket, 
 	return nil
 }
 
-func FileDownloadStream(ctx context.Context, svc *s3.Client, w *io.PipeWriter, bucket, key string) error {
-	_, err := manager.NewDownloader(svc).Download(ctx, DummyWriterAt{w}, &s3.GetObjectInput{
+func fileDownloadStream(ctx context.Context, m DownloadManager, w io.Writer, bucket, key string) error {
+	logger := log.With(logger, "bucket", bucket, "source_key", key)
+
+	log.Debug(logger, "downloading zip archive stream", "bucket", bucket, "source_key", key)
+	_, err := m.Download(ctx, DummyWriterAt{w}, &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 	})
+	if err != nil {
+		sendMetric("archive.downloaded", 1)
+	}
 	return err
 }
 
-func ManageStreamingDownloadUpload(ctx context.Context, svc *s3.Client, bucket, sourceKey, tmpKey string) error {
-	logger := log.With(logger, "bucket", bucket,
-		"source_key", sourceKey, "destination_key", "tmp_destination_key", tmpKey)
-	log.Info(logger, "uploading XML extracted from zip archive")
-
-	reader, writer := io.Pipe()
+func manageStreamingDownloadUpload(ctx context.Context, c S3UploaderDownloaderAPIClient, bucket, sourceKey, tmpKey string) error {
+	logger := log.With(logger, "bucket", bucket, "source_key", sourceKey, "destination_key", tmpKey)
 	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
+	reader, writer := io.Pipe()
 
 	// Start the upload handler
 	var uploadErr error
@@ -83,42 +85,45 @@ func ManageStreamingDownloadUpload(ctx context.Context, svc *s3.Client, bucket, 
 	go func() {
 		defer wg.Done()
 		defer reader.Close()
-		uploadErr = FileUploadStream(ctx, svc, reader, bucket, tmpKey)
+		uploadErr = fileUploadStream(ctx, manager.NewUploader(c), reader, bucket, tmpKey)
+		if uploadErr != nil {
+			// Cancel the shared context to abort any in-progress download
+			cancel()
+		}
 	}()
 
-	// Stream source object contents to the pipe writer
-	downloader := manager.NewDownloader(svc, func(d *manager.Downloader) {
-		// TODO: Do we need to initialize with `d.Concurrency = 1`?
-		// d.Concurrency = 1
-	})
-	_, downloadErr := downloader.Download(ctx, DummyWriterAt{writer}, &s3.GetObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(sourceKey),
-	})
+	// Download and stream source object contents to the pipe writer
+	downloadErr := fileDownloadStream(ctx, NewSequentialDownloadManager(c), writer, bucket, sourceKey)
 	writer.Close()
 	if downloadErr != nil {
+		// Cancel the shared context to abort any in-progress unzip/upload operation
+		cancel()
 		return log.Errorf(logger, "error streaming source object from S3", downloadErr)
 	}
 	log.Info(logger, "finished streaming source object from S3")
 
 	wg.Wait()
 	if uploadErr != nil {
-		sendMetric("upload.failed", 1)
 		return log.Errorf(logger, "error uploading zip archive contexts to S3", uploadErr)
 	}
-	log.Info(logger, "finished uploading XML from zip archive")
+	log.Info(logger, "finished uploading XML from zip archive stream")
 
 	return nil
 }
 
-func MoveS3Object(ctx context.Context, svc S3MoveObjectAPI, bucket, oldKey, newKey string) error {
+func moveS3Object(ctx context.Context, svc S3MoverAPIClient, bucket, oldKey, newKey string) error {
+	logger := log.With(logger, "bucket", bucket, "source_key", oldKey, "destination_key", newKey)
+
 	if _, err := svc.CopyObject(ctx, &s3.CopyObjectInput{
-		Bucket:     aws.String(bucket),
-		CopySource: aws.String(oldKey),
-		Key:        aws.String(newKey),
+		Bucket:               aws.String(bucket),
+		CopySource:           aws.String(filepath.Join(bucket, oldKey)),
+		Key:                  aws.String(newKey),
+		ServerSideEncryption: types.ServerSideEncryptionAes256,
 	}); err != nil {
 		return log.Errorf(logger, "error copying extracted XML to permanent destination", err)
 	}
+	log.Debug(logger, "copied extracted XML to permanent destination")
+	sendMetric("xml.uploaded", 1)
 
 	if _, err := svc.DeleteObject(ctx, &s3.DeleteObjectInput{
 		Bucket: aws.String(bucket),
@@ -126,7 +131,9 @@ func MoveS3Object(ctx context.Context, svc S3MoveObjectAPI, bucket, oldKey, newK
 	}); err != nil {
 		return log.Errorf(logger, "error deleting extracted XML from temporary destination", err)
 	}
+	log.Debug(logger, "deleted extracted XML from temporary destination")
 
+	log.Info(logger, "moved extracted XML to permanent destination")
 	return nil
 }
 
@@ -140,9 +147,7 @@ Note: you may need to change the bucket and file name as you see fit based on wh
 	    --payload $(printf '{"Records": [{"eventVersion": "2.0","eventSource": "aws:s3","awsRegion": "us-west-2","eventTime": "1970-01-01T00:00:00.123Z","eventName": "ObjectCreated:Put","userIdentity": {"principalId": "EXAMPLE"},"requestParameters": {"sourceIPAddress": "127.0.0.1"},"responseElements": {"x-amz-request-id": "C3D13FE58DE4C810","x-amz-id-2": "FMyUVURIY8/IgAtTv8xRjskZQpcIZ9KG4V5Wp6S7S/JRWeUWerMUE5JgHvANOjpD"},"s3": {"s3SchemaVersion": "1.0","configurationId": "testConfigRule","bucket": {"name": “ADD_GRANTS_DATA_BUCKET_NAME,”ownerIdentity": {"principalId": "EXAMPLE"},"arn": "arn:aws:s3:::mybucket"},"object": {"key": “archive.zip”,”size": 1024,"versionId": "version","eTag": "d41d8cd98f00b204e9800998ecf8427e","sequencer": "Happy Sequencer"}}}]}' | base64) \
 	    /dev/stdout
 */
-func handleS3EventWithConfig(cfg aws.Config, ctx context.Context, s3Event events.S3Event) error {
-	s3svc := s3.NewFromConfig(cfg, func(o *s3.Options) { o.UsePathStyle = env.UsePathStyleS3Opt })
-
+func handleS3Event(ctx context.Context, s3svc S3UploaderDownloaderMoverAPIClient, s3Event events.S3Event) error {
 	record := s3Event.Records[0]
 	bucket := record.S3.Bucket.Name
 	sourceKey := record.S3.Object.Key
@@ -151,12 +156,12 @@ func handleS3EventWithConfig(cfg aws.Config, ctx context.Context, s3Event events
 	sourcePath, _ := filepath.Split(sourceKey)
 	destinationKey := filepath.Join(sourcePath, "extract.xml")
 	tmpDestinationKey := filepath.Join(env.TmpKeyPrefix, destinationKey)
-	err := ManageStreamingDownloadUpload(ctx, s3svc, record.S3.Bucket.Name, sourceKey, tmpDestinationKey)
+	err := manageStreamingDownloadUpload(ctx, s3svc, record.S3.Bucket.Name, sourceKey, tmpDestinationKey)
 	if err != nil {
 		return log.Errorf(logger, "failed to stream zip archive to XML object", err)
 	}
 
-	if err := MoveS3Object(ctx, s3svc, bucket, tmpDestinationKey, destinationKey); err != nil {
+	if err := moveS3Object(ctx, s3svc, bucket, tmpDestinationKey, destinationKey); err != nil {
 		return log.Errorf(logger,
 			"failed to move XML upload from temporary path to permanent destination", err)
 	}
