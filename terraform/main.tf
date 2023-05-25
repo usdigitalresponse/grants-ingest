@@ -269,6 +269,7 @@ module "grants_prepared_dynamodb_table" {
   name                          = "prepareddata"
   hash_key                      = "grant_id"
   table_class                   = "STANDARD"
+  billing_mode                  = "PAY_PER_REQUEST"
   enable_streams                = true
   stream_view_type              = "NEW_AND_OLD_IMAGES"
   enable_point_in_time_recovery = true
