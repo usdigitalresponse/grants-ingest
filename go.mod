@@ -22,7 +22,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/johannesboyne/gofakes3 v0.0.0-20230506070712-04da935ef877
 	github.com/krolaw/zipstream v0.0.0-20180621105154-0a2661891f94
-	github.com/stretchr/testify v1.8.3
+	github.com/stretchr/testify v1.8.4
 	github.com/xuri/excelize/v2 v2.7.1
 	gopkg.in/DataDog/dd-trace-go.v1 v1.51.0
 )
