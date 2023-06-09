@@ -49,6 +49,7 @@ func main() {
 		if err != nil {
 			return fmt.Errorf("could not create AWS SDK config: %w", err)
 		}
+		awstrace.AppendMiddleware(&cfg)
 
 		// Configure service clients
 		s3Svc := s3.NewFromConfig(cfg, func(o *s3.Options) {
@@ -56,7 +57,6 @@ func main() {
 		})
 		dynamodbSvc := dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {})
 
-		awstrace.AppendMiddleware(&cfg)
 		log.Debug(logger, "Starting Lambda")
 		return handleS3EventWithConfig(s3Svc, dynamodbSvc, ctx, s3Event)
 	}, nil))
