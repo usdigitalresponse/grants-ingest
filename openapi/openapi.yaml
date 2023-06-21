@@ -1,0 +1,274 @@
+openapi: 3.1.0
+info:
+  title: OpenAPI standard for federal grant data
+  version: 0.0.1
+paths: {} # No endpoints defined
+components:
+  schemas:
+      AdditionalInformation:
+        type: object
+        properties:
+          eligibility:
+            type: string
+          text:
+            type: string
+          url:
+            type: string
+            format: uri
+      Agency:
+        type: object
+        properties:
+          code:
+            type: string
+          name:
+            type: string
+      Applicant:
+        type: object
+        properties:
+          name:
+            type: string
+            enum:
+              - 'State governments'
+              - 'County governments'
+              - 'City or township governments'
+              - 'Special district governments'
+              - 'Independent school districts'
+              - 'Public and State controlled institutions of higher education'
+              - 'Native American tribal governments (Federally recognized)'
+              - 'Public housing authorities/Indian housing authorities'
+              - 'Native American tribal organizations (other than Federally recognized tribal governments)'
+              - 'Nonprofits having a 501(c)(3) status with the IRS, other than institutions of higher education'
+              - 'Nonprofits that do not have a 501(c)(3) status with the IRS, other than institutions of higher education'
+              - 'Private institutions of higher education'
+              - 'Individuals'
+              - 'For profit organizations other than small businesses'
+              - 'Small businesses'
+              - 'Others (see text field entitled "Additional Information on Eligibility" for clarification)'
+              - 'Unrestricted (i.e., open to any type of entity above), subject to any clarification in text field entitled "Additional Information on Eligibility'
+          code:
+            type: string
+            enum:
+              - '00'
+              - '01'
+              - '02'
+              - '04'
+              - '05'
+              - '06'
+              - '07'
+              - '08'
+              - '11'
+              - '12'
+              - '13'
+              - '20'
+              - '21'
+              - '22'
+              - '23'
+              - '25'
+              - '99'
+      Award:
+        type: object
+        properties:
+          ceiling:
+            type: string
+          floor:
+            type: string
+          estimated_total_program_funding:
+            type: string
+          expected_number_of_awards:
+            type: string
+      CloseDate:
+        type: object
+        properties:
+          date:
+            type: string
+            format: date
+          explanation:
+            type: string
+      Email:
+        type: object
+        properties:
+          email:
+            type: string
+            format: email
+          description:
+            type: string
+      FundingActivityCategory:
+        type: object
+        properties:
+          name:
+            type: string
+            enum:
+              - 'Recovery Act'
+              - 'Agriculture'
+              - 'Arts'
+              - 'Business and Commerce'
+              - 'Community Development'
+              - 'Consumer Protection'
+              - 'Disaster Prevention and Relief'
+              - 'Education'
+              - 'Employment, Labor and Training'
+              - 'Energy'
+              - 'Environment'
+              - 'Food and Nutrition'
+              - 'Health'
+              - 'Housing'
+              - 'Humanities'
+              - 'Information and Statistics'
+              - 'Income Security and Social Services'
+              - 'Law, Justice and Legal Services'
+              - 'Natural Resources'
+              - 'Other'
+              - 'Opportunity Zone Benefits'
+              - 'Regional Development'
+              - 'Science and Technology and Other Research and Development'
+              - 'Transportation'
+              - 'Affordable Care Act'
+          code:
+            type: string
+            enum:
+              - 'RA'
+              - 'AG'
+              - 'AR'
+              - 'BC'
+              - 'CD'
+              - 'CP'
+              - 'DPR'
+              - 'ED'
+              - 'ELT'
+              - 'EN'
+              - 'ENV'
+              - 'FN'
+              - 'HL'
+              - 'HO'
+              - 'HU'
+              - 'IS'
+              - 'ISS'
+              - 'LJL'
+              - 'NR'
+              - 'O'
+              - 'OZ'
+              - 'RD'
+              - 'ST'
+              - 'T'
+              - 'ACA'
+      FundingActivity:
+        type: object
+        properties:
+          categories:
+            type: array
+            items:
+              $ref: '#/components/schemas/FundingActivityCategory'
+          explanation:
+            type: string
+      FundingInstrument:
+        type: object
+        properties:
+          name:
+            type: string
+            enum: [
+              'Cooperative Agreement',
+              'Grant',
+              'Procurement Contract',
+              'Other',
+            ]
+          code:
+            type: string
+            enum: [
+              'CA',
+              'G',
+              'PC',
+              'O',
+            ]
+      GrantorContact:
+        type: object
+        properties:
+          email:
+            $ref: '#/components/schemas/Email'
+          text:
+            type: string
+      Metadata:
+        type: object
+        properties:
+          version:
+            type: string
+      OpportunityCategory:
+        type: object
+        properties:
+          name:
+            type: string
+            enum:
+              - 'Discretionary'
+              - 'Mandatory'
+              - 'Continuation'
+              - 'Earmark'
+              - 'Other'
+          code:
+            type: string
+            enum:
+              - 'D'
+              - 'M'
+              - 'C'
+              - 'E'
+              - 'O'
+          explanation:
+            type: string
+      Opportunity:
+        type: object
+        properties:
+          id:
+            type: string
+          number:
+            type: string
+          title:
+            type: string
+          category:
+            $ref: '#/components/schemas/OpportunityCategory'
+      Grant:
+        type: object
+        properties:
+          grant_id:
+            type: integer
+            format: int64
+          description:
+            type: string
+          funding_instrument_types:
+            type: array
+            items:
+              $ref: '#/components/schemas/FundingInstrument'
+          cost_sharing_or_matching_requirement:
+            type: boolean
+          CFDA_numbers:
+            type: array
+            items:
+              type: string
+          bill:
+            type: string
+          post_date:
+            type: string
+            format: date
+          archive_date:
+            type: string
+            format: date
+          last_updated_date:
+            type: string
+            format: date
+          eligible_applicants:
+            type: array
+            items:
+              $ref: '#/components/schemas/Applicant'
+          additional_information:
+            $ref: '#/components/schemas/AdditionalInformation'
+          agency:
+            $ref: '#/components/schemas/Agency'
+          award:
+            $ref: '#/components/schemas/Award'
+          close_date:
+            $ref: '#/components/schemas/CloseDate'
+          funding_activity:
+            $ref: '#/components/schemas/FundingActivity'
+          grantor:
+            $ref: '#/components/schemas/GrantorContact'
+          metadata:
+            $ref: '#/components/schemas/Metadata'
+          opportunity:
+            $ref: '#/components/schemas/Opportunity'
