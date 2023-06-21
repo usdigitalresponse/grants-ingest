@@ -189,6 +189,12 @@ variable "ffis_ingest_email_address" {
   default     = "ffis-ingest@grants.usdigitalresponse.org"
 }
 
+variable "dynamodb_contributor_insights_enabled" {
+  description = "If false, disable DynamoDB contributor insights in CloudWatch. This should only be false in local development."
+  type        = bool
+  default     = true
+}
+
 variable "ses_active_receipt_rule_set_enabled" {
   description = "If false, prevents SES receipt rule set from being set to active. This should only be false in local development."
   type        = bool
