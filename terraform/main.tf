@@ -238,31 +238,6 @@ module "email_delivery_bucket" {
   ]
 }
 
-resource "aws_cloudwatch_event_bus" "grants_event_bus" {
-  name = "grants_event_bus"
-}
-
-data "aws_iam_policy_document" "publish_grant_events_dlq_policy_document" {
-  statement {
-    sid = "ReadFromGrantEventsDLQ"
-    effect = "Allow"
-
-    actions = ["sqs:ReceiveMessage"]
-    resources = [resource.aws_sqs_queue.grant_publish_events_dlq_sqs_queue.arn]
-  }
-}
-
-resource "aws_sqs_queue" "grant_publish_events_dlq_sqs_queue" {
-  name = "publish_grant_events_dlq"
-
-  visibility_timeout_seconds    = 3600 // 1 hour
-  delay_seconds                 = 0
-  receive_wait_time_seconds     = 20
-  message_retention_seconds     = 1209600 // 14 days
-  max_message_size              = 262144 // 256 kB
-  sqs_managed_sse_enabled       = true
-}
-
 resource "aws_scheduler_schedule_group" "default" {
   count = var.eventbridge_scheduler_enabled ? 1 : 0
 
@@ -651,7 +626,6 @@ module "ExtractGrantsGovDBToXML" {
   ]
 }
 
-
 module "PublishGrantEvents" {
   source = "./modules/PublishGrantEvents"
 
@@ -667,6 +641,5 @@ module "PublishGrantEvents" {
   additional_lambda_execution_policy_documents = local.lambda_execution_policies
   lambda_layer_arns                            = local.lambda_layer_arns
 
-  grants_event_bus_arn  = aws_cloudwatch_event_bus.grants_event_bus.arn
-  dlq_arn               = aws_sqs_queue.grant_publish_events_dlq_sqs_queue.arn
+  dynamodb_table_name   = module.grants_prepared_dynamodb_table.table_name
 }

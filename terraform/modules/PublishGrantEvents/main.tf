@@ -1,7 +1,7 @@
 terraform {
-  required_version = "1.3.9"
+  required_version = "1.5.1"
   required_providers {
-    aws = "~> 4.55.0"
+    aws = "~> 4.63.0"
   }
 }
 
@@ -16,41 +16,65 @@ locals {
   )
 }
 
-data "aws_sqs_queue" "grants_dlq" {
-  name = var.dlq_arn
+resource "aws_cloudwatch_event_bus" "target" {
+  name = "${var.namespace}-grant_events"
 }
 
-module "lambda_execution_policy" {
-  source  = "cloudposse/iam-policy/aws"
-  version = "0.4.0"
+resource "aws_sqs_queue" "dlq" {
+  name = "publish_grant_events_dlq"
 
-  iam_source_policy_documents = var.additional_lambda_execution_policy_documents
-  iam_policy_statements = {
-    AllowDLQPublish = {
-      effect  = "Allow"
-      actions = ["sqs.SendMessage"]
-      resources  = [var.dlq_arn]
-    }
-    AllowEventBusPublish = {
-      effect  = "Allow"
-      actions = ["events.PutEvents"]
-      resources = [var.grants_event_bus_arn]
-    }
-  }
+  visibility_timeout_seconds = 3600 // 1 hour
+  delay_seconds              = 0
+  receive_wait_time_seconds  = 20
+  message_retention_seconds  = 1209600 // 14 days
+  max_message_size           = 262144  // 256 kB
+  sqs_managed_sse_enabled    = true
+}
+
+data "aws_dynamodb_table" "source" {
+  name = var.dynamodb_table_name
 }
 
 module "lambda_function" {
   source  = "terraform-aws-modules/lambda/aws"
-  version = "4.12.1"
+  version = "5.0.0"
 
   function_name = "${var.namespace}-${var.function_name}"
-  description   = "Downloads and stores the daily XML database extract from Grants.gov"
+  description   = "Publishes grant opportunity create/update events from DynamoDB to EventBridge."
 
   role_permissions_boundary         = var.permissions_boundary_arn
   attach_cloudwatch_logs_policy     = true
   cloudwatch_logs_retention_in_days = var.log_retention_in_days
-  attach_policy_json                = true
-  policy_json                       = module.lambda_execution_policy.json
+  attach_policy_jsons               = true
+  number_of_policy_jsons            = length(var.additional_lambda_execution_policy_documents)
+  policy_jsons                      = var.additional_lambda_execution_policy_documents
+  attach_policy_statements          = true
+  policy_statements = {
+    PublishToEventBridge = {
+      effect    = "Allow"
+      actions   = ["events:PutEvents"]
+      resources = [aws_cloudwatch_event_bus.target.arn]
+    }
+    PublishFailuresToDLQ = {
+      effect    = "Allow"
+      actions   = ["sqs:SendMessage"]
+      resources = [aws_sqs_queue.dlq.arn]
+    }
+    StreamRecordsFromDynamoDB = {
+      effect = "Allow"
+      actions = [
+        "dynamodb:DescribeStream",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+      ]
+      resources = [data.aws_dynamodb_table.source.stream_arn]
+    }
+    ListDynamoDBStreams = {
+      effect    = "Allow"
+      actions   = ["dynamodb:ListStreams"]
+      resources = ["*"]
+    }
+  }
 
   handler       = "bootstrap"
   runtime       = "provided.al2"
@@ -73,9 +97,25 @@ module "lambda_function" {
   timeout     = 30 # seconds
   memory_size = 128
   environment_variables = merge(var.additional_environment_variables, {
-    DD_TAGS            = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
-    DLQ_SQS_QUEUE_URL  = data.aws_sqs_queue.grants_dlq.id
-    LOG_LEVEL          = var.log_level
-    S3_USE_PATH_STYLE  = "true"
+    DD_TAGS           = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
+    LOG_LEVEL         = var.log_level
   })
+
+  event_source_mapping = {
+    dynamodb = {
+      event_source_arn           = data.aws_dynamodb_table.source.stream_arn
+      starting_position          = "LATEST"
+      parallelization_factor     = 10
+      function_response_types    = ["ReportBatchItemFailures"]
+      bisect_batch_on_error      = true
+      destination_arn_on_failure = aws_sqs_queue.dlq.arn
+    }
+  }
+
+  allowed_triggers = {
+    dynamodb = {
+      principal  = "dynamodb.amazonaws.com"
+      source_arn = data.aws_dynamodb_table.source.stream_arn
+    }
+  }
 }

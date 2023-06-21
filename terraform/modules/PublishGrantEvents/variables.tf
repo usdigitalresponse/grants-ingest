@@ -72,14 +72,7 @@ variable "datadog_custom_tags" {
 }
 
 // Module-specific
-variable "grants_event_bus_arn" {
-  description = "ARN for the EventBridge event bus that the Lambda publishes to."
+variable "dynamodb_table_name" {
+  description = "Name of the DynamoDB table providing the stream that invokes the Lambda function."
   type        = string
-  default     = null
-}
-
-variable "dlq_arn" {
-  description = "ARN for the Grants SQS DLQ"
-  type        = string
-  default     = null
 }
