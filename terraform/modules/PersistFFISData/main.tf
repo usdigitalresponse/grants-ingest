@@ -25,7 +25,7 @@ data "aws_s3_bucket" "source_data" {
 
 module "lambda_execution_policy" {
   source  = "cloudposse/iam-policy/aws"
-  version = "0.4.0"
+  version = "1.0.1"
 
   iam_source_policy_documents = var.additional_lambda_execution_policy_documents
   iam_policy_statements = {
