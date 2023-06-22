@@ -41,6 +41,8 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           version: 3.x
+      - name: Pre-build optimization
+        run: task prebuild-lambda
       - name: Check Formatting
         run: test -z "$(go fmt ./...)" || echo "Formatting check failed."
       - name: Test
