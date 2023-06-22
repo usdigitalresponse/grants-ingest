@@ -86,7 +86,7 @@ tasks:
     cmds:
       - task: go-build-lambda
         vars:
-          LABEL: "{{ .TASK }}"
+          LABEL: "prebuild-lambda"
           BUILD_DEST: /dev/null
           SOURCE: ./cmd/...
 
@@ -186,7 +186,7 @@ tasks:
       - task: build-lambda
         vars:
           LAMBDA_CMD: PersistFFISData
-          
+
   build-SplitFFISSpreadsheet:
     desc: Compiles SplitFFISSpreadsheet
     cmds:
