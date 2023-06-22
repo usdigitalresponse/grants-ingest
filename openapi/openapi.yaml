@@ -76,6 +76,9 @@ components:
             type: string
           expected_number_of_awards:
             type: string
+        required:
+          - ceiling
+          - floor
       CloseDate:
         type: object
         properties:
@@ -158,8 +161,10 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/FundingActivityCategory'
+            minItems: 1
           explanation:
             type: string
+            nullable: true
       FundingInstrument:
         type: object
         properties:
@@ -223,27 +228,30 @@ components:
             type: string
           category:
             $ref: '#/components/schemas/OpportunityCategory'
+          required:
+            - id
+            - number
+            - title
       Grant:
         type: object
         properties:
-          grant_id:
-            type: integer
-            format: int64
           description:
             type: string
           funding_instrument_types:
             type: array
             items:
               $ref: '#/components/schemas/FundingInstrument'
+            minItems: 1
           cost_sharing_or_matching_requirement:
             type: boolean
           CFDA_numbers:
             type: array
             items:
               type: string
+            minItems: 1
           bill:
             type: string
-          post_date:
+          posting_date:
             type: string
             format: date
           archive_date:
@@ -256,6 +264,7 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/Applicant'
+            minItems: 1
           additional_information:
             $ref: '#/components/schemas/AdditionalInformation'
           agency:
@@ -272,3 +281,13 @@ components:
             $ref: '#/components/schemas/Metadata'
           opportunity:
             $ref: '#/components/schemas/Opportunity'
+        required:
+          - funding_instrument_types
+          - funding_activity
+          - cost_sharing_or_matching_requirement
+          - grantor
+          - posting_date
+          - eligible_applicants
+          - description
+          - CFDA_numbers
+          - opportunity
