@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
 # https://taskfile.dev
 
 version: '3'
@@ -79,6 +80,16 @@ tasks:
       - find ./bin -mindepth 1 -type d -exec rm -rf {} + -print
       - find ./build -mindepth 1 -type d -exec rm -rf {} + -print
 
+  prebuild-lambda:
+    run: always
+    desc: Batch-compiles all Lambda handlers to /dev/null to optimize future builds
+    cmds:
+      - task: go-build-lambda
+        vars:
+          LABEL: "prebuild-lambda"
+          BUILD_DEST: /dev/null
+          SOURCE: ./cmd/...
+
   build-lambda:
     internal: true
     run: when_changed
@@ -88,12 +99,14 @@ tasks:
       BUILD_BIN: "{{ .BUILD_DIR }}/bootstrap"
       SOURCE: ./cmd/{{ .LAMBDA_CMD }}/...
     env:
-      GOARCH: arm64
-      GOOS: linux
       GOPATH:
         sh: go env GOPATH
     cmds:
-      - go build -gcflags="-trimpath=$GOPATH" -ldflags="-s -w" -asmflags="-trimpath=$GOPATH" -trimpath -tags "lambda.norpc" -v -o {{ .BUILD_BIN }} {{ .SOURCE }}
+      - task: go-build-lambda
+        vars:
+          LABEL: "build-{{ .LAMBDA_CMD }}"
+          BUILD_DEST: "{{ .BUILD_BIN }}"
+          SOURCE: "{{ .SOURCE }}"
       - cmd: echo {{ .BUILD_BIN }}
         silent: true
     sources:
@@ -103,6 +116,16 @@ tasks:
       - ./go.sum
     generates:
       - "{{ .BUILD_BIN }}"
+
+  go-build-lambda:
+    internal: true
+    run: always
+    label: "{{ .LABEL }}"
+    env:
+      GOPATH:
+        sh: go env GOPATH
+    cmds:
+      - GOOS=linux GOARCH=arm64 go build -gcflags="-trimpath=$GOPATH" -ldflags="-s -w" -asmflags="-trimpath=$GOPATH" -trimpath -tags "lambda.norpc" -v -o {{ .BUILD_DEST }} {{ .SOURCE }}
 
   build:
     desc: "Compiles all Lambda handlers"
