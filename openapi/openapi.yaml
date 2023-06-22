@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
-  title: OpenAPI standard for federal grant data
-  version: 0.0.1
+  title: USDR standard representation for federal grant data
+  version: 1.0.0
 paths: {} # No endpoints defined
 components:
   schemas:
