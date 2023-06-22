@@ -232,6 +232,9 @@ components:
             - id
             - number
             - title
+      ULIDType:
+        type: string
+        format: ulid
       Grant:
         type: object
         properties:
@@ -281,6 +284,8 @@ components:
             $ref: '#/components/schemas/Metadata'
           opportunity:
             $ref: '#/components/schemas/Opportunity'
+          revision:
+            ref: '#/components/schemas/ULIDType'
         required:
           - funding_instrument_types
           - funding_activity
@@ -291,3 +296,4 @@ components:
           - description
           - CFDA_numbers
           - opportunity
+          - revision
