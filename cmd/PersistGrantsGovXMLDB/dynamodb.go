@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/usdigitalresponse/grants-ingest/internal/awsHelpers"
 )
 
 type DynamoDBUpdateItemAPI interface {
@@ -50,6 +51,11 @@ func buildUpdateExpression(o opportunity) (expression.Expression, error) {
 	for k, v := range oppAttr {
 		update = update.Set(expression.Name(k), expression.Value(v))
 	}
+	update = awsHelpers.DDBSetRevisionForUpdate(update)
+	condition, err := awsHelpers.DDBIfAnyValueChangedCondition(oppAttr)
+	if err != nil {
+		return expression.Expression{}, err
+	}
 
-	return expression.NewBuilder().WithUpdate(update).Build()
+	return expression.NewBuilder().WithUpdate(update).WithCondition(condition).Build()
 }

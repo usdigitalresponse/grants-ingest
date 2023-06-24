@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 
+	"github.com/usdigitalresponse/grants-ingest/internal/awsHelpers"
 	"github.com/usdigitalresponse/grants-ingest/pkg/grantsSchemas/ffis"
 )
 
@@ -24,10 +25,15 @@ func UpdateOpportunity(ctx context.Context, c DynamoDBUpdateItemAPI, table strin
 	if err != nil {
 		return err
 	}
+	oppAttr, err := attributevalue.MarshalMap(map[string]interface{}{"Bill": opp.Bill})
+	if err != nil {
+		return err
+	}
+	condition, _ := awsHelpers.DDBIfAnyValueChangedCondition(oppAttr)
 
-	update := expression.Set(expression.Name("Bill"), expression.Value(opp.Bill))
+	update := expression.Set(expression.Name("Bill"), expression.Value(oppAttr["Bill"]))
 
-	expr, err := expression.NewBuilder().WithUpdate(update).Build()
+	expr, err := expression.NewBuilder().WithUpdate(update).WithCondition(condition).Build()
 	if err != nil {
 		return err
 	}
@@ -38,6 +44,7 @@ func UpdateOpportunity(ctx context.Context, c DynamoDBUpdateItemAPI, table strin
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
 		UpdateExpression:          expr.Update(),
+		ConditionExpression:       expr.Condition(),
 		ReturnValues:              types.ReturnValueNone,
 	})
 	return err
