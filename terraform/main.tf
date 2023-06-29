@@ -642,4 +642,8 @@ module "PublishGrantEvents" {
   lambda_layer_arns                            = local.lambda_layer_arns
 
   dynamodb_table_name   = module.grants_prepared_dynamodb_table.table_name
+
+  depends_on = [
+    module.grants_prepared_dynamodb_table
+  ]
 }
