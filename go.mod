@@ -14,10 +14,12 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.4.56
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.70
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.19.11
+	github.com/aws/aws-sdk-go-v2/service/eventbridge v1.18.9
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.35.0
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.23.2
 	github.com/aws/smithy-go v1.13.5
 	github.com/cenkalti/backoff/v4 v4.2.1
+	github.com/deepmap/oapi-codegen v1.13.0
 	github.com/go-kit/log v0.2.1
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/johannesboyne/gofakes3 v0.0.0-20230506070712-04da935ef877
@@ -45,7 +47,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.35 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.0.26 // indirect
 	github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.14.14 // indirect
-	github.com/aws/aws-sdk-go-v2/service/eventbridge v1.18.9 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.11 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.29 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/endpoint-discovery v1.7.28 // indirect
@@ -87,13 +88,13 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go4.org/intern v0.0.0-20230205224052-192e9f60865c // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20230426161633-7e06285ff160 // indirect
-	golang.org/x/crypto v0.8.0 // indirect
+	golang.org/x/crypto v0.9.0 // indirect
 	golang.org/x/mod v0.10.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
-	golang.org/x/tools v0.9.1 // indirect
+	golang.org/x/tools v0.9.2 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
 	google.golang.org/grpc v1.55.0 // indirect
