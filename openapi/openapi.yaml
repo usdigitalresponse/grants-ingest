@@ -90,7 +90,7 @@ components:
       Email:
         type: object
         properties:
-          email:
+          address:
             type: string
             format: email
           description:
