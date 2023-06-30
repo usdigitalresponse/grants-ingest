@@ -247,7 +247,7 @@ components:
             minItems: 1
           cost_sharing_or_matching_requirement:
             type: boolean
-          CFDA_numbers:
+          cfda_numbers:
             type: array
             items:
               type: string
