@@ -170,20 +170,18 @@ components:
         properties:
           name:
             type: string
-            enum: [
-              'Cooperative Agreement',
-              'Grant',
-              'Procurement Contract',
-              'Other',
-            ]
+            enum:
+              - 'Cooperative Agreement'
+              - 'Grant'
+              - 'Procurement Contract'
+              - 'Other'
           code:
             type: string
-            enum: [
-              'CA',
-              'G',
-              'PC',
-              'O',
-            ]
+            enum:
+              - 'CA'
+              - 'G'
+              - 'PC'
+              - 'O'
       GrantorContact:
         type: object
         properties:
@@ -330,3 +328,23 @@ components:
           - cfda_numbers
           - opportunity
           - revision
+      GrantModificationEvent:
+        type: object
+        properties:
+          type:
+            type: string
+            enum:
+              - create
+              - update
+              - delete
+          versions:
+            type: object
+            properties:
+              new:
+                anyOf:
+                  - type: 'null'
+                  - $ref: '#/components/schemas/Grant'
+              previous:
+                anyOf:
+                  - type: 'null'
+                  - $ref: '#/components/schemas/Grant'
