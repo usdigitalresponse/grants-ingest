@@ -97,8 +97,9 @@ module "lambda_function" {
   timeout     = 30 # seconds
   memory_size = 128
   environment_variables = merge(var.additional_environment_variables, {
-    DD_TAGS           = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
-    LOG_LEVEL         = var.log_level
+    DD_TAGS        = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
+    LOG_LEVEL      = var.log_level
+    EVENT_BUS_NAME = aws_cloudwatch_event_bus.target.name
   })
 
   event_source_mapping = {
