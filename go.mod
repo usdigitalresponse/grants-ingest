@@ -10,10 +10,10 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.18.1
 	github.com/aws/aws-sdk-go-v2/config v1.18.27
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.26
-	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.10.29
+	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.10.30
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.4.56
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.70
-	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.19.11
+	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.20.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.36.0
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.23.2
 	github.com/aws/smithy-go v1.13.5
