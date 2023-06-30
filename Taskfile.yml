@@ -16,6 +16,12 @@ tasks:
   check:
     desc: >-
       Simulates all steps of the "QA" job executed during the pull request CI workflow
+    cmds:
+      - task: prebuild-lambda
+      - task: check-tasks
+
+  check-tasks:
+    internal: true
     deps:
       - fmt
       - test
