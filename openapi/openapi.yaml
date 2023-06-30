@@ -285,7 +285,7 @@ components:
           opportunity:
             $ref: '#/components/schemas/Opportunity'
           revision:
-            ref: '#/components/schemas/ULIDType'
+            $ref: '#/components/schemas/ULIDType'
         required:
           - funding_instrument_types
           - funding_activity
