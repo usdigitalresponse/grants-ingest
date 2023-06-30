@@ -11,6 +11,21 @@ import (
 	"github.com/oklog/ulid/v2"
 )
 
+// Utilities
+
+// swapMap creates a new map by swapping the keys and values of a source map.
+// Will panic when the values of the source map are not unique.
+func swapMap[K, V comparable](source map[K]V) map[V]K {
+	res := make(map[V]K)
+	for k, v := range source {
+		if _, ok := res[v]; ok {
+			panic(fmt.Errorf("source value creates duplicate key in destination map: %v", v))
+		}
+		res[v] = k
+	}
+	return res
+}
+
 // Common types
 
 type Date time.Time
@@ -83,13 +98,7 @@ var (
 		"25": "Others (see text field entitled \"Additional Information on Eligibility\" for clarification)",
 		"99": "Unrestricted (i.e., open to any type of entity above), subject to any clarification in text field entitled \"Additional Information on Eligibility\"",
 	}
-	applicantCodesByName = func() map[applicantName]applicantCode {
-		m := map[applicantName]applicantCode{}
-		for c, n := range applicantNamesByCode {
-			m[n] = c
-		}
-		return m
-	}()
+	applicantCodesByName = swapMap(applicantNamesByCode)
 )
 
 func ApplicantFromName(name string) (app Applicant, err error) {
@@ -183,13 +192,7 @@ var (
 		"T":   "Transportation",
 		"ACA": "Affordable Care Act",
 	}
-	fundingActivityCategoryCodesByName = func() map[fundingActivityCategoryName]fundingActivityCategoryCode {
-		m := map[fundingActivityCategoryName]fundingActivityCategoryCode{}
-		for c, n := range fundingActivityCategoryNamesByCode {
-			m[n] = c
-		}
-		return m
-	}()
+	fundingActivityCategoryCodesByName = swapMap(fundingActivityCategoryNamesByCode)
 )
 
 func FundingActivityCategoryFromName(name string) (cat FundingActivityCategory, err error) {
@@ -207,7 +210,7 @@ func FundingActivityCategoryFromCode(code string) (cat FundingActivityCategory, 
 	n, ok := fundingActivityCategoryNamesByCode[c]
 	cat = FundingActivityCategory{Name: n, Code: c}
 	if !ok {
-		err = ErrInvalidApplicant
+		err = ErrInvalidFundingActivityCategory
 	}
 	return
 }
@@ -254,13 +257,7 @@ var (
 		"PC": "Procurement Contract",
 		"O":  "Other",
 	}
-	fundingInstrumentCodesByName = func() map[fundingInstrumentName]fundingInstrumentCode {
-		m := map[fundingInstrumentName]fundingInstrumentCode{}
-		for c, n := range fundingInstrumentNamesByCode {
-			m[n] = c
-		}
-		return m
-	}()
+	fundingInstrumentCodesByName = swapMap(fundingInstrumentNamesByCode)
 )
 
 func FundingInstrumentFromName(name string) (inst FundingInstrument, err error) {
@@ -325,13 +322,7 @@ var (
 		"E": "Earmark",
 		"O": "Other",
 	}
-	opportunityCategoryCodesByName = func() map[opportunityCategoryName]opportunityCategoryCode {
-		m := map[opportunityCategoryName]opportunityCategoryCode{}
-		for c, n := range opportunityCategoryNamesByCode {
-			m[n] = c
-		}
-		return m
-	}()
+	opportunityCategoryCodesByName = swapMap(opportunityCategoryNamesByCode)
 )
 
 func OpportunityCategoryFromName(name string) (cat OpportunityCategory, err error) {
@@ -405,7 +396,7 @@ type Revision struct {
 
 func (r *Revision) Validate() error {
 	if r.Id.Compare(ulid.ULID{}) <= 0 {
-		return fmt.Errorf("cannot be empty: revision")
+		return fmt.Errorf("cannot be empty: revision id")
 	}
 	return nil
 }
