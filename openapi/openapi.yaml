@@ -235,6 +235,14 @@ components:
       ULIDType:
         type: string
         format: ulid
+      Revision:
+        type: object
+        properties:
+          id:
+            $ref: '#/components/schemas/ULIDType'
+          timestamp:
+            type: string
+            format: date-time
       Grant:
         type: object
         properties:
