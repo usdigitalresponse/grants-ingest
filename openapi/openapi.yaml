@@ -238,6 +238,7 @@ components:
           - number
           - title
           - last_updated
+          - milestones
       OpportunityMilestones:
         type: object
         properties:
