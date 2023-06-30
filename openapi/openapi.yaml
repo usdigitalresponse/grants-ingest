@@ -226,6 +226,31 @@ components:
             type: string
           title:
             type: string
+          description:
+            type: string
+          category:
+            $ref: '#/components/schemas/OpportunityCategory'
+          last_updated:
+            type: string
+            format: date
+          milestones:
+            $ref: '#/components/schemas/OpportunityMilestones'
+        required:
+          - id
+          - number
+          - title
+          - last_updated
+      OpportunityMilestones:
+        type: object
+        properties:
+          post_date:
+            type: string
+            format: date
+          archive_date:
+            type: string
+            format: date
+          close:
+            $ref: '#/components/schemas/CloseDate'
           category:
             $ref: '#/components/schemas/OpportunityCategory'
           required:
