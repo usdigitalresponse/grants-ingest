@@ -19,7 +19,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.23.2
 	github.com/aws/smithy-go v1.13.5
 	github.com/cenkalti/backoff/v4 v4.2.1
-	github.com/deepmap/oapi-codegen v1.13.0
 	github.com/go-kit/log v0.2.1
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/johannesboyne/gofakes3 v0.0.0-20230506070712-04da935ef877
