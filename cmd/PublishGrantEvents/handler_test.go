@@ -194,7 +194,7 @@ func TestHandleRecord(t *testing.T) {
 		mockEB := &mockEventBridgePutEventsAPI{}
 		err := handleRecord(context.Background(), mockEB, record)
 		assert.Error(t, err)
-		assert.ErrorContains(t, err, "grant version is invalid")
+		assert.ErrorContains(t, err, "grant data from ItemMapper is invalid")
 		assert.Equal(t, mockEB.callCount, 0)
 	})
 }
