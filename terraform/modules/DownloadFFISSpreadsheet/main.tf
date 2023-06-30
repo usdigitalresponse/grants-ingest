@@ -98,7 +98,7 @@ module "lambda_function" {
       maximum_batching_window_in_seconds = 20
       event_source_arn                   = data.aws_sqs_queue.ffis_downloads.arn
       scaling_config = {
-        maximum_concurrency = 1
+        maximum_concurrency = 2
       }
     }
   }
