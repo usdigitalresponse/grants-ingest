@@ -75,7 +75,7 @@ components:
           estimated_total_program_funding:
             type: string
           expected_number_of_awards:
-            type: string
+            type: number
         required:
           - ceiling
           - floor
