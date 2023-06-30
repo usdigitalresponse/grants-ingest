@@ -16,6 +16,7 @@ import (
 	goenv "github.com/Netflix/go-env"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go-v2/service/eventbridge"
 	"github.com/usdigitalresponse/grants-ingest/internal/awsHelpers"
 	"github.com/usdigitalresponse/grants-ingest/internal/ddHelpers"
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
@@ -52,8 +53,9 @@ func main() {
 				return resp, fmt.Errorf("could not create AWS SDK config: %w", err)
 			}
 			awstrace.AppendMiddleware(&cfg)
+			eventBridgeClient := eventbridge.NewFromConfig(cfg)
 			httptrace.WrapClient(http.DefaultClient)
-			return handleWithConfig(cfg, ctx, event)
+			return handleEvent(ctx, eventBridgeClient, event)
 		}, nil),
 	)
 }

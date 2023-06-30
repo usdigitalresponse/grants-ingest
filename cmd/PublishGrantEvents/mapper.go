@@ -1,12 +1,14 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/oklog/ulid/v2"
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
 	grantsgov "github.com/usdigitalresponse/grants-ingest/pkg/grantsSchemas/grants.gov"
 	"github.com/usdigitalresponse/grants-ingest/pkg/grantsSchemas/usdr"
@@ -53,8 +55,8 @@ func (im *ItemMapper) timeFor(k string, layout string) (*time.Time, error) {
 
 func (im *ItemMapper) Grant() usdr.Grant {
 	grant := usdr.Grant{
-		Description:            im.stringFor("Description"),
 		Bill:                   im.stringFor("Bill"),
+		Revision:               im.Revision(),
 		Opportunity:            im.Opportunity(),
 		FundingActivity:        im.FundingActivity(),
 		FundingInstrumentTypes: im.FundingInstruments(),
@@ -97,6 +99,14 @@ func (im *ItemMapper) Grant() usdr.Grant {
 	return grant
 }
 
+func (im *ItemMapper) Revision() usdr.Revision {
+	id, err := ulid.ParseStrict(im.stringFor("revision"))
+	if err != nil {
+		malformattedField("revision", err)
+	}
+	return usdr.Revision{Id: id}
+}
+
 func (im *ItemMapper) Award() usdr.Award {
 	award := usdr.Award{
 		Ceiling:                      im.stringFor("AwardCeiling"),
@@ -133,9 +143,11 @@ func (im *ItemMapper) FundingActivity() usdr.FundingActivity {
 
 func (im *ItemMapper) Opportunity() usdr.Opportunity {
 	opportunity := usdr.Opportunity{
-		Id:     im.stringFor("OpportunityID"),
-		Number: im.stringFor("OpportunityNumber"),
-		Title:  im.stringFor("OpportunityTitle"),
+		Id:          im.stringFor("OpportunityID"),
+		Number:      im.stringFor("OpportunityNumber"),
+		Title:       im.stringFor("OpportunityTitle"),
+		Description: im.stringFor("Description"),
+		Milestones:  im.OpportunityMilestones(),
 	}
 
 	if attr := im.stringFor("OpportunityCategory"); attr != "" {
@@ -192,4 +204,36 @@ func (im *ItemMapper) FundingInstruments() []usdr.FundingInstrument {
 		}
 	}
 	return fundingInstruments
+}
+
+// GuardPanic wraps any zero-argument function that returns a single value,
+// which may panic when called as part of its normal behavior.
+//
+// This function is provided because the documented behavior of many accessor methods for the
+// events.DynamoDBAttributeValue type is to panic when the stored value of the attribute is
+// of a different type than what is expected by the accessor method (for example, caling .Boolean()
+// on an attribute with a stored type of StringSet ("SS")). Therefore, this function may be used
+// to wrap calls to various functions/methods which make use of DynamoDBAttribute value accessors,
+// such as those provided by ItemMapper.
+//
+// If the wrapped function panics, GuardPanic recovers and returns an error
+// representing the panic value according to the following behavior:
+//   - If the recovered panic value is an error, returns the error as is.
+//   - If the recovered panic value is a string, returns an error created from that string.
+//   - If the recovered panic value is any other type, returns an error prefixed with
+//     "unknown panic:", followed by the verbose string representation of the value and its type.
+func GuardPanic[T any](wrappedFunc func() T) (t T, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			switch v := r.(type) {
+			case error:
+				err = v
+			case string:
+				err = errors.New(v)
+			default:
+				err = fmt.Errorf("unknown panic: %+v of type %T", r, r)
+			}
+		}
+	}()
+	return wrappedFunc(), err
 }

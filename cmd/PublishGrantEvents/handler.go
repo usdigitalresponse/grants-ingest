@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"sync"
 
@@ -21,44 +20,44 @@ const (
 	DDBStreamEventDelete = string(events.DynamoDBOperationTypeRemove)
 )
 
-type PutEventsClient interface {
+type EventBridgePutEventsAPI interface {
 	PutEvents(context.Context, *eventbridge.PutEventsInput, ...func(*eventbridge.Options)) (
 		*eventbridge.PutEventsOutput, error)
 }
 
-func handleWithConfig(cfg aws.Config, ctx context.Context, event events.DynamoDBEvent) (events.DynamoDBEventResponse, error) {
+func handleEvent(ctx context.Context, pub EventBridgePutEventsAPI, event events.DynamoDBEvent) (events.DynamoDBEventResponse, error) {
 	sendMetric("invocation_batch_size", float64(len(event.Records)))
-	ebClient := eventbridge.NewFromConfig(cfg)
 
 	wg := sync.WaitGroup{}
 	wg.Add(len(event.Records))
-	failIds := make(chan string, len(event.Records))
+	failSeq := make(chan string, len(event.Records))
 	for i := range event.Records {
 		go func(r events.DynamoDBEventRecord) {
 			defer wg.Done()
-			if err := handleRecord(ctx, ebClient, r); err != nil {
-				failIds <- r.Change.SequenceNumber
+			if err := handleRecord(ctx, pub, r); err != nil {
+				failSeq <- r.Change.SequenceNumber
 				log.Error(logger, "Failed to handle record in batch", err,
 					"sequence_number", r.Change.SequenceNumber)
 				sendMetric("record.failed", 1, fmt.Sprintf("event_name:%s", r.EventName))
-			} else {
-				sendMetric("record.handled", 1, fmt.Sprintf("event_name:%s", r.EventName))
 			}
 		}(event.Records[i])
 	}
 	wg.Wait()
-	close(failIds)
+	close(failSeq)
 
-	failures := make([]events.DynamoDBBatchItemFailure, len(failIds))
-	counter := 0
-	for seq := range failIds {
-		failures[counter] = events.DynamoDBBatchItemFailure{ItemIdentifier: seq}
-		counter++
+	failures := make([]events.DynamoDBBatchItemFailure, len(failSeq))
+	idx := 0
+	for seq := range failSeq {
+		failures[idx].ItemIdentifier = seq
+		idx++
 	}
 	return events.DynamoDBEventResponse{BatchItemFailures: failures}, nil
 }
 
-func handleRecord(ctx context.Context, pub PutEventsClient, rec events.DynamoDBEventRecord) error {
+func handleRecord(ctx context.Context, pub EventBridgePutEventsAPI, rec events.DynamoDBEventRecord) error {
+	logger := log.With(logger, "event_name", rec.EventName,
+		"keys", rec.Change.Keys, "sequence_number", rec.Change.SequenceNumber)
+
 	eventDetail, err := buildGrantModificationEventJSON(rec)
 	if err != nil {
 		return err
@@ -72,7 +71,7 @@ func handleRecord(ctx context.Context, pub PutEventsClient, rec events.DynamoDBE
 			EventBusName: aws.String(env.EventBusName),
 		}},
 	}); err != nil {
-		return log.Errorf(logger, "Failed to publish GrantModificationEvent", err)
+		return log.Errorf(logger, "error publishing to EventBridge", err)
 	}
 
 	sendMetric("event.published", 1)
@@ -113,6 +112,9 @@ func buildGrantModificationEventJSON(record events.DynamoDBEventRecord) ([]byte,
 	if err != nil {
 		return nil, log.Errorf(logger, "Error building event", err)
 	}
+	if err := modificationEvent.Validate(); err != nil {
+		log.Warn(logger, "event contains invalid data", "error", err)
+	}
 
 	data, err := json.Marshal(modificationEvent)
 	if err != nil {
@@ -122,18 +124,7 @@ func buildGrantModificationEventJSON(record events.DynamoDBEventRecord) ([]byte,
 }
 
 func buildGrantVersion(image map[string]events.DynamoDBAttributeValue) (g *usdr.Grant, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			switch v := r.(type) {
-			case error:
-				err = v
-			case string:
-				err = errors.New(v)
-			default:
-				err = fmt.Errorf("unknown panic: %+v of type %T", r, r)
-			}
-		}
-	}()
-	result := NewItemMapper(image).Grant()
-	return &result, err
+	mapper := NewItemMapper(image)
+	res, err := GuardPanic(mapper.Grant)
+	return &res, err
 }

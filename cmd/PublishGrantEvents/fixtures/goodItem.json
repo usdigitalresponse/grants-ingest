@@ -1,6 +1,12 @@
 {
+    "revision": {
+      "S": "01H44KDRQ9EDQP2PS3X4VJHY9X"
+    },
     "grant_id": {
       "S": "328621"
+    },
+    "Bill": {
+      "S": "ARPA"
     },
     "AdditionalInformationOnEligibility": {
       "B": "asdf"

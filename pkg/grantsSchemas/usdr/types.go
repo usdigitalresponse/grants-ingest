@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/go-multierror"
@@ -14,8 +15,17 @@ import (
 
 type Date time.Time
 
+const DateLayout = time.DateOnly
+
 func (d Date) MarshalJSON() ([]byte, error) {
-	return json.Marshal(time.Time(d).Format("2006-01-02"))
+	return json.Marshal(time.Time(d).Format(DateLayout))
+}
+
+func (d *Date) UnmarshalJSON(b []byte) error {
+	s := strings.Trim(string(b), "\"")
+	t, err := time.Parse(DateLayout, s)
+	*d = Date(t)
+	return err
 }
 
 // AdditionalInformation model
@@ -45,7 +55,7 @@ type Applicant struct {
 	Code applicantCode `json:"code,omitempty"`
 }
 
-func (a Applicant) Validate() error {
+func (a *Applicant) Validate() error {
 	if code, ok := applicantCodesByName[a.Name]; !ok || a.Code != code {
 		return ErrInvalidApplicant
 	}
@@ -54,17 +64,29 @@ func (a Applicant) Validate() error {
 
 var (
 	ErrInvalidApplicant  = errors.New("invalid applicant")
-	applicantCodesByName = map[applicantName]applicantCode{
-		"State governments":            "00",
-		"County governments":           "01",
-		"City or township governments": "02",
-		"Special district governments": "04",
-		// TODO
+	applicantNamesByCode = map[applicantCode]applicantName{
+		"00": "State governments",
+		"01": "County governments",
+		"02": "City or township governments",
+		"04": "Special district governments",
+		"05": "Independent school districts",
+		"06": "Public and State controlled institutions of higher education",
+		"07": "Native American tribal governments (Federally recognized)",
+		"08": "Public housing authorities/Indian housing authorities",
+		"11": "Native American tribal organizations (other than Federally recognized tribal governments)",
+		"12": "Nonprofits having a 501(c)(3) status with the IRS, other than institutions of higher education",
+		"13": "Nonprofits that do not have a 501(c)(3) status with the IRS, other than institutions of higher education",
+		"20": "Private institutions of higher education",
+		"21": "Individuals",
+		"22": "For profit organizations other than small businesses",
+		"23": "Small businesses",
+		"25": "Others (see text field entitled \"Additional Information on Eligibility\" for clarification)",
+		"99": "Unrestricted (i.e., open to any type of entity above), subject to any clarification in text field entitled \"Additional Information on Eligibility\"",
 	}
-	applicantNamesByCode = func() map[applicantCode]applicantName {
-		m := map[applicantCode]applicantName{}
-		for n, c := range applicantCodesByName {
-			m[c] = n
+	applicantCodesByName = func() map[applicantName]applicantCode {
+		m := map[applicantName]applicantCode{}
+		for c, n := range applicantNamesByCode {
+			m[n] = c
 		}
 		return m
 	}()
@@ -125,7 +147,7 @@ type FundingActivityCategory struct {
 	Code fundingActivityCategoryCode `json:"code,omitempty"`
 }
 
-func (f FundingActivityCategory) Validate() error {
+func (f *FundingActivityCategory) Validate() error {
 	if code, ok := fundingActivityCategoryCodesByName[f.Name]; !ok || f.Code != code {
 		return ErrInvalidFundingActivityCategory
 	}
@@ -134,17 +156,37 @@ func (f FundingActivityCategory) Validate() error {
 
 var (
 	ErrInvalidFundingActivityCategory  = errors.New("invalid funding activity category")
-	fundingActivityCategoryCodesByName = map[fundingActivityCategoryName]fundingActivityCategoryCode{
-		"Recovery Act":          "RA",
-		"Agriculture":           "AG",
-		"Arts":                  "AR",
-		"Business and Commerce": "BC",
-		// TODO
+	fundingActivityCategoryNamesByCode = map[fundingActivityCategoryCode]fundingActivityCategoryName{
+		"RA":  "Recovery Act",
+		"AG":  "Agriculture",
+		"AR":  "Arts",
+		"BC":  "Business and Commerce",
+		"CD":  "Community Development",
+		"CP":  "Consumer Protection",
+		"DPR": "Disaster Prevention and Relief",
+		"ED":  "Education",
+		"ELT": "Employment, Labor and Training",
+		"EN":  "Energy",
+		"ENV": "Environment",
+		"FN":  "Food and Nutrition",
+		"HL":  "Health",
+		"HO":  "Housing",
+		"HU":  "Humanities",
+		"IS":  "Information and Statistics",
+		"ISS": "Income Security and Social Services",
+		"LJL": "Law, Justice and Legal Services",
+		"NR":  "Natural Resources",
+		"O":   "Other",
+		"OZ":  "Opportunity Zone Benefits",
+		"RD":  "Regional Development",
+		"ST":  "Science and Technology and Other Research and Development",
+		"T":   "Transportation",
+		"ACA": "Affordable Care Act",
 	}
-	fundingActivityCategoryNamesByCode = func() map[fundingActivityCategoryCode]fundingActivityCategoryName {
-		m := map[fundingActivityCategoryCode]fundingActivityCategoryName{}
-		for n, c := range fundingActivityCategoryCodesByName {
-			m[c] = n
+	fundingActivityCategoryCodesByName = func() map[fundingActivityCategoryName]fundingActivityCategoryCode {
+		m := map[fundingActivityCategoryName]fundingActivityCategoryCode{}
+		for c, n := range fundingActivityCategoryNamesByCode {
+			m[n] = c
 		}
 		return m
 	}()
@@ -177,7 +219,7 @@ type FundingActivity struct {
 	Explanation string                    `json:"explanation,omitempty"`
 }
 
-func (f FundingActivity) Validate() error {
+func (f *FundingActivity) Validate() error {
 	var err *multierror.Error
 	for _, c := range f.Categories {
 		err = multierror.Append(err, c.Validate())
@@ -197,7 +239,7 @@ type FundingInstrument struct {
 	Code fundingInstrumentCode `json:"code,omitempty"`
 }
 
-func (f FundingInstrument) Validate() error {
+func (f *FundingInstrument) Validate() error {
 	if code, ok := fundingInstrumentCodesByName[f.Name]; !ok || f.Code != code {
 		return ErrInvalidFundingInstrument
 	}
@@ -206,16 +248,16 @@ func (f FundingInstrument) Validate() error {
 
 var (
 	ErrInvalidFundingInstrument  = errors.New("invalid funding instrument")
-	fundingInstrumentCodesByName = map[fundingInstrumentName]fundingInstrumentCode{
-		"Cooperative Agreement": "CA",
-		"Grant":                 "G",
-		"Procurement Contract":  "PC",
-		"Other":                 "O",
+	fundingInstrumentNamesByCode = map[fundingInstrumentCode]fundingInstrumentName{
+		"CA": "Cooperative Agreement",
+		"G":  "Grant",
+		"PC": "Procurement Contract",
+		"O":  "Other",
 	}
-	fundingInstrumentNamesByCode = func() map[fundingInstrumentCode]fundingInstrumentName {
-		m := map[fundingInstrumentCode]fundingInstrumentName{}
-		for n, c := range fundingInstrumentCodesByName {
-			m[c] = n
+	fundingInstrumentCodesByName = func() map[fundingInstrumentName]fundingInstrumentCode {
+		m := map[fundingInstrumentName]fundingInstrumentCode{}
+		for c, n := range fundingInstrumentNamesByCode {
+			m[n] = c
 		}
 		return m
 	}()
@@ -267,7 +309,7 @@ type OpportunityCategory struct {
 	Explanation string                  `json:"explanation,omitempty"`
 }
 
-func (o OpportunityCategory) Validate() error {
+func (o *OpportunityCategory) Validate() error {
 	if code, ok := opportunityCategoryCodesByName[o.Name]; !ok || o.Code != code {
 		return ErrInvalidOpportunityCategory
 	}
@@ -276,17 +318,17 @@ func (o OpportunityCategory) Validate() error {
 
 var (
 	ErrInvalidOpportunityCategory  = errors.New("invalid opportunity category")
-	opportunityCategoryCodesByName = map[opportunityCategoryName]opportunityCategoryCode{
-		"Discretionary": "D",
-		"Mandatory":     "M",
-		"Continuation":  "C",
-		"Earmark":       "E",
-		"Other":         "O",
+	opportunityCategoryNamesByCode = map[opportunityCategoryCode]opportunityCategoryName{
+		"D": "Discretionary",
+		"M": "Mandatory",
+		"C": "Continuation",
+		"E": "Earmark",
+		"O": "Other",
 	}
-	opportunityCategoryNamesByCode = func() map[opportunityCategoryCode]opportunityCategoryName {
-		m := map[opportunityCategoryCode]opportunityCategoryName{}
-		for n, c := range opportunityCategoryCodesByName {
-			m[c] = n
+	opportunityCategoryCodesByName = func() map[opportunityCategoryName]opportunityCategoryCode {
+		m := map[opportunityCategoryName]opportunityCategoryCode{}
+		for c, n := range opportunityCategoryNamesByCode {
+			m[n] = c
 		}
 		return m
 	}()
@@ -318,12 +360,13 @@ type Opportunity struct {
 	Id          string                `json:"id,omitempty"`
 	Number      string                `json:"number,omitempty"`
 	Title       string                `json:"title,omitempty"`
+	Description string                `json:"description,omitempty"`
 	Category    OpportunityCategory   `json:"category,omitempty"`
 	Milestones  OpportunityMilestones `json:"milestones,omitempty"`
 	LastUpdated *Date                 `json:"last_updated,omitempty"`
 }
 
-func (o Opportunity) Validate() error {
+func (o *Opportunity) Validate() error {
 	err := multierror.Append(o.Category.Validate(), o.Milestones.Validate())
 	if o.Id == "" {
 		err = multierror.Append(err, fmt.Errorf("cannot be empty: Id"))
@@ -348,7 +391,7 @@ type OpportunityMilestones struct {
 	ArchiveDate *Date     `json:"archive_date,omitempty"`
 }
 
-func (o OpportunityMilestones) Validate() error {
+func (o *OpportunityMilestones) Validate() error {
 	if o.PostDate == nil {
 		return fmt.Errorf("cannot be nil: PostDate")
 	}
@@ -360,8 +403,8 @@ type Revision struct {
 	Id ulid.ULID `json:"id,omitempty"`
 }
 
-func (r Revision) Validate() error {
-	if r.Id.Compare(ulid.ULID{}) > 0 {
+func (r *Revision) Validate() error {
+	if r.Id.Compare(ulid.ULID{}) <= 0 {
 		return fmt.Errorf("cannot be empty: revision")
 	}
 	return nil
@@ -382,10 +425,7 @@ func (r Revision) MarshalJSON() ([]byte, error) {
 	})
 }
 
-// Grant model
-
 type Grant struct {
-	Description                      string                `json:"description,omitempty"`
 	FundingInstrumentTypes           []FundingInstrument   `json:"funding_instrument_types,omitempty"`
 	CostSharingOrMatchingRequirement *bool                 `json:"cost_sharing_or_matching_requirement,omitempty"`
 	CFDANumbers                      []string              `json:"cfda_numbers,omitempty"`
@@ -401,7 +441,7 @@ type Grant struct {
 	Revision                         Revision              `json:"revision,omitempty"`
 }
 
-func (g Grant) Validate() error {
+func (g *Grant) Validate() error {
 	err := multierror.Append(
 		g.Opportunity.Validate(),
 		g.Revision.Validate(),
@@ -417,10 +457,17 @@ func (g Grant) Validate() error {
 
 type grantModificationEventType string
 
+func (t grantModificationEventType) String() string {
+	return string(t)
+}
+
 const (
-	grantModificationEventTypeCreate grantModificationEventType = "create"
-	grantModificationEventTypeUpdate grantModificationEventType = "update"
-	grantModificationEventTypeDelete grantModificationEventType = "delete"
+	EventTypeCreate                  string = "create"
+	EventTypeUpdate                  string = "update"
+	EventTypeDelete                  string = "delete"
+	grantModificationEventTypeCreate        = grantModificationEventType(EventTypeCreate)
+	grantModificationEventTypeUpdate        = grantModificationEventType(EventTypeUpdate)
+	grantModificationEventTypeDelete        = grantModificationEventType(EventTypeDelete)
 )
 
 var ErrUnknonwModificationScenario = errors.New("modification scenario is not one of create, update, delete")
@@ -430,9 +477,32 @@ type grantModificationEventVersions struct {
 	New      *Grant `json:"new"`
 }
 
+func (v *grantModificationEventVersions) Validate() error {
+	var err *multierror.Error
+	if v.Previous != nil {
+		err = multierror.Append(err, v.Previous.Validate())
+	}
+	if v.New != nil {
+		err = multierror.Append(err, v.New.Validate())
+	}
+	return err.ErrorOrNil()
+}
+
 type GrantModificationEvent struct {
 	Type     grantModificationEventType     `json:"type,omitempty"`
 	Versions grantModificationEventVersions `json:"versions,omitempty"`
+}
+
+func (e *GrantModificationEvent) Validate() error {
+	err := multierror.Append(e.Versions.Validate())
+	switch e.Type {
+	case grantModificationEventTypeCreate:
+	case grantModificationEventTypeUpdate:
+	case grantModificationEventTypeDelete:
+	default:
+		err = multierror.Append(err, ErrUnknonwModificationScenario)
+	}
+	return err.ErrorOrNil()
 }
 
 func NewGrantModificationEvent(newVersion, previousVersion *Grant) (*GrantModificationEvent, error) {
