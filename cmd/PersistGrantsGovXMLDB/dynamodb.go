@@ -30,6 +30,7 @@ func UpdateDynamoDBItem(ctx context.Context, c DynamoDBUpdateItemAPI, table stri
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
 		UpdateExpression:          expr.Update(),
+		ConditionExpression:       expr.Condition(),
 		ReturnValues:              types.ReturnValueUpdatedNew,
 	})
 	return err
