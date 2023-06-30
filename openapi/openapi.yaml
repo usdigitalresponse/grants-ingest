@@ -249,12 +249,8 @@ components:
             format: date
           close:
             $ref: '#/components/schemas/CloseDate'
-          category:
-            $ref: '#/components/schemas/OpportunityCategory'
-          required:
-            - id
-            - number
-            - title
+        required:
+          - post_date
       ULIDType:
         type: string
         format: ulid
