@@ -20,7 +20,7 @@ func malformattedField(name string, err error) {
 		logger = log.With(logger, "error", err)
 	}
 	log.Warn(logger, "Could not parse field")
-	sendMetric("item.malformatted_field", 1, fmt.Sprintf("field:%s", name))
+	sendMetric("item_image.malformatted_field", 1, fmt.Sprintf("field:%s", name))
 }
 
 const GrantsGovDateLayout = grantsgov.TimeLayoutMMDDYYYYType
@@ -235,5 +235,6 @@ func GuardPanic[T any](wrappedFunc func() T) (t T, err error) {
 			}
 		}
 	}()
-	return wrappedFunc(), err
+	res := wrappedFunc()
+	return res, err
 }

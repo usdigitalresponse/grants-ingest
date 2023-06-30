@@ -117,7 +117,7 @@ func TestHandleEvent(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, resp.BatchItemFailures, 1)
 	assert.Equal(t, "FailAfterInsert", resp.BatchItemFailures[0].ItemIdentifier)
-	assert.EqualValues(t, 3, mockEB.callCount)
+	assert.Equal(t, 3, mockEB.callCount)
 }
 
 func TestHandleRecord(t *testing.T) {
@@ -142,7 +142,7 @@ func TestHandleRecord(t *testing.T) {
 		mockEB := &mockEventBridgePutEventsAPI{}
 		err := handleRecord(context.Background(), mockEB, record)
 		assert.NoError(t, err)
-		assert.EqualValues(t, mockEB.callCount, 1)
+		assert.Equal(t, mockEB.callCount, 1)
 		var modEvent usdr.GrantModificationEvent
 		assert.NoError(t, json.Unmarshal([]byte(*mockEB.params.Entries[0].Detail), &modEvent))
 		assert.Equal(t, modEvent.Versions.Previous.Revision.Id, prevRevId)
@@ -175,7 +175,7 @@ func TestHandleRecord(t *testing.T) {
 				} else {
 					assert.NoError(t, err)
 				}
-				assert.EqualValues(t, mockEB.callCount, 1)
+				assert.Equal(t, mockEB.callCount, 1)
 				var modEvent usdr.GrantModificationEvent
 				assert.NoError(t, json.Unmarshal([]byte(*mockEB.params.Entries[0].Detail), &modEvent))
 				assert.Equal(t, modEvent.Type.String(), usdr.EventTypeCreate)
@@ -194,25 +194,7 @@ func TestHandleRecord(t *testing.T) {
 		mockEB := &mockEventBridgePutEventsAPI{}
 		err := handleRecord(context.Background(), mockEB, record)
 		assert.Error(t, err)
-		assert.ErrorContains(t, err, "new grant version is invalid")
-		assert.EqualValues(t, mockEB.callCount, 0)
-	})
-}
-
-func TestBuildGrantVersion(t *testing.T) {
-	setupLambdaEnvForTesting(t)
-
-	t.Run("build success", func(t *testing.T) {
-		item := getFixtureItem(t, "fixtures/goodItem.json")
-		grant, err := buildGrantVersion(item)
-		assert.NoError(t, err)
-		assert.NoError(t, grant.Validate())
-	})
-
-	t.Run("build failure", func(t *testing.T) {
-		item := mapToItem(t, map[string]string{})
-		grant, err := buildGrantVersion(item)
-		assert.NoError(t, err)
-		assert.Error(t, grant.Validate())
+		assert.ErrorContains(t, err, "grant version is invalid")
+		assert.Equal(t, mockEB.callCount, 0)
 	})
 }
