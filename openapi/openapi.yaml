@@ -294,6 +294,6 @@ components:
           - posting_date
           - eligible_applicants
           - description
-          - CFDA_numbers
+          - cfda_numbers
           - opportunity
           - revision
