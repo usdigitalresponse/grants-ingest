@@ -641,7 +641,7 @@ module "PublishGrantEvents" {
   additional_lambda_execution_policy_documents = local.lambda_execution_policies
   lambda_layer_arns                            = local.lambda_layer_arns
 
-  dynamodb_table_name   = module.grants_prepared_dynamodb_table.table_name
+  dynamodb_table_name = module.grants_prepared_dynamodb_table.table_name
 
   depends_on = [
     module.grants_prepared_dynamodb_table
