@@ -47,8 +47,10 @@ func (im *ItemMapper) stringFor(k string) (s string) {
 func (im *ItemMapper) timeFor(k string, layout string) (*time.Time, error) {
 	if attr := im.attrs[k]; !attr.IsNull() {
 		dateString := attr.String()
-		t, err := time.Parse(layout, dateString)
-		return &t, err
+		if dateString != "" {
+			t, err := time.Parse(layout, dateString)
+			return &t, err
+		}
 	}
 	return nil, nil
 }
