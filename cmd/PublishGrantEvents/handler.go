@@ -55,21 +55,27 @@ func handleEvent(ctx context.Context, pub EventBridgePutEventsAPI, event events.
 }
 
 func handleRecord(ctx context.Context, pub EventBridgePutEventsAPI, rec events.DynamoDBEventRecord) error {
-	logger := log.With(logger, "event_name", rec.EventName,
-		"keys", rec.Change.Keys, "sequence_number", rec.Change.SequenceNumber)
+	logger := log.With(logger, "ddb_event_name", rec.EventName,
+		"ddb_keys", rec.Change.Keys, "ddb_sequence_number", rec.Change.SequenceNumber)
 
-	eventDetail, err := buildGrantModificationEventJSON(rec)
+	eventJSON, err := buildGrantModificationEventJSON(rec)
 	if err != nil {
 		return err
 	}
+
+	eventInput := types.PutEventsRequestEntry{
+		Source:       aws.String("org.usdigitalresponse.grants-ingest"),
+		DetailType:   aws.String("GrantModificationEvent"),
+		Detail:       aws.String(string(eventJSON)),
+		Time:         aws.Time(rec.Change.ApproximateCreationDateTime.Time),
+		EventBusName: aws.String(env.EventBusName),
+	}
+	log.Debug(logger, "Publishing to EventBridge",
+		"event_bus_name", eventInput.EventBusName, "event_time", eventInput.Time,
+		"event_source", eventInput.Source, "event_detail_type", eventInput.DetailType,
+		"event_detail", eventInput.Detail, "event_detail_bytes", eventJSON)
 	if _, err := pub.PutEvents(ctx, &eventbridge.PutEventsInput{
-		Entries: []types.PutEventsRequestEntry{{
-			Source:       aws.String("org.usdigitalresponse.grants-ingest"),
-			DetailType:   aws.String("GrantModificationEvent"),
-			Detail:       aws.String(string(eventDetail)),
-			Time:         aws.Time(rec.Change.ApproximateCreationDateTime.Time),
-			EventBusName: aws.String(env.EventBusName),
-		}},
+		Entries: []types.PutEventsRequestEntry{eventInput},
 	}); err != nil {
 		return log.Errorf(logger, "error publishing to EventBridge", err)
 	}
@@ -80,11 +86,11 @@ func handleRecord(ctx context.Context, pub EventBridgePutEventsAPI, rec events.D
 }
 
 func buildGrantModificationEventJSON(record events.DynamoDBEventRecord) ([]byte, error) {
-	logger := log.With(logger, "change_size_bytes", record.Change.SizeBytes,
-		"change_approximate_creation_time", record.Change.ApproximateCreationDateTime,
-		"keys", record.Change.Keys, "sequence_number", record.Change.SequenceNumber,
-		"event_id", record.EventID, "event_version", record.EventVersion,
-		"event_name", record.EventName,
+	logger := log.With(logger, "ddb_change_size_bytes", record.Change.SizeBytes,
+		"ddb_change_approximate_creation_time", record.Change.ApproximateCreationDateTime,
+		"ddb_keys", record.Change.Keys, "ddb_sequence_number", record.Change.SequenceNumber,
+		"ddb_event_id", record.EventID, "ddb_event_version", record.EventVersion,
+		"ddb_event_name", record.EventName,
 	)
 
 	var newVersion, prevVersion *usdr.Grant
