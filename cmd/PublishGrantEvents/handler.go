@@ -65,7 +65,7 @@ func handleRecord(ctx context.Context, pub EventBridgePutEventsAPI, rec events.D
 	if _, err := pub.PutEvents(ctx, &eventbridge.PutEventsInput{
 		Entries: []types.PutEventsRequestEntry{{
 			Source:       aws.String("org.usdigitalresponse.grants-ingest"),
-			DetailType:   aws.String("GrantModification"),
+			DetailType:   aws.String("GrantModificationEvent"),
 			Detail:       aws.String(string(eventDetail)),
 			Time:         aws.Time(rec.Change.ApproximateCreationDateTime.Time),
 			EventBusName: aws.String(env.EventBusName),
