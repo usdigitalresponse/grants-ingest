@@ -64,7 +64,7 @@ module "lambda_execution_policy" {
 
 module "lambda_function" {
   source  = "terraform-aws-modules/lambda/aws"
-  version = "5.1.0"
+  version = "5.2.0"
 
   function_name = "${var.namespace}-${var.function_name}"
   description   = "Creates per-grant JSON representation of an FFIS Spreadsheet"
