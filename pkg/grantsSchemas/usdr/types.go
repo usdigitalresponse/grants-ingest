@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -390,6 +391,7 @@ func (o *OpportunityMilestones) Validate() error {
 }
 
 // Revision model
+
 type Revision struct {
 	Id ulid.ULID `json:"id,omitempty"`
 }
@@ -416,10 +418,31 @@ func (r Revision) MarshalJSON() ([]byte, error) {
 	})
 }
 
+// Grant model
+
+var (
+	ValidCFDANumberRegexp = regexp.MustCompile(`^[0-9]{2}[\.][0-9]{3}$`)
+	ErrInvalidCFDANumber  = errors.New("invalid CFDA number")
+)
+
+type cfdaNumber string
+
+func NewCFDANumber(s string) (v cfdaNumber, err error) {
+	v = cfdaNumber(s)
+	return v, v.Validate()
+}
+
+func (c cfdaNumber) Validate() error {
+	if !ValidCFDANumberRegexp.MatchString(string(c)) {
+		return ErrInvalidCFDANumber
+	}
+	return nil
+}
+
 type Grant struct {
 	FundingInstrumentTypes           []FundingInstrument   `json:"funding_instrument_types,omitempty"`
 	CostSharingOrMatchingRequirement *bool                 `json:"cost_sharing_or_matching_requirement,omitempty"`
-	CFDANumbers                      []string              `json:"cfda_numbers,omitempty"`
+	CFDANumbers                      []cfdaNumber          `json:"cfda_numbers,omitempty"`
 	Bill                             string                `json:"bill,omitempty"`
 	EligibleApplicants               []Applicant           `json:"eligible_applicants,omitempty"`
 	AdditionalInformation            AdditionalInformation `json:"additional_information,omitempty"`
@@ -438,6 +461,12 @@ func (g *Grant) Validate() error {
 		g.Revision.Validate(),
 		g.FundingActivity.Validate(),
 	)
+	for _, cfdaNum := range g.CFDANumbers {
+		err = multierror.Append(err, cfdaNum.Validate())
+	}
+	for _, ea := range g.EligibleApplicants {
+		err = multierror.Append(err, ea.Validate())
+	}
 	for _, fit := range g.FundingInstrumentTypes {
 		err = multierror.Append(err, fit.Validate())
 	}

@@ -60,6 +60,7 @@ func (im *ItemMapper) Grant() usdr.Grant {
 		Bill:                   im.stringFor("Bill"),
 		Revision:               im.Revision(),
 		Opportunity:            im.Opportunity(),
+		EligibleApplicants:     im.EligibleApplicants(),
 		FundingActivity:        im.FundingActivity(),
 		FundingInstrumentTypes: im.FundingInstruments(),
 		Award:                  im.Award(),
@@ -84,17 +85,28 @@ func (im *ItemMapper) Grant() usdr.Grant {
 		},
 	}
 
-	if req := im.stringFor("CostSharingOrMatchingRequirement"); req != "" {
-		yesNo := strings.ToLower(req)
-		if yesNo == "yes" {
+	if attr := im.stringFor("CostSharingOrMatchingRequirement"); attr != "" {
+		if normalized := strings.ToLower(attr); normalized == "yes" {
 			grant.CostSharingOrMatchingRequirement = toPointer(true)
-		} else if yesNo == "no" {
+		} else if normalized == "no" {
 			grant.CostSharingOrMatchingRequirement = toPointer(false)
 		} else {
 			malformattedField(
 				"CostSharingOrMatchingRequirement",
-				fmt.Errorf("value not one of yes or no: %s", yesNo),
+				fmt.Errorf("not one of yes or no: %s", normalized),
 			)
+		}
+	} else {
+		malformattedField("CostSharingOrMatchingRequirement", fmt.Errorf("missing or empty"))
+	}
+
+	if attr := im.attrs["CFDANumbers"]; !attr.IsNull() {
+		for _, av := range attr.List() {
+			cfdaNumber, err := usdr.NewCFDANumber(av.String())
+			grant.CFDANumbers = append(grant.CFDANumbers, cfdaNumber)
+			if err != nil {
+				malformattedField("CFDANumbers", err)
+			}
 		}
 	}
 
@@ -124,6 +136,20 @@ func (im *ItemMapper) Award() usdr.Award {
 		}
 	}
 	return award
+}
+
+func (im *ItemMapper) EligibleApplicants() []usdr.Applicant {
+	eligibleApplicants := make([]usdr.Applicant, 0)
+	if attr := im.attrs["EligibleApplicants"]; !attr.IsNull() {
+		for _, av := range attr.List() {
+			applicant, err := usdr.ApplicantFromCode(av.String())
+			eligibleApplicants = append(eligibleApplicants, applicant)
+			if err != nil {
+				malformattedField("EligibleApplicants", err)
+			}
+		}
+	}
+	return eligibleApplicants
 }
 
 func (im *ItemMapper) FundingActivity() usdr.FundingActivity {
