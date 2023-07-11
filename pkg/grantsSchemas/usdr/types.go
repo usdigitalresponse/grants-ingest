@@ -182,6 +182,7 @@ var (
 		"HL":  "Health",
 		"HO":  "Housing",
 		"HU":  "Humanities",
+		"IIJ": "Infrastructure Investment and Jobs Act",
 		"IS":  "Information and Statistics",
 		"ISS": "Income Security and Social Services",
 		"LJL": "Law, Justice and Legal Services",
