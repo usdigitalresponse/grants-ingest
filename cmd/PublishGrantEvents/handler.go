@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sync"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -27,30 +26,18 @@ type EventBridgePutEventsAPI interface {
 
 func handleEvent(ctx context.Context, pub EventBridgePutEventsAPI, event events.DynamoDBEvent) (events.DynamoDBEventResponse, error) {
 	sendMetric("invocation_batch_size", float64(len(event.Records)))
+	failures := make([]events.DynamoDBBatchItemFailure, 0)
 
-	wg := sync.WaitGroup{}
-	wg.Add(len(event.Records))
-	failSeq := make(chan string, len(event.Records))
-	for i := range event.Records {
-		go func(r events.DynamoDBEventRecord) {
-			defer wg.Done()
-			if err := handleRecord(ctx, pub, r); err != nil {
-				failSeq <- r.Change.SequenceNumber
-				log.Error(logger, "Failed to handle record in batch", err,
-					"sequence_number", r.Change.SequenceNumber)
-				sendMetric("record.failed", 1, fmt.Sprintf("event_name:%s", r.EventName))
-			}
-		}(event.Records[i])
+	for _, record := range event.Records {
+		if err := handleRecord(ctx, pub, record); err != nil {
+			seq := record.Change.SequenceNumber
+			log.Error(logger, "Failed to handle record in batch", err, "sequence_number", seq)
+			sendMetric("record.failed", 1, fmt.Sprintf("event_name:%s", record.EventName))
+			failures = append(failures, events.DynamoDBBatchItemFailure{ItemIdentifier: seq})
+			break
+		}
 	}
-	wg.Wait()
-	close(failSeq)
 
-	failures := make([]events.DynamoDBBatchItemFailure, len(failSeq))
-	idx := 0
-	for seq := range failSeq {
-		failures[idx].ItemIdentifier = seq
-		idx++
-	}
 	return events.DynamoDBEventResponse{BatchItemFailures: failures}, nil
 }
 
