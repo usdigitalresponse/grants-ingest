@@ -40,7 +40,7 @@ data "aws_dynamodb_table" "source" {
 
 module "lambda_function" {
   source  = "terraform-aws-modules/lambda/aws"
-  version = "5.0.0"
+  version = "5.2.0"
 
   function_name = "${var.namespace}-${var.function_name}"
   description   = "Publishes grant opportunity create/update events from DynamoDB to EventBridge."
