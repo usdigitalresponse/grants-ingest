@@ -284,15 +284,6 @@ components:
             minItems: 1
           bill:
             type: string
-          posting_date:
-            type: string
-            format: date
-          archive_date:
-            type: string
-            format: date
-          last_updated_date:
-            type: string
-            format: date
           eligible_applicants:
             type: array
             items:
@@ -304,8 +295,6 @@ components:
             $ref: '#/components/schemas/Agency'
           award:
             $ref: '#/components/schemas/Award'
-          close_date:
-            $ref: '#/components/schemas/CloseDate'
           funding_activity:
             $ref: '#/components/schemas/FundingActivity'
           grantor:
@@ -321,7 +310,6 @@ components:
           - funding_activity
           - cost_sharing_or_matching_requirement
           - grantor
-          - posting_date
           - eligible_applicants
           - description
           - cfda_numbers
