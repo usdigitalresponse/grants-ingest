@@ -29,7 +29,7 @@ data "aws_sqs_queue" "ffis_downloads" {
 
 module "lambda_execution_policy" {
   source  = "cloudposse/iam-policy/aws"
-  version = "0.4.0"
+  version = "1.0.1"
 
   iam_source_policy_documents = var.additional_lambda_execution_policy_documents
   iam_policy_statements = {
@@ -53,7 +53,7 @@ module "lambda_execution_policy" {
 
 module "lambda_function" {
   source  = "terraform-aws-modules/lambda/aws"
-  version = "4.12.1"
+  version = "5.2.0"
 
   function_name = "${var.namespace}-${var.function_name}"
   description   = "Downloads FFIS XLSX files and saves to S3"
@@ -98,7 +98,7 @@ module "lambda_function" {
       maximum_batching_window_in_seconds = 20
       event_source_arn                   = data.aws_sqs_queue.ffis_downloads.arn
       scaling_config = {
-        maximum_concurrency = 1
+        maximum_concurrency = 2
       }
     }
   }
