@@ -107,12 +107,14 @@ module "lambda_function" {
 
   event_source_mapping = {
     dynamodb = {
-      event_source_arn               = data.aws_dynamodb_table.source.stream_arn
-      starting_position              = "LATEST"
-      parallelization_factor         = 10
-      function_response_types        = ["ReportBatchItemFailures"]
-      bisect_batch_on_function_error = true
-      destination_arn_on_failure     = aws_sqs_queue.dlq.arn
+      event_source_arn                   = data.aws_dynamodb_table.source.stream_arn
+      starting_position                  = "LATEST"
+      parallelization_factor             = 10
+      function_response_types            = ["ReportBatchItemFailures"]
+      bisect_batch_on_function_error     = true
+      destination_arn_on_failure         = aws_sqs_queue.dlq.arn
+      maximum_retry_attempts             = 5
+      maximum_batching_window_in_seconds = 180
     }
   }
 
