@@ -107,6 +107,7 @@ module "lambda_function" {
 
   event_source_mapping = {
     dynamodb = {
+      enabled                            = true
       event_source_arn                   = data.aws_dynamodb_table.source.stream_arn
       starting_position                  = "LATEST"
       parallelization_factor             = 10
