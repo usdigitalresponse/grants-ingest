@@ -1,4 +1,4 @@
-nameepace                             = "grants_ingest-staging"
+namespace                             = "grants_ingest-staging"
 environment                           = "staging"
 ssm_deployment_parameters_path_prefix = "/grants_ingest/staging/deploy-config"
 datadog_enabled                       = true
