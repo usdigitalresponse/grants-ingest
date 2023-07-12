@@ -29,3 +29,7 @@ output "lambda_function_log_group_arn" {
 output "event_bus_arn" {
   value = data.aws_cloudwatch_event_bus.target.arn
 }
+
+output "dlq_name" {
+  value = aws_sqs_queue.dlq.name
+}
