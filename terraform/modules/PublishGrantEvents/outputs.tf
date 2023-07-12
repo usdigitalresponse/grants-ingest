@@ -25,3 +25,7 @@ output "lambda_function_log_group_name" {
 output "lambda_function_log_group_arn" {
   value = module.lambda_function.lambda_cloudwatch_log_group_arn
 }
+
+output "event_bus_arn" {
+  value = data.aws_cloudwatch_event_bus.target.arn
+}

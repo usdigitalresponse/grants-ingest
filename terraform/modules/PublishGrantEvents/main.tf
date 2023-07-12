@@ -19,8 +19,8 @@ locals {
   )
 }
 
-resource "aws_cloudwatch_event_bus" "target" {
-  name = "${var.namespace}-grant_events"
+data "aws_cloudwatch_event_bus" "target" {
+  name = var.event_bus_name
 }
 
 resource "aws_sqs_queue" "dlq" {
@@ -56,7 +56,7 @@ module "lambda_function" {
     PublishToEventBridge = {
       effect    = "Allow"
       actions   = ["events:PutEvents"]
-      resources = [aws_cloudwatch_event_bus.target.arn]
+      resources = [data.aws_cloudwatch_event_bus.target.arn]
     }
     PublishFailuresToDLQ = {
       effect    = "Allow"
@@ -102,7 +102,7 @@ module "lambda_function" {
   environment_variables = merge(var.additional_environment_variables, {
     DD_TAGS        = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
     LOG_LEVEL      = var.log_level
-    EVENT_BUS_NAME = aws_cloudwatch_event_bus.target.name
+    EVENT_BUS_NAME = data.aws_cloudwatch_event_bus.target.name
   })
 
   event_source_mapping = {

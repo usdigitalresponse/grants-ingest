@@ -76,3 +76,9 @@ variable "dynamodb_table_name" {
   description = "Name of the DynamoDB table providing the stream that invokes the Lambda function."
   type        = string
 }
+
+variable "event_bus_name" {
+  description = "Name of the AWS EventBridge Event Bus resource to which the Lambda should publish grant events."
+  type        = string
+  default     = "default"
+}
