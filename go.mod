@@ -14,6 +14,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.4.58
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.72
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.20.1
+	github.com/aws/aws-sdk-go-v2/service/eventbridge v1.18.9
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.37.0
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.23.3
 	github.com/aws/smithy-go v1.13.5
@@ -22,6 +23,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/johannesboyne/gofakes3 v0.0.0-20230506070712-04da935ef877
 	github.com/krolaw/zipstream v0.0.0-20180621105154-0a2661891f94
+	github.com/oklog/ulid/v2 v2.1.0
 	github.com/stretchr/testify v1.8.4
 	github.com/xuri/excelize/v2 v2.7.1
 	gopkg.in/DataDog/dd-trace-go.v1 v1.52.0
@@ -44,7 +46,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.36 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.0.27 // indirect
 	github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.14.15 // indirect
-	github.com/aws/aws-sdk-go-v2/service/eventbridge v1.18.9 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.11 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.30 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/endpoint-discovery v1.7.29 // indirect
@@ -92,7 +93,7 @@ require (
 	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
-	golang.org/x/tools v0.9.1 // indirect
+	golang.org/x/tools v0.9.2 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
 	google.golang.org/grpc v1.55.0 // indirect

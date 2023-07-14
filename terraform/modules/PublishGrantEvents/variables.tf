@@ -72,18 +72,13 @@ variable "datadog_custom_tags" {
 }
 
 // Module-specific
-variable "eventbridge_scheduler_enabled" {
-  description = "If false, uses CloudWatch Events to schedule Lambda execution. This should only be false in development."
-  type        = bool
-  default     = true
-}
-
-variable "scheduler_group_name" {
-  description = "Name of the AWS EventBridge Scheduler group in which schedules should be placed."
+variable "dynamodb_table_name" {
+  description = "Name of the DynamoDB table providing the stream that invokes the Lambda function."
   type        = string
 }
 
-variable "grants_source_data_bucket_name" {
-  description = "Name of the S3 bucket used to store grants source data."
+variable "event_bus_name" {
+  description = "Name of the AWS EventBridge Event Bus resource to which the Lambda should publish grant events."
   type        = string
+  default     = "default"
 }

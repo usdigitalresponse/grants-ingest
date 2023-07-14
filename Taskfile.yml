@@ -16,6 +16,12 @@ tasks:
   check:
     desc: >-
       Simulates all steps of the "QA" job executed during the pull request CI workflow
+    cmds:
+      - task: prebuild-lambda
+      - task: check-tasks
+
+  check-tasks:
+    internal: true
     deps:
       - fmt
       - test
@@ -132,6 +138,7 @@ tasks:
     deps:
       - build-DownloadGrantsGovDB
       - build-SplitGrantsGovXMLDB
+      - build-PublishGrantEvents
       - build-EnqueueFFISDownload
       - build-PersistGrantsGovXMLDB
       - build-DownloadFFISSpreadsheet
@@ -193,3 +200,10 @@ tasks:
       - task: build-lambda
         vars:
           LAMBDA_CMD: SplitFFISSpreadsheet
+
+  build-PublishGrantEvents:
+    desc: Compiles build-PublishGrantEvents
+    cmds:
+      - task: build-lambda
+        vars:
+          LAMBDA_CMD: PublishGrantEvents

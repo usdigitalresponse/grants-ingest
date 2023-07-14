@@ -625,3 +625,25 @@ module "ExtractGrantsGovDBToXML" {
     module.grants_source_data_bucket,
   ]
 }
+
+module "PublishGrantEvents" {
+  source = "./modules/PublishGrantEvents"
+
+  namespace                                    = var.namespace
+  function_name                                = "PublishGrantEvents"
+  permissions_boundary_arn                     = local.permissions_boundary_arn
+  lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
+  log_retention_in_days                        = var.lambda_default_log_retention_in_days
+  log_level                                    = var.lambda_default_log_level
+  lambda_code_path                             = local.lambda_code_path
+  lambda_arch                                  = var.lambda_arch
+  additional_environment_variables             = local.lambda_environment_variables
+  additional_lambda_execution_policy_documents = local.lambda_execution_policies
+  lambda_layer_arns                            = local.lambda_layer_arns
+
+  dynamodb_table_name = module.grants_prepared_dynamodb_table.table_name
+
+  depends_on = [
+    module.grants_prepared_dynamodb_table
+  ]
+}

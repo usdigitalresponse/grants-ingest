@@ -1,0 +1,120 @@
+{
+    "revision": {
+      "S": "01H44KDRQ9EDQP2PS3X4VJHY9X"
+    },
+    "grant_id": {
+      "S": "328621"
+    },
+    "Bill": {
+      "S": "ARPA"
+    },
+    "AdditionalInformationOnEligibility": {
+      "B": "asdf"
+    },
+    "AdditionalInformationText": {
+      "S": ""
+    },
+    "AdditionalInformationURL": {
+      "S": "https://example.com"
+    },
+    "AgencyCode": {
+      "S": "DHS-OPO"
+    },
+    "AgencyName": {
+      "S": "Office of Procurement Operations - Grants Division"
+    },
+    "ArchiveDate": {
+      "S": "11082020"
+    },
+    "AwardCeiling": {
+      "S": "470000"
+    },
+    "AwardFloor": {
+      "S": "470000"
+    },
+    "CategoryExplanation": {
+      "S": ""
+    },
+    "CategoryOfFundingActivity": {
+      "L": [
+        {
+          "S": "ST"
+        }
+      ]
+    },
+    "CFDANumbers": {
+      "L": [
+        {
+          "S": "97.062"
+        }
+      ]
+    },
+    "CloseDate": {
+      "S": "10092020"
+    },
+    "CloseDateExplanation": {
+      "S": ""
+    },
+    "CostSharingOrMatchingRequirement": {
+      "S": "No"
+    },
+    "Description": {
+      "S": "DHS S&amp;T Office of University Program (OUP) is requesting applications for the SLAs from accredited U.S. colleges and universities defined as &quot;minority institutions&quot; by &#167; 365(3) of the Higher Education Act (HEA) (20 U.S.C. &#167; 1067k (3)). Awarded institutions will develop programs providing experiential learning activities for students already studying science, technology, engineering, and mathematics an opportunity to connect to ongoing DHS research programs. SLA recipients will engage with local community colleges to identify the strengths of their local communities and promote their degree completion and transition from 2-year to 4-year institutions."
+    },
+    "EligibleApplicants": {
+      "L": [
+        {
+          "S": "06"
+        },
+        {
+          "S": "20"
+        }
+      ]
+    },
+    "EstimatedTotalProgramFunding": {
+      "S": "3290000"
+    },
+    "ExpectedNumberOfAwards": {
+      "S": "7"
+    },
+    "FundingInstrumentType": {
+      "L": [
+        {
+          "S": "CA"
+        }
+      ]
+    },
+    "GrantorContactEmail": {
+      "S": "stephanie.dawkins@dhs.gov"
+    },
+    "GrantorContactEmailDescription": {
+      "S": "stephanie.dawkins@dhs.gov"
+    },
+    "GrantorContactText": {
+      "S": "stephanie h dawkins &lt;br/&gt;grants specialist &lt;br/&gt;Phone 202-447-0495"
+    },
+    "LastUpdatedDate": {
+      "S": "09022020"
+    },
+    "OpportunityCategory": {
+      "S": "D"
+    },
+    "OpportunityCategoryExplanation": {
+      "S": ""
+    },
+    "OpportunityID": {
+      "S": "328621"
+    },
+    "OpportunityNumber": {
+      "S": "DHS-20-ST-062-001"
+    },
+    "OpportunityTitle": {
+      "S": "2020 DHS SLA for Minority Serving Institutions"
+    },
+    "PostDate": {
+      "S": "08102020"
+    },
+    "Version": {
+      "S": "Synopsis 2"
+    }
+  }
