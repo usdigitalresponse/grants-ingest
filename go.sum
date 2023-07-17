@@ -58,7 +58,6 @@ github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.29 h1:yOpYx+FTBdpk/g+sBU
 github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.29/go.mod h1:M/eUABlDbw2uVrdAn+UsI6M727qp2fxkp8K0ejcBDUY=
 github.com/aws/aws-sdk-go-v2/internal/ini v1.3.36 h1:8r5m1BoAWkn0TDC34lUculryf7nUF25EgIMdjvGCkgo=
 github.com/aws/aws-sdk-go-v2/internal/ini v1.3.36/go.mod h1:Rmw2M1hMVTwiUhjwMoIBFWFJMhvJbct06sSidxInkhY=
-github.com/aws/aws-sdk-go-v2/internal/v4a v1.0.24/go.mod h1:+fFaIjycTmpV6hjmPTbyU9Kp5MI/lA+bbibcAtmlhYA=
 github.com/aws/aws-sdk-go-v2/internal/v4a v1.0.27 h1:cZG7psLfqpkB6H+fIrgUDWmlzM474St1LP0jcz272yI=
 github.com/aws/aws-sdk-go-v2/internal/v4a v1.0.27/go.mod h1:ZdjYvJpDlefgh8/hWelJhqgqJeodxu4SmbVsSdBlL7E=
 github.com/aws/aws-sdk-go-v2/service/dynamodb v1.20.1 h1:gknY3OHEGXaLamootb1VaJSohtHwcIMGvm23VnZVIzE=
@@ -66,8 +65,8 @@ github.com/aws/aws-sdk-go-v2/service/dynamodb v1.20.1/go.mod h1:iA/evsHrPWhDyMj6
 github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.14.15 h1:yonnEISVD77M77F813Va41d8wl3A1W6HhfEmrVOcqfM=
 github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.14.15/go.mod h1:3zUTVwCixtSfFyNFK0P0x92IMkfTZQpuXH7Lk/WbW9g=
 github.com/aws/aws-sdk-go-v2/service/ec2 v1.93.2 h1:c6a19AjfhEXKlEX63cnlWtSQ4nzENihHZOG0I3wH6BE=
-github.com/aws/aws-sdk-go-v2/service/eventbridge v1.18.9 h1:ZRs58K4BH5u8Zzvsy0z9yZlhYW7BsbyUXEsDjy+wZVg=
-github.com/aws/aws-sdk-go-v2/service/eventbridge v1.18.9/go.mod h1:eQx2HIMJsUQhEXStHzwtbTOcCKUsmWKgJwowhahrEZE=
+github.com/aws/aws-sdk-go-v2/service/eventbridge v1.19.5 h1:kcpBvrPIkY+41BCSws7i215ZU8t63PQGK4Brbh2q4vs=
+github.com/aws/aws-sdk-go-v2/service/eventbridge v1.19.5/go.mod h1:a6vWQ7PX/YesnGnTMFUdaA4pNRpDcFcbRNd0Vtb2u+A=
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.11 h1:y2+VQzC6Zh2ojtV2LoC0MNwHWc6qXv/j2vrQtlftkdA=
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.11/go.mod h1:iV4q2hsqtNECrfmlXyord9u4zyuFEJX9eLgLpSPzWA8=
 github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.30 h1:Bje8Xkh2OWpjBdNfXLrnn8eZg569dUQmhgtydxAYyP0=
