@@ -156,7 +156,7 @@ func TestHandleEvent(t *testing.T) {
 				assert.NoError(t, err)
 				_, err := svc.HeadObject(context.Background(), &s3.HeadObjectInput{
 					Bucket: aws.String(tt.destinationBucket),
-					Key:    aws.String("sources/2023/04/22/ffis/raw.eml"),
+					Key:    aws.String("sources/2023/04/22/ffis.org/raw.eml"),
 				})
 				assert.NoError(t, err, "Could not find the copied destination S3 object")
 			} else {

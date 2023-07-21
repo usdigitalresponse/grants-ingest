@@ -42,7 +42,7 @@ func handleEvent(ctx context.Context, client S3API, event events.S3Event) error 
 		return log.Errorf(logger, "email cannot be trusted", err)
 	}
 
-	destKey := fmt.Sprintf("sources/%s/ffis/raw.eml", sentAt.Format("2006/01/02"))
+	destKey := fmt.Sprintf("sources/%s/ffis.org/raw.eml", sentAt.Format("2006/01/02"))
 	logger = log.With(logger, "destination_key", destKey, "email_date", sentAt)
 	if _, err := client.CopyObject(ctx, &s3.CopyObjectInput{
 		CopySource: aws.String(filepath.Join(sourceBucket, sourceKey)),

@@ -60,15 +60,15 @@ func TestHandleSQSEvent(t *testing.T) {
 		httpStatusCode     int
 	}{
 		{name: "basic happy path",
-			message: ffis.FFISMessageDownload{DownloadURL: "https://www.example.com", SourceFileKey: "/sources/2023/05/01/ffis/raw.eml"}},
+			message: ffis.FFISMessageDownload{DownloadURL: "https://www.example.com", SourceFileKey: "/sources/2023/05/01/ffis.org/raw.eml"}},
 		{name: "fails to download file",
-			message:   ffis.FFISMessageDownload{DownloadURL: "https://www.example.com", SourceFileKey: "/sources/2023/05/01/ffis/raw.eml"},
+			message:   ffis.FFISMessageDownload{DownloadURL: "https://www.example.com", SourceFileKey: "/sources/2023/05/01/ffis.org/raw.eml"},
 			httpError: fmt.Errorf("Error downloading files")},
 		{name: "s3 upload fails",
-			message: ffis.FFISMessageDownload{DownloadURL: "https://www.example.com", SourceFileKey: "/sources/2023/05/01/ffis/raw.eml"},
+			message: ffis.FFISMessageDownload{DownloadURL: "https://www.example.com", SourceFileKey: "/sources/2023/05/01/ffis.org/raw.eml"},
 			s3Error: fmt.Errorf("Error uploading files")},
 		{name: "HTTP error",
-			message:        ffis.FFISMessageDownload{DownloadURL: "https://www.example.com", SourceFileKey: "/sources/2023/05/01/ffis/raw.eml"},
+			message:        ffis.FFISMessageDownload{DownloadURL: "https://www.example.com", SourceFileKey: "/sources/2023/05/01/ffis.org/raw.eml"},
 			httpStatusCode: 500},
 	}
 	for _, test := range tests {

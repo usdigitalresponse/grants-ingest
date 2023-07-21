@@ -38,7 +38,7 @@ module "lambda_execution_policy" {
       actions = ["s3:GetObject"]
       resources = [
         # This path is set by the DownloadFFISSpreadsheet module
-        "${data.aws_s3_bucket.source_data.arn}/sources/*/*/*/ffis/download.xlsx"
+        "${data.aws_s3_bucket.source_data.arn}/sources/*/*/*/ffis.org/download.xlsx"
       ]
     }
     AllowInspectS3PreparedData = {

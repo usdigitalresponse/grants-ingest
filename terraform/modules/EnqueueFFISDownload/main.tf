@@ -37,8 +37,8 @@ module "lambda_execution_policy" {
       effect  = "Allow"
       actions = ["s3:GetObject"]
       resources = [
-        # Path: sources/YYYY/mm/dd/ffis/raw.eml
-        "${data.aws_s3_bucket.source_data.arn}/sources/*/*/*/ffis/raw.eml"
+        # Path: sources/YYYY/mm/dd/ffis.org/raw.eml
+        "${data.aws_s3_bucket.source_data.arn}/sources/*/*/*/ffis.org/raw.eml"
       ]
     }
     AllowSQSPublish = {

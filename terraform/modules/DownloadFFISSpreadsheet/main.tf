@@ -37,8 +37,8 @@ module "lambda_execution_policy" {
       effect  = "Allow"
       actions = ["s3:PutObject"]
       resources = [
-        # Path: /sources/YYYY/mm/dd/ffis/download.xlsx
-        "${data.aws_s3_bucket.download_target.arn}/sources/*/*/*/ffis/download.xlsx"
+        # Path: /sources/YYYY/mm/dd/ffis.org/download.xlsx
+        "${data.aws_s3_bucket.download_target.arn}/sources/*/*/*/ffis.org/download.xlsx"
       ]
     }
     AllowSQSGet = {

@@ -34,8 +34,9 @@ module "lambda_execution_policy" {
       actions = ["s3:GetObject",
       "s3:ListBucket"]
       resources = [
-        # Path: sources/YYYY/mm/dd//ffis.org/v1.json
-        "${data.aws_s3_bucket.source_data.arn}/sources/*/*/*/ffis.org/v1.json"
+        data.aws_s3_bucket.prepared_data.arn,
+        # Path: <first 3 of grant id>/<grant id>/ffis.org/v1.json
+        "${data.aws_s3_bucket.prepared_data.arn}/*/*/ffis.org/v1.json"
       ]
     }
     AllowDynamoDBPreparedData = {
