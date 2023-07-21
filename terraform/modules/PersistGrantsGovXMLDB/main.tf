@@ -87,7 +87,6 @@ module "lambda_function" {
     DD_TAGS                       = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
     GRANTS_PREPARED_DYNAMODB_NAME = var.grants_prepared_dynamodb_table_name
     LOG_LEVEL                     = var.log_level
-    S3_USE_PATH_STYLE             = "true"
   })
 
   allowed_triggers = {

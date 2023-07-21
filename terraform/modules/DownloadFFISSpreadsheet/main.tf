@@ -88,7 +88,6 @@ module "lambda_function" {
     DD_TAGS            = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
     TARGET_BUCKET_NAME = data.aws_s3_bucket.download_target.id
     LOG_LEVEL          = var.log_level
-    S3_USE_PATH_STYLE  = "true"
   })
 
   event_source_mapping = {
