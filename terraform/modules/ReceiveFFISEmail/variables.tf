@@ -75,7 +75,6 @@ variable "datadog_custom_tags" {
 variable "email_delivery_bucket_name" {
   description = "Name of the S3 bucket that will invoke this Lambda function with newly-received emails."
   type        = string
-  required    = true
 }
 
 variable "email_delivery_object_key_prefix" {
@@ -87,15 +86,13 @@ variable "email_delivery_object_key_prefix" {
 variable "grants_source_data_bucket_name" {
   description = "Name of the S3 bucket to which received emails will be copied for further processing upon successful verification."
   type        = string
-  required    = true
 }
 
 variable "allowed_email_senders" {
   description = "Allow-listed domain names and/or email addresses for FFIS email senders."
   type        = list(string)
-  required    = true
   validation {
-    condition     = length(var.ffis_email_sender_domains) > 0
+    condition     = length(var.allowed_email_senders) > 0
     error_message = "At least one domain must be specified or all emails will be rejected."
   }
 }
