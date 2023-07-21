@@ -28,7 +28,7 @@ data "aws_s3_bucket" "email_delivery" {
 }
 
 data "aws_s3_bucket" "grants_source_data" {
-  name = var.grants_source_data_bucket_name
+  bucket = var.grants_source_data_bucket_name
 }
 
 module "lambda_execution_policy" {
@@ -39,14 +39,20 @@ module "lambda_execution_policy" {
   iam_policy_statements = {
     AllowS3DownloadNewEmails = {
       effect  = "Allow"
-      actions = ["s3:GetObject", "s3:GetObjectTagging"]
+      actions = [
+        "s3:GetObject",
+        "s3:GetObjectTagging",
+      ]
       resources = [
-        "${data.aws_s3_bucket.email_delivery.arn}/${var.email_delivery_object_key_prefix}/*"
+        "${data.aws_s3_bucket.email_delivery.arn}/${trim(var.email_delivery_object_key_prefix, "/")}/*",
       ]
     }
     AllowS3UploadVerifiedEmails = {
       effect  = "Allow"
-      actions = ["s3:PutObject", "s3:PutObjectTagging"]
+      actions = [
+        "s3:PutObject",
+        "s3:PutObjectTagging",
+      ]
       resources = [
         # Path: sources/YYYY/mm/dd/ffis.org/raw.eml
         "${data.aws_s3_bucket.grants_source_data.arn}/sources/*/*/*/ffis.org/raw.eml",
