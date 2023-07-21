@@ -29,7 +29,7 @@ module "lambda_execution_policy" {
 
   iam_source_policy_documents = var.additional_lambda_execution_policy_documents
   iam_policy_statements = {
-    AllowInspectS3PreparedData = {
+    AllowGetS3PreparedData = {
       effect = "Allow"
       actions = [
         "s3:GetObject",
@@ -37,6 +37,7 @@ module "lambda_execution_policy" {
       ]
       resources = [
         data.aws_s3_bucket.prepared_data.arn,
+        # Path: <first 3 of grant id>/<grant id>/grants.gov/v2.xml
         "${data.aws_s3_bucket.prepared_data.arn}/*/*/grants.gov/v2.xml"
       ]
     }
