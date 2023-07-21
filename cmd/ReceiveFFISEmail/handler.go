@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
 )
 
@@ -29,6 +30,7 @@ func handleEvent(ctx context.Context, client S3API, event events.S3Event) error 
 	if err != nil {
 		return log.Errorf(logger, "failed to retrieve S3 object", err)
 	}
+	defer resp.Body.Close()
 
 	msg, sender, sentAt, err := parseEmailContents(resp.Body)
 	if err != nil {
@@ -45,9 +47,10 @@ func handleEvent(ctx context.Context, client S3API, event events.S3Event) error 
 	destKey := fmt.Sprintf("sources/%s/ffis.org/raw.eml", sentAt.Format("2006/01/02"))
 	logger = log.With(logger, "destination_key", destKey, "email_date", sentAt)
 	if _, err := client.CopyObject(ctx, &s3.CopyObjectInput{
-		CopySource: aws.String(filepath.Join(sourceBucket, sourceKey)),
-		Bucket:     aws.String(env.DestinationBucket),
-		Key:        aws.String(destKey),
+		CopySource:           aws.String(filepath.Join(sourceBucket, sourceKey)),
+		Bucket:               aws.String(env.DestinationBucket),
+		Key:                  aws.String(destKey),
+		ServerSideEncryption: types.ServerSideEncryptionAes256,
 	}); err != nil {
 		return log.Errorf(logger, "failed to copy S3 object", err)
 	}
