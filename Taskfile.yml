@@ -144,6 +144,7 @@ tasks:
       - build-DownloadFFISSpreadsheet
       - build-SplitFFISSpreadsheet
       - build-ExtractGrantsGovDBToXML
+      - build-ReceiveFFISEmail
 
   build-DownloadGrantsGovDB:
     desc: Compiles DownloadGrantsGovDB
@@ -207,3 +208,10 @@ tasks:
       - task: build-lambda
         vars:
           LAMBDA_CMD: PublishGrantEvents
+
+  build-ReceiveFFISEmail:
+    desc: Compiles build-ReceiveFFISEmail
+    cmds:
+      - task: build-lambda
+        vars:
+          LAMBDA_CMD: ReceiveFFISEmail
