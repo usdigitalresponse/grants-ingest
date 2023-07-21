@@ -19,8 +19,8 @@ locals {
   )
 }
 
-data "aws_s3_bucket" "source_data" {
-  bucket = var.grants_source_data_bucket_name
+data "aws_s3_bucket" "prepared_data" {
+  bucket = var.grants_prepared_data_bucket_name
 }
 
 module "lambda_execution_policy" {
@@ -29,10 +29,12 @@ module "lambda_execution_policy" {
 
   iam_source_policy_documents = var.additional_lambda_execution_policy_documents
   iam_policy_statements = {
-    AllowS3DownloadSourceData = {
+    AllowGetS3PreparedData = {
       effect = "Allow"
-      actions = ["s3:GetObject",
-      "s3:ListBucket"]
+      actions = [
+        "s3:GetObject",
+        "s3:ListBucket",
+      ]
       resources = [
         data.aws_s3_bucket.prepared_data.arn,
         # Path: <first 3 of grant id>/<grant id>/ffis.org/v1.json
@@ -92,7 +94,7 @@ module "lambda_function" {
   allowed_triggers = {
     S3BucketNotification = {
       principal  = "s3.amazonaws.com"
-      source_arn = data.aws_s3_bucket.source_data.arn
+      source_arn = data.aws_s3_bucket.prepared_data.arn
     }
   }
 }
