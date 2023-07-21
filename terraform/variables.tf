@@ -185,8 +185,14 @@ variable "eventbridge_scheduler_enabled" {
 
 variable "ffis_ingest_email_address" {
   type        = string
-  description = "Email address used to receive FFIS digests and save them to S3"
+  description = "Email address of the inbox used to receive FFIS digests and save them to S3."
   default     = "ffis-ingest@grants.usdigitalresponse.org"
+}
+
+variable "ffis_email_allowed_senders" {
+  type        = list(string)
+  description = "Allow-listed domain names and/or email addresses from which FFIS email may be sent."
+  default     = ["ffis.org"]
 }
 
 variable "dynamodb_contributor_insights_enabled" {
