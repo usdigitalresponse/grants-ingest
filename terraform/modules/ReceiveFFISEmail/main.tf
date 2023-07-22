@@ -38,7 +38,7 @@ module "lambda_execution_policy" {
   iam_source_policy_documents = var.additional_lambda_execution_policy_documents
   iam_policy_statements = {
     AllowS3DownloadNewEmails = {
-      effect  = "Allow"
+      effect = "Allow"
       actions = [
         "s3:GetObject",
         "s3:GetObjectTagging",
@@ -48,7 +48,7 @@ module "lambda_execution_policy" {
       ]
     }
     AllowS3UploadVerifiedEmails = {
-      effect  = "Allow"
+      effect = "Allow"
       actions = [
         "s3:PutObject",
         "s3:PutObjectTagging",
