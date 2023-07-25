@@ -67,3 +67,36 @@ func TestParseEligibility(t *testing.T) {
 		assert.Equal(t, tc.expected, actual)
 	}
 }
+
+func TestParseXLSXFile_cfda_format_4_digit(t *testing.T) {
+	/*
+		This test is for a spreadsheet that has a CFDA number with 4 digits
+		instead of 3. This can happen if the CFDA ends in a 0 and Excel
+		treats it as a number instead of a string.
+	*/
+	excelFixture, err := os.Open("fixtures/example_spreadsheet_four_digit_cfda.xlsx")
+	assert.NoError(t, err, "Error opening spreadsheet fixture")
+
+	// Ignore logging in this test
+	logger = log.NewNopLogger()
+
+	opportunities, err := parseXLSXFile(excelFixture, logger)
+	assert.NoError(t, err)
+	assert.NotNil(t, opportunities)
+
+	// Fixture has 4 opportunities
+	assert.Len(t, opportunities, 4)
+
+	for idx, expectedRow := range []struct {
+		expectedBill string
+		expectedCFDA string
+	}{
+		{"Infrastructure Investment and Jobs Act", "81.086"},
+		{"Inflation Reduction Act", "10.720"},
+		{"Inflation Reduction Act", "81.253"},
+		{"Department of Agriculture", "02.980"},
+	} {
+		assert.Equal(t, expectedRow.expectedBill, opportunities[idx].Bill)
+		assert.Equal(t, expectedRow.expectedCFDA, opportunities[idx].CFDA)
+	}
+}
