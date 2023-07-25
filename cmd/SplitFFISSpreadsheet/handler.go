@@ -177,7 +177,7 @@ func processOpportunity(ctx context.Context, svc S3PutObjectAPI, opp opportunity
 
 	logger := log.With(logger,
 		"opportunity_id", opp.GrantID, "opportunity_number", opp.OppNumber,
-		"bucket", env.DestinationBucket, "key", key)
+		"bill", opp.Bill, "bucket", env.DestinationBucket, "key", key)
 
 	log.Info(logger, "Marshaling opportunity to JSON")
 
