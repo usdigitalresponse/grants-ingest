@@ -94,7 +94,7 @@ func TestParseXLSXFile_cfda_format_4_digit(t *testing.T) {
 		{"Infrastructure Investment and Jobs Act", "81.086"},
 		{"Inflation Reduction Act", "10.720"},
 		{"Inflation Reduction Act", "81.253"},
-		{"Department of Agriculture", "10.025"},
+		{"Department of Agriculture", "02.980"},
 	} {
 		assert.Equal(t, expectedRow.expectedBill, opportunities[idx].Bill)
 		assert.Equal(t, expectedRow.expectedCFDA, opportunities[idx].CFDA)
