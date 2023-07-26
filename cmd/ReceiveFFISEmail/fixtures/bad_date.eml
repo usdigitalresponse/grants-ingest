@@ -1,0 +1,11 @@
+Subject: An example email with an invalid date
+X-SES-Virus-Verdict: PASS
+X-SES-Spam-Verdict: PASS
+Received-SPF: pass (spfCheck: domain of example.com designates 192.0.2.1 as permitted sender) client-ip=192.0.2.1;
+MIME-Version: 1.0
+Date: not a date
+From: Some Person <some.person@example.org>
+To: Another Person <anotherperson@example.com>
+Content-Type: text/plain; charset="UTF-8"
+
+Hi, this is an example email.

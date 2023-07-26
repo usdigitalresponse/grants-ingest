@@ -92,7 +92,7 @@ func startDownload(ctx context.Context, httpClient HTTPClientAPI, url string) (r
 // writeToS3 writes the contents of fileStr to the S3 bucket provied by the
 // S3UploaderAPI interface.
 func writeToS3(ctx context.Context, s3Uploader S3UploaderAPI, fileStream io.ReadCloser, sourceKey string) error {
-	destinationKey := strings.Replace(sourceKey, "ffis/raw.eml", "ffis/download.xlsx", 1)
+	destinationKey := strings.Replace(sourceKey, "ffis.org/raw.eml", "ffis.org/download.xlsx", 1)
 	log.Info(logger, "Writing to S3", "sourceKey", sourceKey, "destinationBucket", env.DestinationBucket, "destinationKey", destinationKey)
 	_, err := s3Uploader.Upload(ctx, &s3.PutObjectInput{
 		Bucket:               aws.String(env.DestinationBucket),

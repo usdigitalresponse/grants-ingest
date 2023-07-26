@@ -7,7 +7,7 @@ terraform {
     }
     datadog = {
       source  = "DataDog/datadog"
-      version = "~> 3.27.0"
+      version = "~> 3.28.0"
     }
     http = {
       source  = "hashicorp/http"
@@ -293,9 +293,6 @@ resource "aws_ses_active_receipt_rule_set" "active" {
 }
 
 resource "aws_ses_receipt_rule" "ffis_ingest" {
-  depends_on = [
-    module.email_delivery_bucket
-  ]
   name          = "${var.namespace}-ffis_ingest"
   rule_set_name = aws_ses_receipt_rule_set.ffis_ingest.rule_set_name
   recipients    = [var.ffis_ingest_email_address]
@@ -304,11 +301,14 @@ resource "aws_ses_receipt_rule" "ffis_ingest" {
   tls_policy    = "Require"
 
   s3_action {
-    bucket_name       = module.email_delivery_bucket.bucket_id
     position          = 1
-    object_key_prefix = "ses/ffis_ingest/new"
+    bucket_name       = module.email_delivery_bucket.bucket_id
+    object_key_prefix = "ses/ffis_ingest/new/"
   }
 
+  depends_on = [
+    module.email_delivery_bucket,
+  ]
 }
 
 resource "aws_sqs_queue" "ffis_downloads" {
@@ -410,28 +410,21 @@ resource "aws_s3_bucket_notification" "grant_source_data" {
     lambda_function_arn = module.EnqueueFFISDownload.lambda_function_arn
     events              = ["s3:ObjectCreated:*"]
     filter_prefix       = "sources/"
-    filter_suffix       = "/ffis/raw.eml"
-  }
-
-  lambda_function {
-    lambda_function_arn = module.PersistFFISData.lambda_function_arn
-    events              = ["s3:ObjectCreated:*"]
-    filter_prefix       = "sources/"
-    filter_suffix       = "/ffis/v1.json"
+    filter_suffix       = "/ffis.org/raw.eml"
   }
 
   lambda_function {
     lambda_function_arn = module.SplitFFISSpreadsheet.lambda_function_arn
     events              = ["s3:ObjectCreated:*"]
     filter_prefix       = "sources/"
-    filter_suffix       = "/ffis/download.xlsx"
+    filter_suffix       = "/ffis.org/download.xlsx"
   }
 
   depends_on = [
+    module.grants_source_data_bucket,
     module.ExtractGrantsGovDBToXML,
     module.SplitGrantsGovXMLDB,
     module.EnqueueFFISDownload,
-    module.PersistFFISData,
     module.SplitFFISSpreadsheet,
   ]
 }
@@ -445,8 +438,31 @@ resource "aws_s3_bucket_notification" "grant_prepared_data" {
     filter_suffix       = "/grants.gov/v2.xml"
   }
 
+  lambda_function {
+    lambda_function_arn = module.PersistFFISData.lambda_function_arn
+    events              = ["s3:ObjectCreated:*"]
+    filter_suffix       = "/ffis.org/v1.json"
+  }
+
   depends_on = [
-    module.PersistGrantsGovXMLDB
+    module.grants_prepared_data_bucket,
+    module.PersistGrantsGovXMLDB,
+    module.PersistFFISData,
+  ]
+}
+
+resource "aws_s3_bucket_notification" "email_delivery" {
+  bucket = module.email_delivery_bucket.bucket_id
+
+  lambda_function {
+    lambda_function_arn = module.ReceiveFFISEmail.lambda_function_arn
+    events              = ["s3:ObjectCreated:*"]
+    filter_prefix       = one(aws_ses_receipt_rule.ffis_ingest.s3_action).object_key_prefix
+  }
+
+  depends_on = [
+    module.email_delivery_bucket,
+    module.ReceiveFFISEmail,
   ]
 }
 
@@ -490,8 +506,36 @@ module "SplitGrantsGovXMLDB" {
   grants_prepared_data_bucket_name = module.grants_prepared_data_bucket.bucket_id
 }
 
+module "ReceiveFFISEmail" {
+  source = "./modules/ReceiveFFISEmail"
+
+  namespace                                    = var.namespace
+  function_name                                = "ReceiveFFISEmail"
+  permissions_boundary_arn                     = local.permissions_boundary_arn
+  lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
+  log_retention_in_days                        = var.lambda_default_log_retention_in_days
+  log_level                                    = var.lambda_default_log_level
+  lambda_code_path                             = local.lambda_code_path
+  lambda_arch                                  = var.lambda_arch
+  additional_environment_variables             = local.lambda_environment_variables
+  additional_lambda_execution_policy_documents = local.lambda_execution_policies
+  lambda_layer_arns                            = local.lambda_layer_arns
+
+  email_delivery_bucket_name       = one(aws_ses_receipt_rule.ffis_ingest.s3_action).bucket_name
+  email_delivery_object_key_prefix = one(aws_ses_receipt_rule.ffis_ingest.s3_action).object_key_prefix
+  grants_source_data_bucket_name   = module.grants_source_data_bucket.bucket_id
+  allowed_email_senders            = var.ffis_email_allowed_senders
+
+  depends_on = [
+    module.email_delivery_bucket,
+    aws_ses_receipt_rule.ffis_ingest,
+    module.grants_source_data_bucket,
+  ]
+}
+
 module "EnqueueFFISDownload" {
-  source                                       = "./modules/EnqueueFFISDownload"
+  source = "./modules/EnqueueFFISDownload"
+
   namespace                                    = var.namespace
   function_name                                = "EnqueueFFISDownload"
   permissions_boundary_arn                     = local.permissions_boundary_arn
@@ -534,7 +578,8 @@ module "PersistGrantsGovXMLDB" {
 }
 
 module "DownloadFFISSpreadsheet" {
-  source                                       = "./modules/DownloadFFISSpreadsheet"
+  source = "./modules/DownloadFFISSpreadsheet"
+
   namespace                                    = var.namespace
   function_name                                = "DownloadFFISSpreadsheet"
   permissions_boundary_arn                     = local.permissions_boundary_arn
@@ -557,7 +602,8 @@ module "DownloadFFISSpreadsheet" {
 }
 
 module "SplitFFISSpreadsheet" {
-  source                                       = "./modules/SplitFFISSpreadsheet"
+  source = "./modules/SplitFFISSpreadsheet"
+
   namespace                                    = var.namespace
   function_name                                = "SplitFFISSpreadsheet"
   permissions_boundary_arn                     = local.permissions_boundary_arn
@@ -581,7 +627,8 @@ module "SplitFFISSpreadsheet" {
 }
 
 module "PersistFFISData" {
-  source                                       = "./modules/PersistFFISData"
+  source = "./modules/PersistFFISData"
+
   namespace                                    = var.namespace
   function_name                                = "PersistFFISData"
   permissions_boundary_arn                     = local.permissions_boundary_arn
@@ -594,7 +641,7 @@ module "PersistFFISData" {
   additional_lambda_execution_policy_documents = local.lambda_execution_policies
   lambda_layer_arns                            = local.lambda_layer_arns
 
-  grants_source_data_bucket_name      = module.grants_source_data_bucket.bucket_id
+  grants_prepared_data_bucket_name    = module.grants_prepared_data_bucket.bucket_id
   grants_prepared_dynamodb_table_name = module.grants_prepared_dynamodb_table.table_name
   grants_prepared_dynamodb_table_arn  = module.grants_prepared_dynamodb_table.table_arn
 

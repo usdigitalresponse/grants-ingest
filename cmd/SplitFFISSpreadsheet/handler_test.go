@@ -124,7 +124,7 @@ func TestLambaInvocation(t *testing.T) {
 
 	t.Run("valid excel file", func(t *testing.T) {
 		// Upload the test fixture to S3
-		objectKey := fmt.Sprintf("sources/%s/ffis/download.xlsx", now.Format("2006/01/02"))
+		objectKey := fmt.Sprintf("sources/%s/ffis.org/download.xlsx", now.Format("2006/01/02"))
 		_, err := s3client.PutObject(context.TODO(), &s3.PutObjectInput{
 			Bucket: aws.String(sourceBucketName),
 			Key:    aws.String(objectKey),
@@ -166,7 +166,7 @@ func TestLambaInvocation(t *testing.T) {
 
 		_, err = s3client.PutObject(context.TODO(), &s3.PutObjectInput{
 			Bucket: aws.String(sourceBucketName),
-			Key:    aws.String("sources/2023/05/15/ffis/download.xlsx"),
+			Key:    aws.String("sources/2023/05/15/ffis.org/download.xlsx"),
 			Body:   bytes.NewReader([]byte("foobar")),
 		})
 		require.NoError(t, err)
@@ -175,7 +175,7 @@ func TestLambaInvocation(t *testing.T) {
 			Records: []events.S3EventRecord{
 				{S3: events.S3Entity{
 					Bucket: events.S3Bucket{Name: sourceBucketName},
-					Object: events.S3Object{Key: "sources/2023/05/15/ffis/download.xlsx"},
+					Object: events.S3Object{Key: "sources/2023/05/15/ffis.org/download.xlsx"},
 				}},
 			},
 		})

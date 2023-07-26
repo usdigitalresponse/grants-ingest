@@ -72,17 +72,27 @@ variable "datadog_custom_tags" {
 }
 
 // Module-specific
-variable "grants_prepared_data_bucket_name" {
-  description = "Name of the S3 bucket used to store grants prepared data."
+variable "email_delivery_bucket_name" {
+  description = "Name of the S3 bucket that will invoke this Lambda function with newly-received emails."
   type        = string
 }
 
-variable "grants_prepared_dynamodb_table_name" {
-  description = "Name of the DynamoDB table used to persist grants prepared data."
+variable "email_delivery_object_key_prefix" {
+  description = "S3 key prefix for email file objects delivered to the email delivery bucket."
+  type        = string
+  default     = ""
+}
+
+variable "grants_source_data_bucket_name" {
+  description = "Name of the S3 bucket to which received emails will be copied for further processing upon successful verification."
   type        = string
 }
 
-variable "grants_prepared_dynamodb_table_arn" {
-  description = "ARN of the DynamoDB table used to persist grants prepared data."
-  type        = string
+variable "allowed_email_senders" {
+  description = "Allow-listed domain names and/or email addresses for FFIS email senders."
+  type        = list(string)
+  validation {
+    condition     = length(var.allowed_email_senders) > 0
+    error_message = "At least one domain must be specified or all emails will be rejected."
+  }
 }

@@ -17,14 +17,18 @@ locals {
     var.datadog_custom_tags,
     { handlername = lower(var.function_name), },
   )
+
+  allowed_email_senders = join(",", [
+    for v in sort(var.allowed_email_senders) : lower(trimspace(v))
+  ])
 }
 
-data "aws_s3_bucket" "source_data" {
+data "aws_s3_bucket" "email_delivery" {
+  bucket = var.email_delivery_bucket_name
+}
+
+data "aws_s3_bucket" "grants_source_data" {
   bucket = var.grants_source_data_bucket_name
-}
-
-data "aws_s3_bucket" "prepared_data" {
-  bucket = var.grants_prepared_data_bucket_name
 }
 
 module "lambda_execution_policy" {
@@ -33,30 +37,25 @@ module "lambda_execution_policy" {
 
   iam_source_policy_documents = var.additional_lambda_execution_policy_documents
   iam_policy_statements = {
-    AllowS3DownloadSourceData = {
-      effect  = "Allow"
-      actions = ["s3:GetObject"]
-      resources = [
-        # This path is set by the DownloadFFISSpreadsheet module
-        "${data.aws_s3_bucket.source_data.arn}/sources/*/*/*/ffis.org/download.xlsx"
-      ]
-    }
-    AllowInspectS3PreparedData = {
+    AllowS3DownloadNewEmails = {
       effect = "Allow"
       actions = [
         "s3:GetObject",
-        "s3:ListBucket"
+        "s3:GetObjectTagging",
       ]
       resources = [
-        data.aws_s3_bucket.prepared_data.arn,
-        "${data.aws_s3_bucket.prepared_data.arn}/*/*/ffis.org/v1.json"
+        "${data.aws_s3_bucket.email_delivery.arn}/${trim(var.email_delivery_object_key_prefix, "/")}/*",
       ]
     }
-    AllowS3UploadPreparedData = {
-      effect  = "Allow"
-      actions = ["s3:PutObject"]
+    AllowS3UploadVerifiedEmails = {
+      effect = "Allow"
+      actions = [
+        "s3:PutObject",
+        "s3:PutObjectTagging",
+      ]
       resources = [
-        "${data.aws_s3_bucket.prepared_data.arn}/*/*/ffis.org/v1.json"
+        # Path: sources/YYYY/mm/dd/ffis.org/raw.eml
+        "${data.aws_s3_bucket.grants_source_data.arn}/sources/*/*/*/ffis.org/raw.eml",
       ]
     }
   }
@@ -67,7 +66,7 @@ module "lambda_function" {
   version = "5.3.0"
 
   function_name = "${var.namespace}-${var.function_name}"
-  description   = "Creates per-grant JSON representation of an FFIS Spreadsheet"
+  description   = "Receives and verifies new FFIS digest emails"
 
   role_permissions_boundary         = var.permissions_boundary_arn
   attach_cloudwatch_logs_policy     = true
@@ -84,8 +83,8 @@ module "lambda_function" {
   source_path = [{
     path = var.lambda_code_path
     commands = [
-      "task build-SplitFFISSpreadsheet",
-      "cd bin/SplitFFISSpreadsheet",
+      "task build-ReceiveFFISEmail",
+      "cd bin/ReceiveFFISEmail",
       ":zip",
     ],
   }]
@@ -93,21 +92,19 @@ module "lambda_function" {
   s3_bucket                 = var.lambda_artifact_bucket
   s3_server_side_encryption = "AES256"
 
-  timeout     = 300 # 5 minutes, in seconds
-  memory_size = 1024
+  timeout     = 30 # seconds
+  memory_size = 128
   environment_variables = merge(var.additional_environment_variables, {
-    DD_TRACE_RATE_LIMIT              = "1000"
-    DD_TAGS                          = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
-    DOWNLOAD_CHUNK_LIMIT             = "20"
-    GRANTS_PREPARED_DATA_BUCKET_NAME = data.aws_s3_bucket.prepared_data.id
-    LOG_LEVEL                        = var.log_level
-    MAX_CONCURRENT_UPLOADS           = "10"
+    DD_TAGS                        = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
+    LOG_LEVEL                      = var.log_level
+    ALLOWED_EMAIL_SENDERS          = local.allowed_email_senders
+    GRANTS_SOURCE_DATA_BUCKET_NAME = data.aws_s3_bucket.grants_source_data.id
   })
 
   allowed_triggers = {
     S3BucketNotification = {
       principal  = "s3.amazonaws.com"
-      source_arn = data.aws_s3_bucket.source_data.arn
+      source_arn = data.aws_s3_bucket.email_delivery.arn
     }
   }
 }

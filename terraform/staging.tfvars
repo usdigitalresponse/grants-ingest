@@ -40,6 +40,12 @@ datadog_metrics_metadata = {
     unit        = "record"
   }
 
+  "ReceiveFFISEmail.email.untrusted" = {
+    short_name  = "Received untrusted email"
+    description = "Count of received emails that were determined to be untrustworthy."
+    unit        = "email"
+  }
+
   "PublishGrantEvents.invocation_batch_size" = {
     short_name  = "Invocation batch size"
     description = "Count of records contained in the stream batch for an invocation."

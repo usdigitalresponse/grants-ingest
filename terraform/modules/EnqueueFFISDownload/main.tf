@@ -37,8 +37,8 @@ module "lambda_execution_policy" {
       effect  = "Allow"
       actions = ["s3:GetObject"]
       resources = [
-        # Path: sources/YYYY/mm/dd/ffis/raw.eml
-        "${data.aws_s3_bucket.source_data.arn}/sources/*/*/*/ffis/raw.eml"
+        # Path: sources/YYYY/mm/dd/ffis.org/raw.eml
+        "${data.aws_s3_bucket.source_data.arn}/sources/*/*/*/ffis.org/raw.eml"
       ]
     }
     AllowSQSPublish = {
@@ -88,7 +88,6 @@ module "lambda_function" {
     DD_TAGS            = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
     FFIS_SQS_QUEUE_URL = data.aws_sqs_queue.ffis_downloads.id
     LOG_LEVEL          = var.log_level
-    S3_USE_PATH_STYLE  = "true"
   })
 
   allowed_triggers = {
