@@ -7,7 +7,7 @@ require (
 	github.com/Netflix/go-env v0.0.0-20220526054621-78278af1949d
 	github.com/aws/aws-lambda-go v1.41.0
 	github.com/aws/aws-sdk-go v1.44.309
-	github.com/aws/aws-sdk-go-v2 v1.19.0
+	github.com/aws/aws-sdk-go-v2 v1.19.1
 	github.com/aws/aws-sdk-go-v2/config v1.18.29
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.28
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.10.32
@@ -16,7 +16,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.20.2
 	github.com/aws/aws-sdk-go-v2/service/eventbridge v1.19.5
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.37.0
-	github.com/aws/aws-sdk-go-v2/service/sqs v1.23.3
+	github.com/aws/aws-sdk-go-v2/service/sqs v1.23.4
 	github.com/aws/smithy-go v1.13.5
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/go-kit/log v0.2.1
@@ -41,8 +41,8 @@ require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.10 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.13.5 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.35 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.29 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.36 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.30 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.36 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.0.27 // indirect
 	github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.14.15 // indirect
