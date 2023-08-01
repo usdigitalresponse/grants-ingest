@@ -7,9 +7,9 @@ require (
 	github.com/Netflix/go-env v0.0.0-20220526054621-78278af1949d
 	github.com/aws/aws-lambda-go v1.41.0
 	github.com/aws/aws-sdk-go v1.44.309
-	github.com/aws/aws-sdk-go-v2 v1.19.1
+	github.com/aws/aws-sdk-go-v2 v1.20.0
 	github.com/aws/aws-sdk-go-v2/config v1.18.29
-	github.com/aws/aws-sdk-go-v2/credentials v1.13.28
+	github.com/aws/aws-sdk-go-v2/credentials v1.13.30
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.10.32
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.4.59
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.73
@@ -17,7 +17,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/eventbridge v1.19.5
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.37.1
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.23.3
-	github.com/aws/smithy-go v1.13.5
+	github.com/aws/smithy-go v1.14.0
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/go-kit/log v0.2.1
 	github.com/hashicorp/go-multierror v1.1.1
@@ -40,24 +40,24 @@ require (
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.10 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.13.5 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.36 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.30 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.13.7 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.37 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.31 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.36 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.0.28 // indirect
 	github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.14.15 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.11 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.31 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/endpoint-discovery v1.7.29 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.30 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.31 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.14.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/kinesis v1.17.10 // indirect
 	github.com/aws/aws-sdk-go-v2/service/kms v1.21.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sfn v1.17.9 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sns v1.20.8 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.12.13 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.14.13 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.20.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.13.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.15.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.21.0 // indirect
 	github.com/aws/aws-xray-sdk-go v1.8.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
