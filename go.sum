@@ -63,7 +63,6 @@ github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.32 h1:hNeAAymUY5gu11Wrrm
 github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.32/go.mod h1:0ZXSqrty4FtQ7p8TEuRde/SZm9X05KT18LAUlR40Ln0=
 github.com/aws/aws-sdk-go-v2/internal/ini v1.3.39 h1:fc0ukRAiP1syoSGZYu+DaE+FulSYhTiJ8WpVu5jElU4=
 github.com/aws/aws-sdk-go-v2/internal/ini v1.3.39/go.mod h1:WLAW8PT7+JhjZfLSWe7WEJaJu0GNo0cKc2Zyo003RBs=
-github.com/aws/aws-sdk-go-v2/internal/v4a v1.1.0/go.mod h1:EhC/83j8/hL/UB1WmExo3gkElaja/KlmZM/gl1rTfjM=
 github.com/aws/aws-sdk-go-v2/internal/v4a v1.1.1 h1:vUh7dBFNS3oFCtVv6CiYKh5hP9ls8+kIpKLeFruIBLk=
 github.com/aws/aws-sdk-go-v2/internal/v4a v1.1.1/go.mod h1:sFMeinkhj/SZKQM8BxtvNtSPjJEo0Xrz+w3g2e4FSKI=
 github.com/aws/aws-sdk-go-v2/service/dynamodb v1.21.1/go.mod h1:HVZN4RDNEO/u7XvWytqUBKm9BsBjt5OKVnRTW8NMMVc=
@@ -73,8 +72,8 @@ github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.15.1/go.mod h1:AddBz80OP
 github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.15.2 h1:rYIoOIvmoTqJSvPgYxXkEWRLNUdkFFa+8HHKBQJN16w=
 github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.15.2/go.mod h1:DIde88L/uXMdhknFQShQrJ0pgYp11wTGxJOhhkSU910=
 github.com/aws/aws-sdk-go-v2/service/ec2 v1.93.2 h1:c6a19AjfhEXKlEX63cnlWtSQ4nzENihHZOG0I3wH6BE=
-github.com/aws/aws-sdk-go-v2/service/eventbridge v1.20.1 h1:Urz/RESMsmBlGXyxVrdvsS6FXXP0PEeMLvbxQg5yAaw=
-github.com/aws/aws-sdk-go-v2/service/eventbridge v1.20.1/go.mod h1:0x3rH45OR8DTamQmPLDBVgNa8GRILFavNS7/Z2VXCTI=
+github.com/aws/aws-sdk-go-v2/service/eventbridge v1.20.2 h1:vWcaK5BK7UK39I65OH9iFastEdv0qzrO2pmISt6ZDtI=
+github.com/aws/aws-sdk-go-v2/service/eventbridge v1.20.2/go.mod h1:et3im2LFKyvrNujMoRwlcQlH8JnrBB/X5kcS6+cWOXk=
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.12/go.mod h1:fUTHpOXqRQpXvEpDPSa3zxCc2fnpW6YnBoba+eQr+Bg=
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.13 h1:iV/W5OMBys+66OeXJi/7xIRrKZNsu0ylsLGu+6nbmQE=
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.13/go.mod h1:ReJb6xYmtGyu9KoFtRreWegbN9dZqvZIIv4vWnhcsyI=
