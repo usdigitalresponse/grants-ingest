@@ -1,8 +1,6 @@
 locals {
   dd_monitor_default_evaluation_delay = 900
-  dd_monitor_name_prefix = join(" ", compact([
-    "Grants Ingest", var.datadog_draft ? "(${var.environment})" : ""
-  ]))
+  dd_monitor_name_prefix              = trimspace("Grants Ingest ${local.datadog_draft_label}")
   dd_monitor_default_tags = [
     "service:grants-ingest",
     "env:${var.environment}",
