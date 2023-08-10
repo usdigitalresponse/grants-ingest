@@ -1,18 +1,20 @@
 locals {
   dd_monitor_default_evaluation_delay = 900
-  dd_monitor_default_tags             = ["service:grants-ingest", "team:grants"]
-  dd_monitor_default_notify_handles = [
-    "slack-project-gost-auto-notifs",
-    "thendrickson@usdigitalresponse.org",
-    "asridhar@usdigitalresponse.org",
+  dd_monitor_name_prefix = join(" ", compact([
+    "Grants Ingest", var.datadog_draft ? "(${var.environment})" : ""
+  ]))
+  dd_monitor_default_tags = [
+    "service:grants-ingest",
+    "env:${var.environment}",
+    "team:grants",
   ]
   dd_monitor_default_notify = join(" ", [
-    for v in local.dd_monitor_default_notify_handles : "@${v}"
+    for v in var.datadog_monitor_notification_handles : "@${v}"
   ])
 }
 
 resource "datadog_monitor" "events_failed_to_publish" {
-  name = "Grants Ingest: Grant modificaiton events failed to publish"
+  name = "${local.dd_monitor_name_prefix}: Grant modification events failed to publish"
   type = "metric alert"
   message = join("\n", [
     "{{#is_alert}}",
@@ -26,137 +28,108 @@ resource "datadog_monitor" "events_failed_to_publish" {
     "Notify: ${local.dd_monitor_default_notify}",
   ])
 
-  query = "min(last_1h):avg:aws.sqs.approximate_number_of_messages_visible{env:production,queuename:${module.PublishGrantEvents.dlq_name}} > 0"
+  query = "min(last_1h):avg:aws.sqs.approximate_number_of_messages_visible{env:${var.environment},queuename:${module.PublishGrantEvents.dlq_name}} > 0"
 
   notify_no_data   = false
   evaluation_delay = local.dd_monitor_default_evaluation_delay
-  monitor_thresholds = {
-    critical          = 1
-    critical_recovery = 0
-  }
-
-  tags = local.dd_monitor_default_tags
+  tags             = local.dd_monitor_default_tags
 }
 
 resource "datadog_monitor" "DownloadGrantsGovDB-failed" {
-  name = "Grants Ingest: DownloadGrantsGovDB failed"
+  name = "${local.dd_monitor_name_prefix}: DownloadGrantsGovDB failed"
   type = "metric alert"
   message = join("\n", [
-    "Alert: Cannot download grants database archive from grants.gov.",
+    "Alert: All attempts to download the latest grants database from grants.gov have failed in the past 10 hours.",
     "This may be due to a temporary service outage on grants.gov.",
     "Verify whether a download is available. If it is, investigate the cause of this failure,",
     "and then trigger a new download attempt.",
     "Notify: ${local.dd_monitor_default_notify}",
   ])
 
-  query = "sum(last_10h):avg:aws.lambda.errors{env:production,handlername:downloadgrantsgovdb}.as_count() > 0"
+  query = "sum(last_10h):sum:aws.lambda.errors{env:${var.environment},handlername:downloadgrantsgovdb}.as_count() / sum:aws.lambda.invocations{env:${var.environment},handlername:downloadgrantsgovdb}.as_count() >= 1.0"
 
   notify_no_data   = false
   evaluation_delay = local.dd_monitor_default_evaluation_delay
-  monitor_thresholds = {
-    critical = 1
-  }
-
-  tags = local.dd_monitor_default_tags
+  tags             = local.dd_monitor_default_tags
 }
 
 resource "datadog_monitor" "DownloadFFISSpreadsheet-failed" {
-  name = "Grants Ingest: DownloadFFISSpreadsheet failed"
+  name = "${local.dd_monitor_name_prefix}: DownloadFFISSpreadsheet failed"
   type = "metric alert"
   message = join("\n", [
     "Alert: Cannot download spreadsheet from FFIS.",
     "Notify: ${local.dd_monitor_default_notify}",
   ])
 
-  query = "sum(last_1h):avg:aws.lambda.errors{env:production,handlername:downloadffisspreadsheet}.as_count() > 0"
+  query = "sum(last_1h):avg:aws.lambda.errors{env:${var.environment},handlername:downloadffisspreadsheet}.as_count() > 0"
 
   notify_no_data   = false
   evaluation_delay = local.dd_monitor_default_evaluation_delay
-  monitor_thresholds = {
-    critical = 1
-  }
-
-  tags = local.dd_monitor_default_tags
+  tags             = local.dd_monitor_default_tags
 }
 
 resource "datadog_monitor" "EnqueueFFISSpreadsheet-failed" {
-  name = "Grants Ingest: EnqueueFFISSpreadsheet failed"
+  name = "${local.dd_monitor_name_prefix}: EnqueueFFISSpreadsheet failed"
   type = "metric alert"
   message = join("\n", [
     "Alert: Failed when attempting to enqueue download for FFIS spreadsheet link parsed from email.",
     "Notify: ${local.dd_monitor_default_notify}",
   ])
 
-  query = "sum(last_1h):avg:aws.lambda.errors{env:production,handlername:enqueueffisspreadsheet}.as_count() > 0"
+  query = "sum(last_1h):avg:aws.lambda.errors{env:${var.environment},handlername:enqueueffisspreadsheet}.as_count() > 0"
 
   notify_no_data   = false
   evaluation_delay = local.dd_monitor_default_evaluation_delay
-  monitor_thresholds = {
-    critical = 1
-  }
-
-  tags = local.dd_monitor_default_tags
+  tags             = local.dd_monitor_default_tags
 }
 
 resource "datadog_monitor" "ExtractGrantsGovXMLToDB-failed" {
-  name = "Grants Ingest: ExtractGrantsGovXMLToDB failed"
+  name = "${local.dd_monitor_name_prefix}: ExtractGrantsGovXMLToDB failed"
   type = "metric alert"
   message = join("\n", [
     "Failed to extract XML from Grants.gov zip archive.",
     "Notify: ${local.dd_monitor_default_notify}",
   ])
 
-  query = "sum(last_1h):avg:aws.lambda.errors{env:production,handlername:enqueueffisspreadsheet}.as_count() > 0"
+  query = "sum(last_1h):avg:aws.lambda.errors{env:${var.environment},handlername:enqueueffisspreadsheet}.as_count() > 0"
 
   notify_no_data   = false
   evaluation_delay = local.dd_monitor_default_evaluation_delay
-  monitor_thresholds = {
-    critical = 1
-  }
-
-  tags = local.dd_monitor_default_tags
+  tags             = local.dd_monitor_default_tags
 }
 
 resource "datadog_monitor" "PersistFFISData-failed" {
-  name = "Grants Ingest: PersistFFISData failed"
+  name = "${local.dd_monitor_name_prefix}: PersistFFISData failed"
   type = "metric alert"
   message = join("\n", [
     "Alert: Failed to save FFIS data to DynamoDB.",
     "Notify: ${local.dd_monitor_default_notify}",
   ])
 
-  query = "sum(last_1h):avg:aws.lambda.errors{env:production,handlername:persistffisdata}.as_count() > 0"
+  query = "sum(last_1h):avg:aws.lambda.errors{env:${var.environment},handlername:persistffisdata}.as_count() > 0"
 
   notify_no_data   = false
   evaluation_delay = local.dd_monitor_default_evaluation_delay
-  monitor_thresholds = {
-    critical = 1
-  }
-
-  tags = local.dd_monitor_default_tags
+  tags             = local.dd_monitor_default_tags
 }
 
 resource "datadog_monitor" "PersistGrantsGovXMLDB-failed" {
-  name = "Grants Ingest: PersistGrantsGovXMLDB failed"
+  name = "${local.dd_monitor_name_prefix}: PersistGrantsGovXMLDB failed"
   type = "metric alert"
   message = join("\n", [
     "Alert: Failed to save Grants.gov data to DynamoDB.",
     "Notify: ${local.dd_monitor_default_notify}",
   ])
 
-  query = "sum(last_1h):avg:aws.lambda.errors{env:production,handlername:persistgrantsgovxmldb}.as_count() > 0"
+  query = "sum(last_1h):avg:aws.lambda.errors{env:${var.environment},handlername:persistgrantsgovxmldb}.as_count() > 0"
 
   notify_no_data   = false
   evaluation_delay = local.dd_monitor_default_evaluation_delay
-  monitor_thresholds = {
-    critical = 1
-  }
-
-  tags = local.dd_monitor_default_tags
+  tags             = local.dd_monitor_default_tags
 }
 
 resource "datadog_monitor" "ReceiveFFISEmail-failed" {
-  name = "Grants Ingest: ReceiveFFISEmail failed"
+  name = "${local.dd_monitor_name_prefix}: ReceiveFFISEmail failed"
   type = "metric alert"
   message = join("\n", [
     "Alert: There was a problem with an email delivered to the FFIS inbox.",
@@ -164,57 +137,45 @@ resource "datadog_monitor" "ReceiveFFISEmail-failed" {
     "Notify: ${local.dd_monitor_default_notify}",
   ])
 
-  query = "sum(last_1h):avg:aws.lambda.errors{env:production,handlername:receiveffisemail}.as_count() > 0"
+  query = "sum(last_1h):avg:aws.lambda.errors{env:${var.environment},handlername:receiveffisemail}.as_count() > 0"
 
   notify_no_data   = false
   evaluation_delay = local.dd_monitor_default_evaluation_delay
-  monitor_thresholds = {
-    critical = 1
-  }
-
-  tags = local.dd_monitor_default_tags
+  tags             = local.dd_monitor_default_tags
 }
 
 resource "datadog_monitor" "SplitFFISSpreadsheet-failed" {
-  name = "Grants Ingest: SplitFFISSpreadsheet failed"
+  name = "${local.dd_monitor_name_prefix}: SplitFFISSpreadsheet failed"
   type = "metric alert"
   message = join("\n", [
     "Alert: A failure occurred while attempting to parse data from an FFIS spreadsheet.",
     "Notify: ${local.dd_monitor_default_notify}",
   ])
 
-  query = "sum(last_1h):avg:aws.lambda.errors{env:production,handlername:splitffisspreadsheet}.as_count() > 0"
+  query = "sum(last_1h):avg:aws.lambda.errors{env:${var.environment},handlername:splitffisspreadsheet}.as_count() > 0"
 
   notify_no_data   = false
   evaluation_delay = local.dd_monitor_default_evaluation_delay
-  monitor_thresholds = {
-    critical = 1
-  }
-
-  tags = local.dd_monitor_default_tags
+  tags             = local.dd_monitor_default_tags
 }
 
 resource "datadog_monitor" "SplitGrantsGovXMLDB-failed" {
-  name = "Grants Ingest: SplitGrantsGovXMLDB failed"
+  name = "${local.dd_monitor_name_prefix}: SplitGrantsGovXMLDB failed"
   type = "metric alert"
   message = join("\n", [
     "Alert: A failure occurred while attempting to parse data from a Grants.gov XML file.",
     "Notify: ${local.dd_monitor_default_notify}",
   ])
 
-  query = "sum(last_1h):avg:aws.lambda.errors{env:production,handlername:splitgrantsgovxmldb}.as_count() > 0"
+  query = "sum(last_1h):avg:aws.lambda.errors{env:${var.environment},handlername:splitgrantsgovxmldb}.as_count() > 0"
 
   notify_no_data   = false
   evaluation_delay = local.dd_monitor_default_evaluation_delay
-  monitor_thresholds = {
-    critical = 1
-  }
-
-  tags = local.dd_monitor_default_tags
+  tags             = local.dd_monitor_default_tags
 }
 
 resource "datadog_monitor" "SplitGrantsGovXMLDB-no_opportunities_created" {
-  name = "Grants Ingest: SplitGrantsGovXMLDB has not created new grant opportunities"
+  name = "${local.dd_monitor_name_prefix}: SplitGrantsGovXMLDB has not created new grant opportunities"
   type = "metric alert"
   message = join("\n", [
     "Alert: No new grant opportunities have been created from Grants.gov data in the past 4 days.",
@@ -223,19 +184,15 @@ resource "datadog_monitor" "SplitGrantsGovXMLDB-no_opportunities_created" {
     "Notify: ${local.dd_monitor_default_notify}",
   ])
 
-  query = "sum(last_4d):sum:grants_ingest.SplitGrantsGovXMLDB.opportunity.created{env:production}.as_count() < 1"
+  query = "sum(last_4d):sum:grants_ingest.SplitGrantsGovXMLDB.opportunity.created{env:${var.environment}}.as_count() < 1"
 
   notify_no_data   = false
   evaluation_delay = local.dd_monitor_default_evaluation_delay
-  monitor_thresholds = {
-    critical = 1
-  }
-
-  tags = local.dd_monitor_default_tags
+  tags             = local.dd_monitor_default_tags
 }
 
 resource "datadog_monitor" "SplitFFISSpreadsheet-no_opportunities_created" {
-  name = "Grants Ingest: SplitFFISSpreadsheet has not created new grant opportunities"
+  name = "${local.dd_monitor_name_prefix}: SplitFFISSpreadsheet has not created new grant opportunities"
   type = "metric alert"
   message = join("\n", [
     "Alert: No new grant opportunities have been created from FFIS data in the past 9 days.",
@@ -244,19 +201,15 @@ resource "datadog_monitor" "SplitFFISSpreadsheet-no_opportunities_created" {
     "Notify: ${local.dd_monitor_default_notify}",
   ])
 
-  query = "sum(last_4d):sum:grants_ingest.SplitFFISSpreadsheet.opportunity.created{env:production}.as_count() < 1"
+  query = "sum(last_4d):sum:grants_ingest.SplitFFISSpreadsheet.opportunity.created{env:${var.environment}}.as_count() < 1"
 
   notify_no_data   = false
   evaluation_delay = local.dd_monitor_default_evaluation_delay
-  monitor_thresholds = {
-    critical = 1
-  }
-
-  tags = local.dd_monitor_default_tags
+  tags             = local.dd_monitor_default_tags
 }
 
 resource "datadog_monitor" "PublishGrantEvents-no_events_published" {
-  name = "Grants Ingest: PublishGrantEvents has not published any events in a while"
+  name = "${local.dd_monitor_name_prefix}: PublishGrantEvents has not published any events in a while"
   type = "metric alert"
   message = join("\n", [
     "Alert: No grant modification events have been published in the past 4 days.",
@@ -265,13 +218,9 @@ resource "datadog_monitor" "PublishGrantEvents-no_events_published" {
     "Notify: ${local.dd_monitor_default_notify}",
   ])
 
-  query = "sum(last_4d):sum:grants_ingest.PublishGrantEvents.event.published{env:production}.as_count() < 1"
+  query = "sum(last_4d):sum:grants_ingest.PublishGrantEvents.event.published{env:${var.environment}}.as_count() < 1"
 
   notify_no_data   = false
   evaluation_delay = local.dd_monitor_default_evaluation_delay
-  monitor_thresholds = {
-    critical = 1
-  }
-
-  tags = local.dd_monitor_default_tags
+  tags             = local.dd_monitor_default_tags
 }

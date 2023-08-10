@@ -90,6 +90,18 @@ variable "datadog_dashboards_enabled" {
   default     = true
 }
 
+variable "datadog_monitors_enabled" {
+  description = "Whether to provision Datadog monitors."
+  type        = bool
+  default     = false
+}
+
+variable "datadog_monitor_notification_handles" {
+  description = "List of handles to notify on monitor alerts."
+  type        = list(string)
+  default     = []
+}
+
 variable "datadog_api_key" {
   description = "API key to use when provisioning Datadog resources."
   type        = string
@@ -105,9 +117,9 @@ variable "datadog_app_key" {
 }
 
 variable "datadog_draft" {
-  description = "Marks datadog resources as drafts. Set to false unless deploying to Production."
+  description = "Marks Datadog resources as drafts. Set to false when deploying to Production."
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "datadog_reserved_tags" {
