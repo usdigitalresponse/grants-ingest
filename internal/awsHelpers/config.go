@@ -41,12 +41,14 @@ func GetSQSClient(ctx context.Context) (*sqs.Client, error) {
 	}
 
 	var sqsResolver sqs.EndpointResolverFunc = func(region string, options sqs.EndpointResolverOptions) (aws.Endpoint, error) {
+		//lint:ignore SA1019 we need to update this eventually, but should not block release
 		return cfg.EndpointResolverWithOptions.ResolveEndpoint("sqs", cfg.Region)
 	}
 	client := sqs.NewFromConfig(cfg, func(o *sqs.Options) {
 		// the logic for providing the config above doesn't affect the endpoint for SQS, and this is
 		// needed so that localstack will work
 		if _, isSet := os.LookupEnv("LOCALSTACK_HOSTNAME"); isSet {
+			//lint:ignore SA1019 we need to update this eventually, but should not block release
 			o.EndpointResolver = sqsResolver
 		}
 	})
