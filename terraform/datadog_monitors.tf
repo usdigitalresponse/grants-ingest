@@ -12,6 +12,8 @@ locals {
 }
 
 resource "datadog_monitor" "events_failed_to_publish" {
+  count = var.datadog_monitors_enabled ? 1 : 0
+
   name = "${local.dd_monitor_name_prefix}: Grant modification events failed to publish"
   type = "metric alert"
   message = join("\n", [
@@ -34,6 +36,8 @@ resource "datadog_monitor" "events_failed_to_publish" {
 }
 
 resource "datadog_monitor" "DownloadGrantsGovDB-failed" {
+  count = var.datadog_monitors_enabled ? 1 : 0
+
   name = "${local.dd_monitor_name_prefix}: DownloadGrantsGovDB failed"
   type = "metric alert"
   message = join("\n", [
@@ -52,6 +56,8 @@ resource "datadog_monitor" "DownloadGrantsGovDB-failed" {
 }
 
 resource "datadog_monitor" "DownloadFFISSpreadsheet-failed" {
+  count = var.datadog_monitors_enabled ? 1 : 0
+
   name = "${local.dd_monitor_name_prefix}: DownloadFFISSpreadsheet failed"
   type = "metric alert"
   message = join("\n", [
@@ -67,6 +73,8 @@ resource "datadog_monitor" "DownloadFFISSpreadsheet-failed" {
 }
 
 resource "datadog_monitor" "EnqueueFFISSpreadsheet-failed" {
+  count = var.datadog_monitors_enabled ? 1 : 0
+
   name = "${local.dd_monitor_name_prefix}: EnqueueFFISSpreadsheet failed"
   type = "metric alert"
   message = join("\n", [
@@ -82,6 +90,8 @@ resource "datadog_monitor" "EnqueueFFISSpreadsheet-failed" {
 }
 
 resource "datadog_monitor" "ExtractGrantsGovXMLToDB-failed" {
+  count = var.datadog_monitors_enabled ? 1 : 0
+
   name = "${local.dd_monitor_name_prefix}: ExtractGrantsGovXMLToDB failed"
   type = "metric alert"
   message = join("\n", [
@@ -97,6 +107,8 @@ resource "datadog_monitor" "ExtractGrantsGovXMLToDB-failed" {
 }
 
 resource "datadog_monitor" "PersistFFISData-failed" {
+  count = var.datadog_monitors_enabled ? 1 : 0
+
   name = "${local.dd_monitor_name_prefix}: PersistFFISData failed"
   type = "metric alert"
   message = join("\n", [
@@ -112,6 +124,8 @@ resource "datadog_monitor" "PersistFFISData-failed" {
 }
 
 resource "datadog_monitor" "PersistGrantsGovXMLDB-failed" {
+  count = var.datadog_monitors_enabled ? 1 : 0
+
   name = "${local.dd_monitor_name_prefix}: PersistGrantsGovXMLDB failed"
   type = "metric alert"
   message = join("\n", [
@@ -127,6 +141,8 @@ resource "datadog_monitor" "PersistGrantsGovXMLDB-failed" {
 }
 
 resource "datadog_monitor" "ReceiveFFISEmail-failed" {
+  count = var.datadog_monitors_enabled ? 1 : 0
+
   name = "${local.dd_monitor_name_prefix}: ReceiveFFISEmail failed"
   type = "metric alert"
   message = join("\n", [
@@ -143,6 +159,8 @@ resource "datadog_monitor" "ReceiveFFISEmail-failed" {
 }
 
 resource "datadog_monitor" "SplitFFISSpreadsheet-failed" {
+  count = var.datadog_monitors_enabled ? 1 : 0
+
   name = "${local.dd_monitor_name_prefix}: SplitFFISSpreadsheet failed"
   type = "metric alert"
   message = join("\n", [
@@ -158,6 +176,8 @@ resource "datadog_monitor" "SplitFFISSpreadsheet-failed" {
 }
 
 resource "datadog_monitor" "SplitGrantsGovXMLDB-failed" {
+  count = var.datadog_monitors_enabled ? 1 : 0
+
   name = "${local.dd_monitor_name_prefix}: SplitGrantsGovXMLDB failed"
   type = "metric alert"
   message = join("\n", [
@@ -173,6 +193,8 @@ resource "datadog_monitor" "SplitGrantsGovXMLDB-failed" {
 }
 
 resource "datadog_monitor" "SplitGrantsGovXMLDB-no_opportunities_created" {
+  count = var.datadog_monitors_enabled ? 1 : 0
+
   name = "${local.dd_monitor_name_prefix}: SplitGrantsGovXMLDB has not created new grant opportunities"
   type = "metric alert"
   message = join("\n", [
@@ -190,6 +212,8 @@ resource "datadog_monitor" "SplitGrantsGovXMLDB-no_opportunities_created" {
 }
 
 resource "datadog_monitor" "SplitFFISSpreadsheet-no_opportunities_created" {
+  count = var.datadog_monitors_enabled ? 1 : 0
+
   name = "${local.dd_monitor_name_prefix}: SplitFFISSpreadsheet has not created new grant opportunities"
   type = "metric alert"
   message = join("\n", [
@@ -207,6 +231,8 @@ resource "datadog_monitor" "SplitFFISSpreadsheet-no_opportunities_created" {
 }
 
 resource "datadog_monitor" "PublishGrantEvents-no_events_published" {
+  count = var.datadog_monitors_enabled ? 1 : 0
+
   name = "${local.dd_monitor_name_prefix}: PublishGrantEvents has not published any events in a while"
   type = "metric alert"
   message = join("\n", [
