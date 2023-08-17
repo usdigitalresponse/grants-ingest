@@ -86,6 +86,25 @@ tasks:
       - find ./bin -mindepth 1 -type d -exec rm -rf {} + -print
       - find ./build -mindepth 1 -type d -exec rm -rf {} + -print
 
+  build-cli:
+    run: when_changed
+    vars:
+      BUILD_BIN: bin/grants-ingest
+    env:
+      GOPATH:
+        sh: go env GOPATH
+    cmds:
+      - go build -gcflags="-trimpath=$GOPATH" -asmflags="-trimpath=$GOPATH" -trimpath -v -o {{ .BUILD_BIN }} ./cli/grants-ingest
+      - cmd: echo {{ .BUILD_BIN }}
+        silent: true
+    sources:
+      - ./cli/grants-ingest/**/*.go
+      - ./go.mod
+      - ./go.sum
+      - ./Taskfile.yml
+    generates:
+      - "{{ .BUILD_BIN }}"
+
   prebuild-lambda:
     run: always
     desc: Batch-compiles all Lambda handlers to /dev/null to optimize future builds
