@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
@@ -120,7 +121,7 @@ rowLoop:
 			// where colIndex is a column (zero is A, 1 is B, etc.)
 			switch colIndex {
 			case 0:
-				if f, err := strconv.ParseFloat(cell, 64); err != nil {
+				if f, err := strconv.ParseFloat(strings.TrimRight(cell, "+"), 64); err != nil {
 					log.Warn(logger, "Error parsing CFDA", err)
 					sendMetric("spreadsheet.cell_parsing_errors", 1)
 					continue
