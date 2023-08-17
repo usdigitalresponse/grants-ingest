@@ -37,9 +37,21 @@ func ConfigureLogger(l *Logger, lvl string) {
 	)
 }
 
-// With is a wrapper for log.With() and exists to provide brevity/syntactic sugar
+// With is a wrapper for log.With() and exists to provide brevity/syntactic sugar.
 func With(logger Logger, keyvals ...interface{}) log.Logger {
 	return log.With(logger, keyvals...)
+}
+
+// WithSuffix is a wrapper for log.WithSuffix() and exists to provide brevity/syntactic sugar.
+// This function has no effect on JSON log output.
+func WithSuffix(logger Logger, keyvals ...interface{}) log.Logger {
+	return log.WithSuffix(logger, keyvals...)
+}
+
+// WithPrefix is a wrapper for log.WithPrefix() and exists to provide brevity/syntactic sugar.
+// This function has no effect on JSON log output.
+func WithPrefix(logger Logger, keyvals ...interface{}) log.Logger {
+	return log.WithPrefix(logger, keyvals...)
 }
 
 // Debug logs a message and any keyvals with DEBUG level
