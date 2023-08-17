@@ -42,7 +42,9 @@ func parseXLSXFile(r io.Reader, logger log.Logger) ([]ffis.FFISFundingOpportunit
 	// Used to test if a cell is a CFDA number. Apparently
 	// this is a consistent CFDA format based on this page:
 	// https://grantsgovprod.wordpress.com/2018/06/04/what-is-a-cfda-number-2/
-	cfdaRegex, err := regexp.Compile(`^[0-9]{1,2}\.[0-9]{0,3}$`)
+	// Sometimes, FFIS appends a + sign character to this cell to indicate
+	// that there are additional CFDA numbers not included in the spreadsheet.
+	cfdaRegex, err := regexp.Compile(`^([0-9]{1,2}\.[0-9]{0,3})\+?$`)
 	if err != nil {
 		return nil, err
 	}
