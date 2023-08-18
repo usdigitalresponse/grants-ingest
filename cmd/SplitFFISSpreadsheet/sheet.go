@@ -141,7 +141,7 @@ rowLoop:
 				num, err := strconv.ParseInt(cell, 10, 64)
 				// If we can't parse the funding amount, just skip the column
 				if err != nil {
-					log.Warn(logger, "Error parsing estimated funding", err)
+					log.Warn(logger, "Error parsing estimated funding", "error", err)
 					sendMetric("spreadsheet.cell_parsing_errors", 1)
 					continue
 				}
@@ -155,7 +155,7 @@ rowLoop:
 				// need to increment the index because Excel is not zero-indexed
 				cellAxis, err := excelize.CoordinatesToCellName(colIndex+1, rowIndex+1)
 				if err != nil {
-					log.Warn(logger, "Error parsing cell axis for grant ID", err)
+					log.Warn(logger, "Error parsing cell axis for grant ID", "error", err)
 					sendMetric("spreadsheet.cell_parsing_errors", 1)
 					continue
 				}
@@ -163,7 +163,7 @@ rowLoop:
 				hasLink, target, err := xlFile.GetCellHyperLink(sheet, cellAxis)
 				if err != nil {
 					// log this, it is not worth aborting the whole extraction for
-					log.Warn(logger, "Error getting cell hyperlink for grant ID", err)
+					log.Warn(logger, "Error getting cell hyperlink for grant ID", "error", err)
 					sendMetric("spreadsheet.cell_parsing_errors", 1)
 					continue
 				}
@@ -173,7 +173,7 @@ rowLoop:
 				if hasLink {
 					url, err := url.Parse(target)
 					if err != nil {
-						log.Warn(logger, "Error parsing link for grant ID", err)
+						log.Warn(logger, "Error parsing link for grant ID", "error", err)
 						sendMetric("spreadsheet.cell_parsing_errors", 1)
 						continue
 					}
@@ -181,7 +181,7 @@ rowLoop:
 					// The opportunity ID should be a < 20 digit numeric value
 					oppID, err := strconv.ParseInt(url.Query().Get("oppId"), 10, 64)
 					if err != nil {
-						log.Warn(logger, "Error parsing opportunity ID", err)
+						log.Warn(logger, "Error parsing opportunity ID", "error", err)
 						sendMetric("spreadsheet.cell_parsing_errors", 1)
 						continue
 					}
@@ -203,13 +203,23 @@ rowLoop:
 			case 12:
 				// If we fail to parse the date, just skip the column
 				// and not the whole row
-				t, err := time.Parse("1-2-06", cell)
-				if err != nil {
-					log.Warn(logger, "Error parsing date", err)
+				dateParsed := false
+				dateLayouts := [...]string{"1-2-06", "1/2/06"}
+				for _, layout := range dateLayouts {
+					t, err := time.Parse(layout, cell)
+					if err == nil {
+						log.Debug(logger, "Parsed DueDate with layout", "layout", layout)
+						opportunity.DueDate = t
+						dateParsed = true
+						break
+					}
+				}
+				if !dateParsed {
+					log.Warn(logger, "Could not parse DueDate according to any attempted layouts",
+						"attempted_layouts", dateLayouts, "raw_value", cell)
 					sendMetric("spreadsheet.cell_parsing_errors", 1)
 					continue
 				}
-				opportunity.DueDate = t
 			case 13:
 				opportunity.Match = parseEligibility(cell)
 			}

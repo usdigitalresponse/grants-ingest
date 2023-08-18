@@ -53,8 +53,10 @@ jobs:
         uses: dominikh/staticcheck-action@v1.3.0
         with:
           install-go: false
-      - name: Build
+      - name: Build Lambdas
         run: task build
+      - name: Build CLI
+        run: task build-cli
 
   tflint:
     name: Lint terraform

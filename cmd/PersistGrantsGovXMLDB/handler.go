@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"encoding/xml"
+	"errors"
 	"io"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/hashicorp/go-multierror"
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
@@ -89,6 +91,12 @@ func processOpportunity(ctx context.Context, svc DynamoDBUpdateItemAPI, opp oppo
 		"opportunity_id", opp.OpportunityID, "opportunity_number", opp.OpportunityNumber)
 
 	if err := UpdateDynamoDBItem(ctx, svc, env.DestinationTable, opp); err != nil {
+		var conditionalCheckErr *types.ConditionalCheckFailedException
+		if errors.As(err, &conditionalCheckErr) {
+			log.Warn(logger, "Grants.gov data already matches the target DynamoDB item",
+				"error", conditionalCheckErr)
+			return nil
+		}
 		return log.Errorf(logger, "Error uploading prepared grant opportunity to DynamoDB", err)
 	}
 
