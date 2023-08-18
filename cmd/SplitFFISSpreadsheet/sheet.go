@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
@@ -42,7 +43,9 @@ func parseXLSXFile(r io.Reader, logger log.Logger) ([]ffis.FFISFundingOpportunit
 	// Used to test if a cell is a CFDA number. Apparently
 	// this is a consistent CFDA format based on this page:
 	// https://grantsgovprod.wordpress.com/2018/06/04/what-is-a-cfda-number-2/
-	cfdaRegex, err := regexp.Compile(`^[0-9]{1,2}\.[0-9]{0,3}$`)
+	// Sometimes, FFIS appends a + sign character to this cell to indicate
+	// that there are additional CFDA numbers not included in the spreadsheet.
+	cfdaRegex, err := regexp.Compile(`^([0-9]{1,2}\.[0-9]{0,3})\+?$`)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +121,7 @@ rowLoop:
 			// where colIndex is a column (zero is A, 1 is B, etc.)
 			switch colIndex {
 			case 0:
-				if f, err := strconv.ParseFloat(cell, 64); err != nil {
+				if f, err := strconv.ParseFloat(strings.TrimRight(cell, "+"), 64); err != nil {
 					log.Warn(logger, "Error parsing CFDA", err)
 					sendMetric("spreadsheet.cell_parsing_errors", 1)
 					continue
