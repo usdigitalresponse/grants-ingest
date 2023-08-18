@@ -12,7 +12,7 @@ import (
 
 type Cmd struct {
 	// Positional arguments
-	SourceDirectory string `arg:"" name:"directory" type:"existingdir" help:"Source directory containing FFIS spreadsheets"`
+	SourceDirectory string `arg:"" name:"directory" type:"existingdir" predictor:"dir" help:"Source directory containing FFIS spreadsheets"`
 	S3Bucket        string `arg:"" name:"bucket" help:"Destination S3 bucket name"`
 
 	// Flags
