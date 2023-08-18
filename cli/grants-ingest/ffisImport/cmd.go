@@ -50,12 +50,14 @@ func (cmd *Cmd) Run(app *kong.Kong, logger *log.Logger) error {
 	if err != nil {
 		return log.Errorf(*logger, "error mapping archive files to S3 keys", err)
 	}
+	log.Debug(*logger, "Mapped files for upload", "count", len(srcToDst))
 
 	s3svc := s3.NewFromConfig(cfg, func(o *s3.Options) { o.UsePathStyle = cmd.S3UsePathStyle })
-	for _, src := range sortKeysByValues(srcToDst) {
+	for i, src := range sortKeysByValues(srcToDst) {
 		dst := srcToDst[src]
 		logger := log.WithSuffix(*logger,
-			"source", src, "destination", fmt.Sprintf("s3://%s/%s", cmd.S3Bucket, dst))
+			"source", src, "destination", fmt.Sprintf("s3://%s/%s", cmd.S3Bucket, dst),
+			"progress", fmt.Sprintf("%d of %d", i+1, len(srcToDst)))
 		log.Debug(logger, "Uploading file to S3")
 		if !cmd.DryRun {
 			if err := uploadToS3(ctx, s3svc, cmd.S3Bucket, src, dst); err != nil {
