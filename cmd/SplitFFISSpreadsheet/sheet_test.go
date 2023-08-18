@@ -100,3 +100,36 @@ func TestParseXLSXFile_cfda_format_4_digit(t *testing.T) {
 		assert.Equal(t, expectedRow.expectedCFDA, opportunities[idx].CFDA)
 	}
 }
+
+func TestParseXLSXFile_cfda_format_trailing_plus_sign(t *testing.T) {
+	/*
+		This test is for a spreadsheet where CFDA number cell values have a trailing plus (+) sign.
+		FFIS sometimes uses this convention to indicate that there are additional CFDA numbers
+		(not represented in the spreadsheet) for an opportunity.
+	*/
+	excelFixture, err := os.Open("fixtures/example_spreadsheet_trailing_plus_sign_cfda.xlsx")
+	assert.NoError(t, err, "Error opening spreadsheet fixture")
+
+	// Ignore logging in this test
+	logger = log.NewNopLogger()
+
+	opportunities, err := parseXLSXFile(excelFixture, logger)
+	assert.NoError(t, err)
+	assert.NotNil(t, opportunities)
+
+	// Fixture has 4 opportunities
+	assert.Len(t, opportunities, 4)
+
+	for idx, expectedRow := range []struct {
+		expectedBill string
+		expectedCFDA string
+	}{
+		{"Infrastructure Investment and Jobs Act", "81.086"},
+		{"Inflation Reduction Act", "10.727"},
+		{"Inflation Reduction Act", "81.253"},
+		{"Department of Agriculture", "02.980"},
+	} {
+		assert.Equal(t, expectedRow.expectedBill, opportunities[idx].Bill)
+		assert.Equal(t, expectedRow.expectedCFDA, opportunities[idx].CFDA)
+	}
+}
