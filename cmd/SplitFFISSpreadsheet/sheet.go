@@ -200,13 +200,23 @@ rowLoop:
 			case 12:
 				// If we fail to parse the date, just skip the column
 				// and not the whole row
-				t, err := time.Parse("1-2-06", cell)
-				if err != nil {
-					log.Warn(logger, "Error parsing date", err)
+				dateParsed := false
+				dateLayouts := [...]string{"1-2-06", "1/2/06"}
+				for _, layout := range dateLayouts {
+					t, err := time.Parse(layout, cell)
+					if err == nil {
+						log.Debug(logger, "Parsed DueDate with layout", "layout", layout)
+						opportunity.DueDate = t
+						dateParsed = true
+						break
+					}
+				}
+				if !dateParsed {
+					log.Warn(logger, "Could not parse DueDate according to any attempted layouts",
+						"attempted_layouts", dateLayouts, "raw_value", cell)
 					sendMetric("spreadsheet.cell_parsing_errors", 1)
 					continue
 				}
-				opportunity.DueDate = t
 			case 13:
 				opportunity.Match = parseEligibility(cell)
 			}
