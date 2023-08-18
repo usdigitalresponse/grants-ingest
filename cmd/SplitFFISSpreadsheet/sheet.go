@@ -138,7 +138,7 @@ rowLoop:
 				num, err := strconv.ParseInt(cell, 10, 64)
 				// If we can't parse the funding amount, just skip the column
 				if err != nil {
-					log.Warn(logger, "Error parsing estimated funding", err)
+					log.Warn(logger, "Error parsing estimated funding", "error", err)
 					sendMetric("spreadsheet.cell_parsing_errors", 1)
 					continue
 				}
@@ -152,7 +152,7 @@ rowLoop:
 				// need to increment the index because Excel is not zero-indexed
 				cellAxis, err := excelize.CoordinatesToCellName(colIndex+1, rowIndex+1)
 				if err != nil {
-					log.Warn(logger, "Error parsing cell axis for grant ID", err)
+					log.Warn(logger, "Error parsing cell axis for grant ID", "error", err)
 					sendMetric("spreadsheet.cell_parsing_errors", 1)
 					continue
 				}
@@ -160,7 +160,7 @@ rowLoop:
 				hasLink, target, err := xlFile.GetCellHyperLink(sheet, cellAxis)
 				if err != nil {
 					// log this, it is not worth aborting the whole extraction for
-					log.Warn(logger, "Error getting cell hyperlink for grant ID", err)
+					log.Warn(logger, "Error getting cell hyperlink for grant ID", "error", err)
 					sendMetric("spreadsheet.cell_parsing_errors", 1)
 					continue
 				}
@@ -170,7 +170,7 @@ rowLoop:
 				if hasLink {
 					url, err := url.Parse(target)
 					if err != nil {
-						log.Warn(logger, "Error parsing link for grant ID", err)
+						log.Warn(logger, "Error parsing link for grant ID", "error", err)
 						sendMetric("spreadsheet.cell_parsing_errors", 1)
 						continue
 					}
@@ -178,7 +178,7 @@ rowLoop:
 					// The opportunity ID should be a < 20 digit numeric value
 					oppID, err := strconv.ParseInt(url.Query().Get("oppId"), 10, 64)
 					if err != nil {
-						log.Warn(logger, "Error parsing opportunity ID", err)
+						log.Warn(logger, "Error parsing opportunity ID", "error", err)
 						sendMetric("spreadsheet.cell_parsing_errors", 1)
 						continue
 					}
