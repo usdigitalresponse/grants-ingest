@@ -27,16 +27,22 @@ var (
 func handleS3Event(ctx context.Context, s3Event events.S3Event, s3client S3API, dbapi DynamoDBUpdateItemAPI) error {
 	uploadedFile := s3Event.Records[0].S3.Object.Key
 	bucket := s3Event.Records[0].S3.Bucket.Name
-	log.Info(logger, "Received S3 event", "uploadedFile", uploadedFile)
+	logger := log.With(logger, "source_key", uploadedFile, "source_bucket", bucket)
+	log.Info(logger, "Received S3 event")
+
 	ffisData, err := parseFFISData(ctx, bucket, uploadedFile, s3client)
 	if err != nil {
+		log.Error(logger, "Error parsing FFIS data", err)
 		return err
 	}
-	err = UpdateOpportunity(ctx, dbapi, env.DestinationTable, opportunity(ffisData))
-	if err == nil {
-		sendMetric("opportunity.saved", 1)
+
+	if err := UpdateOpportunity(ctx, dbapi, env.DestinationTable, opportunity(ffisData)); err != nil {
+		return log.Errorf(logger, "Error saving FFIS opportunity data to DynamoDB", err,
+			"data", ffisData)
 	}
-	return err
+
+	sendMetric("opportunity.saved", 1)
+	return nil
 }
 
 func parseFFISData(ctx context.Context, bucket string, uploadedFile string, s3client S3API) (ffis.FFISFundingOpportunity, error) {
@@ -54,18 +60,17 @@ func parseFFISData(ctx context.Context, bucket string, uploadedFile string, s3cl
 	// parse the file contents into JSON
 	err = json.NewDecoder(s3obj.Body).Decode(&ffisData)
 	if err != nil {
-		return ffisData, log.Errorf(logger, "Error parsing FFIS data", err)
+		return ffisData, log.Errorf(logger, "Error decoding file contents", err)
 	}
 
 	// validate the data
 	if ffisData.Bill == "" {
-		return ffisData, log.Errorf(logger, "Error parsing FFIS data", ErrMissingBill)
+		return ffisData, ErrMissingBill
 	}
 	if ffisData.GrantID == 0 {
-		return ffisData, log.Errorf(logger, "Error parsing FFIS data", ErrMissingGrantID)
+		return ffisData, ErrMissingGrantID
 	}
 
 	log.Info(logger, "Parsed FFIS data", "grant_id", ffisData.GrantID, "bill", ffisData.Bill)
-
 	return ffisData, nil
 }

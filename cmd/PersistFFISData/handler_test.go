@@ -36,7 +36,7 @@ func TestParseFFISData(t *testing.T) {
 	}{
 		{"standard.json", "HR 1234", 123, nil},
 		{"extra-fields.json", "HR 5678", 1234, nil},
-		{"malformed.json", "", 0, fmt.Errorf("Error parsing FFIS data")},
+		{"malformed.json", "", 0, fmt.Errorf("Error decoding file contents")},
 		{"missing-fields-bill.json", "", 0, ErrMissingBill},
 		{"missing-fields-grant.json", "", 0, ErrMissingGrantID},
 	}
@@ -67,7 +67,6 @@ func TestParseFFISData(t *testing.T) {
 					t.Errorf("Expected grant id %v, got %v", test.expectedGrantId, ffisData.GrantID)
 				}
 			}
-
 		})
 	}
 }
