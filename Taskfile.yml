@@ -28,6 +28,7 @@ tasks:
       - lint
       - vet
       - build
+      - build-cli
 
   test:
     desc: "Runs unit tests and updates the HTML coverage report"
