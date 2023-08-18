@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-lambda-go v1.41.0
 	github.com/aws/aws-sdk-go v1.44.325
 	github.com/aws/aws-sdk-go-v2 v1.20.2
-	github.com/aws/aws-sdk-go-v2/config v1.18.33
+	github.com/aws/aws-sdk-go-v2/config v1.18.34
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.33
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.10.36
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.4.63
@@ -43,7 +43,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.13.9 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.39 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.33 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.39 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.40 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.1.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.15.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.13 // indirect
