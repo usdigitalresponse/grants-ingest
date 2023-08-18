@@ -42,6 +42,12 @@ func filesToS3Keys(srcDir, dstPrefix, dstDateLayout, dstSuffix string) (map[stri
 	})
 }
 
+const (
+	publishDateSheet  string = "Sheet1"
+	publishDateCell   string = "N2"
+	publishDateLayout string = "January 2, 2006"
+)
+
 func findSpreadsheetPublishDate(r io.Reader) (t time.Time, err error) {
 	xlFile, err := excelize.OpenReader(r)
 	if err != nil {
@@ -49,8 +55,8 @@ func findSpreadsheetPublishDate(r io.Reader) (t time.Time, err error) {
 	}
 	defer xlFile.Close()
 
-	if cell, err := xlFile.GetCellValue("Sheet1", "N2"); err == nil {
-		return time.Parse("January 2, 2006", cell)
+	if cell, err := xlFile.GetCellValue(publishDateSheet, publishDateCell); err == nil {
+		return time.Parse(publishDateLayout, cell)
 	}
 	return
 }

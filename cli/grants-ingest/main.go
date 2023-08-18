@@ -31,7 +31,7 @@ func (g Globals) AfterApply(app *kong.Kong, logger *log.Logger) error {
 type CLI struct {
 	Globals
 
-	FFISImport ffisImport.Cmd `cmd:"ffis-import" help:"Import FFIS spreadsheets in order of date published."`
+	FFISImport ffisImport.Cmd `cmd:"ffis-import" help:"Imports FFIS spreadsheets to S3."`
 }
 
 func main() {
@@ -40,15 +40,11 @@ func main() {
 	}
 
 	var logger log.Logger
-	// log.ConfigureLogger(&logger, "info")
-
 	ctx := kong.Parse(&cli,
 		kong.Name("grants-ingest"),
-		kong.Description("CLI utility for the grants-ingest service"),
+		kong.Description("CLI utility for the grants-ingest service."),
 		kong.UsageOnError(),
-		kong.ConfigureHelp(kong.HelpOptions{
-			Compact: true,
-		}),
+		kong.ConfigureHelp(kong.HelpOptions{Compact: true}),
 		kong.Bind(&logger),
 	)
 	if err := ctx.Run(&cli.Globals); err != nil {

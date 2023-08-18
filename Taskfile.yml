@@ -88,6 +88,7 @@ tasks:
 
   build-cli:
     run: when_changed
+    desc: Compiles the grants-ingest CLI utility
     vars:
       BUILD_BIN: bin/grants-ingest
     env:
