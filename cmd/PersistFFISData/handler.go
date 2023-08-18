@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
@@ -37,6 +39,13 @@ func handleS3Event(ctx context.Context, s3Event events.S3Event, s3client S3API, 
 	}
 
 	if err := UpdateOpportunity(ctx, dbapi, env.DestinationTable, opportunity(ffisData)); err != nil {
+		var conditionalCheckErr *types.ConditionalCheckFailedException
+		if errors.As(err, &conditionalCheckErr) {
+			log.Warn(logger, "FFIS data already matches the target DynamoDB item",
+				"error", conditionalCheckErr)
+			sendMetric("opportunity.unmodified", 1)
+			return nil
+		}
 		return log.Errorf(logger, "Error saving FFIS opportunity data to DynamoDB", err,
 			"data", ffisData)
 	}

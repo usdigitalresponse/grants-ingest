@@ -17,6 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/go-kit/log"
 	"github.com/hashicorp/go-multierror"
@@ -213,5 +214,19 @@ func TestProcessOpportunity(t *testing.T) {
 		}
 		err := processOpportunity(context.TODO(), dynamodbClient, testOpportunity)
 		assert.ErrorContains(t, err, "Error uploading prepared grant opportunity to DynamoDB")
+	})
+
+	t.Run("Conditional check failed", func(t *testing.T) {
+		setupLambdaEnvForTesting(t)
+		dynamodbClient := mockDynamoDBUpdateItemAPI{
+			mockUpdateItemAPI(func(context.Context, *dynamodb.UpdateItemInput, ...func(*dynamodb.Options)) (*dynamodb.UpdateItemOutput, error) {
+				t.Helper()
+				var err = &types.ConditionalCheckFailedException{
+					Message: aws.String("The conditional request failed"),
+				}
+				return nil, err
+			}),
+		}
+		assert.NoError(t, processOpportunity(context.TODO(), dynamodbClient, testOpportunity))
 	})
 }
