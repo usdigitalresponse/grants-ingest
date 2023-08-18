@@ -43,7 +43,6 @@ func handleS3Event(ctx context.Context, s3Event events.S3Event, s3client S3API, 
 		if errors.As(err, &conditionalCheckErr) {
 			log.Warn(logger, "FFIS data already matches the target DynamoDB item",
 				"error", conditionalCheckErr)
-			sendMetric("opportunity.unmodified", 1)
 			return nil
 		}
 		return log.Errorf(logger, "Error saving FFIS opportunity data to DynamoDB", err,

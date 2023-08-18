@@ -95,7 +95,6 @@ func processOpportunity(ctx context.Context, svc DynamoDBUpdateItemAPI, opp oppo
 		if errors.As(err, &conditionalCheckErr) {
 			log.Warn(logger, "Grants.gov data already matches the target DynamoDB item",
 				"error", conditionalCheckErr)
-			sendMetric("opportunity.unmodified", 1)
 			return nil
 		}
 		return log.Errorf(logger, "Error uploading prepared grant opportunity to DynamoDB", err)
