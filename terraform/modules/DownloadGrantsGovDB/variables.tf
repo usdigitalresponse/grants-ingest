@@ -26,8 +26,8 @@ variable "lambda_artifact_bucket" {
   type        = string
 }
 
-variable "lambda_code_path" {
-  description = "Path to the local directory containing lambda code."
+variable "lambda_binaries_base_path" {
+  description = "Path to the local directory where compiled handlers are outputted to per-Lambda subdirectories."
   type        = string
 }
 

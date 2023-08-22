@@ -44,7 +44,7 @@ data "aws_partition" "current" {}
 data "aws_caller_identity" "current" {}
 
 locals {
-  lambda_code_path = coalesce(var.lambda_code_path, "${path.module}/..")
+  lambda_binaries_base_path = coalesce(var.lambda_binaries_base_path, "${path.module}/../bin")
   permissions_boundary_arn = !can(coalesce(var.permissions_boundary_policy_name)) ? null : join(":", [
     "arn",
     data.aws_partition.current.id,
@@ -476,7 +476,7 @@ module "DownloadGrantsGovDB" {
   lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
   log_retention_in_days                        = var.lambda_default_log_retention_in_days
   log_level                                    = var.lambda_default_log_level
-  lambda_code_path                             = local.lambda_code_path
+  lambda_binaries_base_path                    = local.lambda_binaries_base_path
   lambda_arch                                  = var.lambda_arch
   additional_environment_variables             = local.lambda_environment_variables
   additional_lambda_execution_policy_documents = local.lambda_execution_policies
@@ -496,7 +496,7 @@ module "SplitGrantsGovXMLDB" {
   lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
   log_retention_in_days                        = var.lambda_default_log_retention_in_days
   log_level                                    = var.lambda_default_log_level
-  lambda_code_path                             = local.lambda_code_path
+  lambda_binaries_base_path                    = local.lambda_binaries_base_path
   lambda_arch                                  = var.lambda_arch
   additional_environment_variables             = local.lambda_environment_variables
   additional_lambda_execution_policy_documents = local.lambda_execution_policies
@@ -515,7 +515,7 @@ module "ReceiveFFISEmail" {
   lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
   log_retention_in_days                        = var.lambda_default_log_retention_in_days
   log_level                                    = var.lambda_default_log_level
-  lambda_code_path                             = local.lambda_code_path
+  lambda_binaries_base_path                    = local.lambda_binaries_base_path
   lambda_arch                                  = var.lambda_arch
   additional_environment_variables             = local.lambda_environment_variables
   additional_lambda_execution_policy_documents = local.lambda_execution_policies
@@ -542,7 +542,7 @@ module "EnqueueFFISDownload" {
   lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
   log_retention_in_days                        = var.lambda_default_log_retention_in_days
   log_level                                    = var.lambda_default_log_level
-  lambda_code_path                             = local.lambda_code_path
+  lambda_binaries_base_path                    = local.lambda_binaries_base_path
   lambda_arch                                  = var.lambda_arch
   additional_environment_variables             = local.lambda_environment_variables
   additional_lambda_execution_policy_documents = local.lambda_execution_policies
@@ -566,7 +566,7 @@ module "PersistGrantsGovXMLDB" {
   lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
   log_retention_in_days                        = var.lambda_default_log_retention_in_days
   log_level                                    = var.lambda_default_log_level
-  lambda_code_path                             = local.lambda_code_path
+  lambda_binaries_base_path                    = local.lambda_binaries_base_path
   lambda_arch                                  = var.lambda_arch
   additional_environment_variables             = local.lambda_environment_variables
   additional_lambda_execution_policy_documents = local.lambda_execution_policies
@@ -586,7 +586,7 @@ module "DownloadFFISSpreadsheet" {
   lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
   log_retention_in_days                        = var.lambda_default_log_retention_in_days
   log_level                                    = var.lambda_default_log_level
-  lambda_code_path                             = local.lambda_code_path
+  lambda_binaries_base_path                    = local.lambda_binaries_base_path
   lambda_arch                                  = var.lambda_arch
   additional_environment_variables             = local.lambda_environment_variables
   additional_lambda_execution_policy_documents = local.lambda_execution_policies
@@ -610,7 +610,7 @@ module "SplitFFISSpreadsheet" {
   lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
   log_retention_in_days                        = var.lambda_default_log_retention_in_days
   log_level                                    = var.lambda_default_log_level
-  lambda_code_path                             = local.lambda_code_path
+  lambda_binaries_base_path                    = local.lambda_binaries_base_path
   lambda_arch                                  = var.lambda_arch
   additional_environment_variables             = local.lambda_environment_variables
   additional_lambda_execution_policy_documents = local.lambda_execution_policies
@@ -635,7 +635,7 @@ module "PersistFFISData" {
   lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
   log_retention_in_days                        = var.lambda_default_log_retention_in_days
   log_level                                    = var.lambda_default_log_level
-  lambda_code_path                             = local.lambda_code_path
+  lambda_binaries_base_path                    = local.lambda_binaries_base_path
   lambda_arch                                  = var.lambda_arch
   additional_environment_variables             = local.lambda_environment_variables
   additional_lambda_execution_policy_documents = local.lambda_execution_policies
@@ -659,7 +659,7 @@ module "ExtractGrantsGovDBToXML" {
   lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
   log_retention_in_days                        = var.lambda_default_log_retention_in_days
   log_level                                    = var.lambda_default_log_level
-  lambda_code_path                             = local.lambda_code_path
+  lambda_binaries_base_path                    = local.lambda_binaries_base_path
   lambda_arch                                  = var.lambda_arch
   additional_environment_variables             = local.lambda_environment_variables
   additional_lambda_execution_policy_documents = local.lambda_execution_policies
@@ -682,7 +682,7 @@ module "PublishGrantEvents" {
   lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
   log_retention_in_days                        = var.lambda_default_log_retention_in_days
   log_level                                    = var.lambda_default_log_level
-  lambda_code_path                             = local.lambda_code_path
+  lambda_binaries_base_path                    = local.lambda_binaries_base_path
   lambda_arch                                  = var.lambda_arch
   additional_environment_variables             = local.lambda_environment_variables
   additional_lambda_execution_policy_documents = local.lambda_execution_policies

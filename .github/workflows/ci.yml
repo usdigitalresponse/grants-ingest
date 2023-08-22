@@ -100,13 +100,31 @@ jobs:
       group: run_terraform-staging
       cancel-in-progress: false
     steps:
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
         with:
-          aws-region: us-west-2
-          role-to-assume: "${{ secrets.CI_ROLE_ARN }}"
-      - name: Check out code
-        uses: actions/checkout@v3
+          key: ${{ runner.os }}-taskfile
+          path: |
+            ~/.task
+            ~/bin
+            ~/build
+            ~/terraform/builds
+      - uses: actions/cache@v3
+        with:
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+      - name: Install Taskfile
+        uses: arduino/setup-task@v1
+        with:
+          version: 3.x
+      - name: Pre-build optimization
+        run: task prebuild-lambda
       - name: Get project TF version
         id: get_version
         run: echo "TF_VERSION=$(cat .terraform-version | tr -d '[:space:]')" | tee -a $GITHUB_OUTPUT
@@ -122,6 +140,11 @@ jobs:
           key: ${{ runner.os }}-terraform-${{ hashFiles('**/.terraform.lock.hcl') }}
           restore-keys: |
             ${{ runner.os }}-terraform-
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: us-west-2
+          role-to-assume: "${{ secrets.CI_ROLE_ARN }}"
       - name: Terraform fmt
         id: fmt
         run: terraform fmt -check -diff -recursive
