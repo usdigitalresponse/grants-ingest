@@ -161,6 +161,7 @@ tasks:
       - build-SplitGrantsGovXMLDB
       - build-PublishGrantEvents
       - build-EnqueueFFISDownload
+      - build-PersistFFISData
       - build-PersistGrantsGovXMLDB
       - build-DownloadFFISSpreadsheet
       - build-SplitFFISSpreadsheet
