@@ -100,11 +100,6 @@ jobs:
       group: run_terraform-staging
       cancel-in-progress: false
     steps:
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-region: us-west-2
-          role-to-assume: "${{ secrets.CI_ROLE_ARN }}"
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
@@ -145,6 +140,11 @@ jobs:
           key: ${{ runner.os }}-terraform-${{ hashFiles('**/.terraform.lock.hcl') }}
           restore-keys: |
             ${{ runner.os }}-terraform-
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: us-west-2
+          role-to-assume: "${{ secrets.CI_ROLE_ARN }}"
       - name: Terraform fmt
         id: fmt
         run: terraform fmt -check -diff -recursive
