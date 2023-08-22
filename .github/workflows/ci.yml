@@ -231,3 +231,9 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body: ${{ env.REPORT_CONTENT }}
           edit-mode: replace
+      - name: Print zip md5s
+        if: always()
+        run: md5sum builds/*
+      - name: Print bin md5s
+        if: always()
+        run: md5sum ../bin/*/*
