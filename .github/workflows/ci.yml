@@ -165,7 +165,7 @@ jobs:
         run: |
           echo '${{ steps.plan.outputs.stdout || steps.plan.outputs.stderr }}' \
             | sed -E 's/^([[:space:]]+)([-+])/\2\1/g' > plan.txt
-          PLAN=$(cat plan.txt)
+          PLAN=$(cat plan.txt | head -c 65300) # Observe GitHub's 65535 character limit
           echo "PLAN<<EOF" >> $GITHUB_ENV
           echo "$PLAN" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV

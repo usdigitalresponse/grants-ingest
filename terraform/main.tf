@@ -111,12 +111,12 @@ module "lambda_artifacts_bucket" {
       expiration                             = { days = null }
       noncurrent_version_transition = [
         {
-          days          = 30
-          storage_class = "GLACIER"
+          noncurrent_days = 30
+          storage_class   = "GLACIER"
         },
       ]
       noncurrent_version_expiration = {
-        days = 90
+        noncurrent_days = 90
       }
     }
   ]
@@ -150,12 +150,12 @@ module "grants_source_data_bucket" {
       expiration                             = { days = null }
       noncurrent_version_transition = [
         {
-          days          = 30
-          storage_class = "GLACIER"
+          noncurrent_days = 30
+          storage_class   = "GLACIER"
         },
       ]
       noncurrent_version_expiration = {
-        days = 2557 # 7 years (includes 2 leap days)
+        noncurrent_days = 2557 # 7 years (includes 2 leap days)
       }
     },
     {
@@ -171,8 +171,8 @@ module "grants_source_data_bucket" {
       abort_incomplete_multipart_upload_days = 1
       transition                             = [{ days = null }]
       expiration                             = { days = 7 }
-      noncurrent_version_transition          = [{ days = null }]
-      noncurrent_version_expiration          = { days = null }
+      noncurrent_version_transition          = [{ noncurrent_days = null }]
+      noncurrent_version_expiration          = { noncurrent_days = null }
     },
   ]
 }
@@ -200,12 +200,12 @@ module "grants_prepared_data_bucket" {
       expiration                             = { days = null }
       noncurrent_version_transition = [
         {
-          days          = 30
-          storage_class = "GLACIER"
+          noncurrent_days = 30
+          storage_class   = "GLACIER"
         },
       ]
       noncurrent_version_expiration = {
-        days = 2557 # 7 years (includes 2 leap days)
+        noncurrent_days = 2557 # 7 years (includes 2 leap days)
       }
     }
   ]
@@ -232,8 +232,8 @@ module "email_delivery_bucket" {
       abort_incomplete_multipart_upload_days = 1
       transition                             = [{ days = null }]
       expiration                             = { days = 30 }
-      noncurrent_version_transition          = [{ days = null }]
-      noncurrent_version_expiration          = { days = null }
+      noncurrent_version_transition          = [{ noncurrent_days = null }]
+      noncurrent_version_expiration          = { noncurrent_days = null }
     }
   ]
 }
