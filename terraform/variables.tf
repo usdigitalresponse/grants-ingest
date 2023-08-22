@@ -55,8 +55,8 @@ variable "ssm_deployment_parameters_path_prefix" {
   }
 }
 
-variable "lambda_code_path" {
-  description = "Path to the base source code directory for this project."
+variable "lambda_binaries_base_path" {
+  description = "Path to where Taskfile outputs per-Lambda build directories."
   type        = string
   default     = ""
 }

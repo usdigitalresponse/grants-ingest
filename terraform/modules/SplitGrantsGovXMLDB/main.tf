@@ -63,6 +63,14 @@ module "lambda_execution_policy" {
   }
 }
 
+module "lambda_artifact" {
+  source = "../taskfile_lambda_builder"
+
+  binary_base_path = var.lambda_binaries_base_path
+  function_name    = var.function_name
+  s3_bucket        = var.lambda_artifact_bucket
+}
+
 module "lambda_function" {
   source  = "terraform-aws-modules/lambda/aws"
   version = "5.3.0"
@@ -82,17 +90,11 @@ module "lambda_function" {
   publish       = true
   layers        = var.lambda_layer_arns
 
-  source_path = [{
-    path = var.lambda_code_path
-    commands = [
-      "task build-SplitGrantsGovXMLDB",
-      "cd bin/SplitGrantsGovXMLDB",
-      ":zip",
-    ],
-  }]
-  store_on_s3               = true
-  s3_bucket                 = var.lambda_artifact_bucket
-  s3_server_side_encryption = "AES256"
+  create_package = false
+  s3_existing_package = {
+    bucket = var.lambda_artifact_bucket
+    key    = module.lambda_artifact.s3_object_key
+  }
 
   timeout     = 300 # 5 minutes, in seconds
   memory_size = 1024
