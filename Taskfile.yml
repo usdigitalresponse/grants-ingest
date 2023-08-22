@@ -96,7 +96,7 @@ tasks:
       GOPATH:
         sh: go env GOPATH
     cmds:
-      - go build -gcflags="-trimpath=$GOPATH" -asmflags="-trimpath=$GOPATH" -trimpath -v -o {{ .BUILD_BIN }} ./cli/grants-ingest
+      - go build -gcflags="-trimpath=$GOPATH" -asmflags="-trimpath=$GOPATH" -trimpath -ldflags=-buildid= -v -o {{ .BUILD_BIN }} ./cli/grants-ingest
       - cmd: echo {{ .BUILD_BIN }}
         silent: true
     sources:
@@ -152,7 +152,7 @@ tasks:
       GOPATH:
         sh: go env GOPATH
     cmds:
-      - GOOS=linux GOARCH=arm64 go build -gcflags="-trimpath=$GOPATH" -ldflags="-s -w" -asmflags="-trimpath=$GOPATH" -trimpath -tags "lambda.norpc" -v -o {{ .BUILD_DEST }} {{ .SOURCE }}
+      - GOOS=linux GOARCH=arm64 go build -gcflags="-trimpath=$GOPATH" -ldflags="-s -w" -asmflags="-trimpath=$GOPATH" -trimpath -ldflags=-buildid= -tags "lambda.norpc" -v -o {{ .BUILD_DEST }} {{ .SOURCE }}
 
   build:
     desc: "Compiles all Lambda handlers"
