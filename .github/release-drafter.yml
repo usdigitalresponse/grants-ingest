@@ -1,0 +1,86 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/release-drafter/release-drafter/ff929b5ceb21bf2646a216e916f9a8bb507d48a3/schema.json
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'release/$RESOLVED_VERSION'
+version-template: '2023.$MINOR'
+version-resolver:
+  default: minor
+prerelease: true
+categories:
+  - title: 🚀 New features and enhancements
+    collapse-after: 10
+    labels:
+      - enhancement
+  - title: 🐛 Bug fixes
+    collapse-after: 10
+    labels:
+      - bug
+  - title: 📖 Documentation improvements
+    collapse-after: 10
+    labels:
+      - documentation
+  - title: 🔧 Dependency updates
+    collapse-after: 3
+    labels:
+      - dependencies
+  - title: Other Changes
+    labels:
+      - '*'
+category-template: '### $TITLE'
+exclude-labels:
+  - skip-changelog
+autolabeler:
+  - label: go
+    files:
+      - '**/*.go'
+      - go.mod
+      - go.sum
+  - label: terraform
+    files:
+      - 'terraform/**'
+  - label: dependencies
+    files:
+      - go.mod
+      - go.sum
+      - '**/.terraform.lock.hcl'
+    branch:
+      - '/dependabot\/.+/'
+  - label: documentation
+    files:
+      - README
+      - '**/doc/**'
+      - '**/docs/**'
+      - '**/*.md'
+    branch:
+      - '/docs?/'
+  - label: bug
+    branch:
+      - '/fix\/.+/'
+      - '/bug\/.+/'
+    title:
+      - '/\bfix(es)?\b/i'
+      - '/\bbug\b/i'
+  - label: enhancement
+    branch:
+      - 'feat(ure)?\/.+/'
+      - 'enhance(s|ment)?\/.+/'
+    title:
+      - '/\bfeat(ure)?\b/i'
+      - '/\benhance(s|ment)?\b/i'
+change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
+change-title-escapes: '\<*_&'
+template: |
+  ## 📚 Summary
+
+  The releaser should provide a high-level summary here (or remove this section).
+
+  ## 🛠️ Changes
+
+  $CHANGES
+
+  ## 🤝 Contributors
+
+  We would like to thank the following people who made this release possible:
+
+  $CONTRIBUTORS
+
+  ## Deployment History
