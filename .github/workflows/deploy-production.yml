@@ -3,7 +3,7 @@ name: Deploy to Production
 on:
   push:
     tags:
-      release/**
+      - 'release/**'
 
 concurrency:
   group: production
