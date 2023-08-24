@@ -163,7 +163,7 @@ jobs:
         run: gh release view $RELEASE_TAG --json body --jq .body > release_notes.md
       - name: Add deployment history to release notes
         if: always() && steps.get.outcome == 'success'
-        run: printf "\n\nSuccessfully deployed at $(date --iso-8601=seconds)\n" >> release_notes.md
+        run: printf "\n- Deployed at $(date --iso-8601=seconds)\n" >> release_notes.md
       - name: Update release notes and status
         if: always() && steps.get.outcome == 'success'
         run: gh release edit $RELEASE_TAG --draft=false --prerelease=false --latest --verify-tag -F release_notes.md
