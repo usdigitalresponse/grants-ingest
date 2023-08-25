@@ -32,6 +32,7 @@ func UpdateOpportunity(ctx context.Context, c DynamoDBUpdateItemAPI, table strin
 	condition, _ := awsHelpers.DDBIfAnyValueChangedCondition(oppAttr)
 
 	update := expression.Set(expression.Name("Bill"), expression.Value(oppAttr["Bill"]))
+	update = awsHelpers.DDBSetRevisionForUpdate(update)
 
 	expr, err := expression.NewBuilder().WithUpdate(update).WithCondition(condition).Build()
 	if err != nil {

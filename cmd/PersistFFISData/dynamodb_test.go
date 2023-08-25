@@ -55,11 +55,23 @@ func TestUpsertDynamoDB(t *testing.T) {
 			}
 			values := make(map[string]string)
 			attributevalue.UnmarshalMap(passedParams.ExpressionAttributeValues, &values)
-			if values[":0"] != test.bill {
-				t.Errorf("Expected bill %v, got %v", test.bill, values[":0"])
+			if !checkMapContainsValue(t, values, test.bill) {
+				t.Error("Missing bill value in update attribute values")
 			}
-
+			if !checkMapContainsValue(t, passedParams.ExpressionAttributeNames, "revision") {
+				t.Errorf("Missing attribute %q in update attribute names", "revision")
+			}
 		})
 	}
+}
 
+// checkMapContainsValue is a testing helper function that returns true if target is a value of m
+func checkMapContainsValue[K comparable, V comparable](t *testing.T, m map[K]V, target V) bool {
+	t.Helper()
+	for _, v := range m {
+		if v == target {
+			return true
+		}
+	}
+	return false
 }
