@@ -6,6 +6,10 @@ output "grants_prepared_data_bucket_id" {
   value = module.grants_prepared_data_bucket.bucket_id
 }
 
+output "service_dashboard_url" {
+  value = var.datadog_dashboards_enabled ? "https://app.datadoghq.com${one(datadog_dashboard.service_dashboard[*].url)}" : null
+}
+
 output "lambda_functions" {
   value = [
     module.DownloadGrantsGovDB.lambda_function_name,
