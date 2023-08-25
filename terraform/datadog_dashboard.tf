@@ -1501,7 +1501,8 @@ resource "datadog_dashboard" "service_dashboard" {
               formula_expression = "failed"
               alias              = "Failed"
               style {
-                palette = "warm"
+                palette       = "warm"
+                palette_index = 3
               }
             }
             query {
@@ -1515,7 +1516,8 @@ resource "datadog_dashboard" "service_dashboard" {
               formula_expression = "published"
               alias              = "Published"
               style {
-                palette = "cool"
+                palette       = "green"
+                palette_index = 3
               }
             }
             query {
@@ -1810,8 +1812,7 @@ resource "datadog_dashboard" "service_dashboard" {
               formula_expression = "records_created"
               alias              = "Created"
               style {
-                palette       = "classic"
-                palette_index = 4
+                palette = "classic"
               }
             }
             query {
@@ -1866,7 +1867,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "row_count"
-                query = "sum:grants_ingest.SplitFFISSpreadsheet.spreadsheet.row_count{$env,$service,$version}.as_count()"
+                query = "avg:grants_ingest.SplitFFISSpreadsheet.spreadsheet.row_count{$env,$service,$version}.as_count()"
               }
             }
           }
@@ -1892,7 +1893,8 @@ resource "datadog_dashboard" "service_dashboard" {
             formula {
               formula_expression = "errors"
               style {
-                palette = "warm"
+                palette       = "warm"
+                palette_index = 5
               }
             }
             query {
