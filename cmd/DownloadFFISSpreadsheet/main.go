@@ -18,6 +18,7 @@ import (
 	s3manager "github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/usdigitalresponse/grants-ingest/internal/awsHelpers"
+	"github.com/usdigitalresponse/grants-ingest/internal/ddHelpers"
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
 	awstrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/aws/aws-sdk-go-v2/aws"
 	httptrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/net/http"
@@ -32,9 +33,9 @@ type Environment struct {
 }
 
 var (
-	env    Environment
-	logger log.Logger
-	// sendMetric       = ddHelpers.NewMetricSender("DownloadFFISSpreadsheet", "source:grants.gov")
+	env        Environment
+	logger     log.Logger
+	sendMetric = ddHelpers.NewMetricSender("DownloadFFISSpreadsheet", "source:ffis.org")
 )
 
 func main() {

@@ -10,6 +10,13 @@ ffis_ingest_email_address             = "ffis-ingest@staging.grants.usdr.dev"
 
 // Only defined in staging
 datadog_metrics_metadata = {
+  "DownloadFFISSpreadsheet.source_size" = {
+    short_name  = "Source file size in bytes"
+    description = "Size (in bytes) of the downloaded ffis.org spreadsheet file."
+    unit        = "byte"
+    per_unit    = "file"
+  }
+
   "DownloadGrantsGovDB.source_size" = {
     short_name  = "Source file size in bytes"
     description = "Size (in bytes) of the downloaded grants.gov database archive file."
@@ -17,34 +24,40 @@ datadog_metrics_metadata = {
     per_unit    = "file"
   }
 
-  "SplitGrantsGovXMLDB.opportunity.created" = {
-    short_name  = "New grant opportunities"
-    description = "Count of new grant opportunity records created during invocation."
+  "ExtractGrantsGovDBToXML.archive.downloaded" = {
+    short_name  = "Downloaded archive files"
+    description = "Count of downloaded Grants.gov DB zip archives for extraction."
+    unit        = "file"
+  }
+
+  "ExtractGrantsGovDBToXML.xml.extracted" = {
+    short_name  = "Extracted XML files"
+    description = "Count of XML files extracted from the Grants.gov DB zip archive."
+    unit        = "file"
+  }
+
+  "ExtractGrantsGovDBToXML.xml.uploaded" = {
+    short_name  = "Uploaded XML files"
+    description = "Count of uploaded XML files after extraction."
+    unit        = "file"
+  }
+
+  "PersistFFISData.opportunity.saved" = {
+    short_name  = "Saved opportunities"
+    description = "Count of opportunity records persisted to DynamoDB with FFIS.org data."
     unit        = "record"
   }
 
-  "SplitGrantsGovXMLDB.opportunity.updated" = {
-    short_name  = "Updated grant opportunities"
-    description = "Count of modified grant opportunity records updated during invocation."
+  "PersistGrantsGovXMLDB.opportunity.saved" = {
+    short_name  = "Saved opportunities"
+    description = "Count of opportunity records persisted to DynamoDB with Grants.gov data."
     unit        = "record"
   }
 
-  "SplitGrantsGovXMLDB.opportunity.skipped" = {
-    short_name  = "Skipped grant opportunities"
-    description = "Count of unchanged grant opportunity records skipped during invocation."
+  "PersistGrantsGovXMLDB.opportunity.failed" = {
+    short_name  = "Failed opportunities"
+    description = "Count of opportunity records that failed to be persisted to DynamoDB with Grants.gov data."
     unit        = "record"
-  }
-
-  "SplitGrantsGovXMLDB.opportunity.failed" = {
-    short_name  = "Failed grant opportunities"
-    description = "Count of grant opportunity records that failed to process during invocation."
-    unit        = "record"
-  }
-
-  "ReceiveFFISEmail.email.untrusted" = {
-    short_name  = "Received untrusted email"
-    description = "Count of received emails that were determined to be untrustworthy."
-    unit        = "email"
   }
 
   "PublishGrantEvents.invocation_batch_size" = {
@@ -87,5 +100,59 @@ datadog_metrics_metadata = {
     short_name  = "Invalid mapper results"
     description = "Count of grants mapped from a DynamoDB item image that failed target schema validation."
     unit        = "document"
+  }
+
+  "ReceiveFFISEmail.email.untrusted" = {
+    short_name  = "Received untrusted email"
+    description = "Count of received emails that were determined to be untrustworthy."
+    unit        = "email"
+  }
+
+  "SplitFFISSpreadsheet.opportunity.created" = {
+    short_name  = "New grant opportunities"
+    description = "Count of new grant opportunity records created from FFIS.org data during invocation."
+    unit        = "record"
+  }
+
+  "SplitFFISSpreadsheet.opportunity.failed" = {
+    short_name  = "Failed grant opportunities"
+    description = "Count of grant opportunity records from Grants.gov data that failed to process during invocation."
+    unit        = "record"
+  }
+
+  "SplitFFISSpreadsheet.spreadsheet.row_count" = {
+    short_name  = "Spreadsheet row count"
+    description = "Number of rows contained in source spreadsheets from FFIS.org."
+    unit        = "row"
+  }
+
+  "SplitFFISSpreadsheet.cell_parsing_errors" = {
+    short_name  = "Spreadsheet cell parsing errors"
+    description = "Count of parsing errors encountered in source spreadsheets from FFIS.org."
+    unit        = "error"
+  }
+
+  "SplitGrantsGovXMLDB.opportunity.created" = {
+    short_name  = "New grant opportunities"
+    description = "Count of new grant opportunity records created from Grants.gov data during invocation."
+    unit        = "record"
+  }
+
+  "SplitGrantsGovXMLDB.opportunity.updated" = {
+    short_name  = "Updated grant opportunities"
+    description = "Count of modified grant opportunity records updated from Grants.gov data during invocation."
+    unit        = "record"
+  }
+
+  "SplitGrantsGovXMLDB.opportunity.skipped" = {
+    short_name  = "Skipped grant opportunities"
+    description = "Count of unchanged grant opportunity records from Grants.gov data skipped during invocation."
+    unit        = "record"
+  }
+
+  "SplitGrantsGovXMLDB.opportunity.failed" = {
+    short_name  = "Failed grant opportunities"
+    description = "Count of grant opportunity records from Grants.gov data that failed to process during invocation."
+    unit        = "record"
   }
 }

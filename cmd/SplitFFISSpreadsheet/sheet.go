@@ -123,7 +123,7 @@ rowLoop:
 			case 0:
 				if f, err := strconv.ParseFloat(strings.TrimRight(cell, "+"), 64); err != nil {
 					log.Warn(logger, "Error parsing CFDA", err)
-					sendMetric("spreadsheet.cell_parsing_errors", 1)
+					sendMetric("spreadsheet.cell_parsing_errors", 1, "target:CFDA")
 					continue
 				} else {
 					opportunity.CFDA = fmt.Sprintf("%06.3f", f)
@@ -142,7 +142,7 @@ rowLoop:
 				// If we can't parse the funding amount, just skip the column
 				if err != nil {
 					log.Warn(logger, "Error parsing estimated funding", "error", err)
-					sendMetric("spreadsheet.cell_parsing_errors", 1)
+					sendMetric("spreadsheet.cell_parsing_errors", 1, "target:EstimatedFunding")
 					continue
 				}
 				opportunity.EstimatedFunding = num
@@ -156,7 +156,7 @@ rowLoop:
 				cellAxis, err := excelize.CoordinatesToCellName(colIndex+1, rowIndex+1)
 				if err != nil {
 					log.Warn(logger, "Error parsing cell axis for grant ID", "error", err)
-					sendMetric("spreadsheet.cell_parsing_errors", 1)
+					sendMetric("spreadsheet.cell_parsing_errors", 1, "target:GrantID")
 					continue
 				}
 
@@ -164,7 +164,7 @@ rowLoop:
 				if err != nil {
 					// log this, it is not worth aborting the whole extraction for
 					log.Warn(logger, "Error getting cell hyperlink for grant ID", "error", err)
-					sendMetric("spreadsheet.cell_parsing_errors", 1)
+					sendMetric("spreadsheet.cell_parsing_errors", 1, "target:GrantID")
 					continue
 				}
 
@@ -174,7 +174,7 @@ rowLoop:
 					url, err := url.Parse(target)
 					if err != nil {
 						log.Warn(logger, "Error parsing link for grant ID", "error", err)
-						sendMetric("spreadsheet.cell_parsing_errors", 1)
+						sendMetric("spreadsheet.cell_parsing_errors", 1, "target:GrantID")
 						continue
 					}
 
@@ -182,7 +182,7 @@ rowLoop:
 					oppID, err := strconv.ParseInt(url.Query().Get("oppId"), 10, 64)
 					if err != nil {
 						log.Warn(logger, "Error parsing opportunity ID", "error", err)
-						sendMetric("spreadsheet.cell_parsing_errors", 1)
+						sendMetric("spreadsheet.cell_parsing_errors", 1, "target:GrantID")
 						continue
 					}
 
@@ -217,7 +217,7 @@ rowLoop:
 				if !dateParsed {
 					log.Warn(logger, "Could not parse DueDate according to any attempted layouts",
 						"attempted_layouts", dateLayouts, "raw_value", cell)
-					sendMetric("spreadsheet.cell_parsing_errors", 1)
+					sendMetric("spreadsheet.cell_parsing_errors", 1, "target:DueDate")
 					continue
 				}
 			case 13:
