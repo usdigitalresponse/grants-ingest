@@ -1882,7 +1882,7 @@ resource "datadog_dashboard" "service_dashboard" {
 
       widget {
         timeseries_definition {
-          title          = "Cell Parsing Errors"
+          title          = "Cell Parsing Errors by Target Field"
           show_legend    = true
           legend_layout  = "horizontal"
           legend_columns = ["sum"]
@@ -1893,14 +1893,13 @@ resource "datadog_dashboard" "service_dashboard" {
             formula {
               formula_expression = "errors"
               style {
-                palette       = "warm"
-                palette_index = 5
+                palette = "warm"
               }
             }
             query {
               metric_query {
                 name  = "errors"
-                query = "sum:grants_ingest.SplitFFISSpreadsheet.spreadsheet.cell_parsing_errors{$env,$service,$version}.as_count()"
+                query = "sum:grants_ingest.SplitFFISSpreadsheet.spreadsheet.cell_parsing_errors{$env,$service,$version} by {target}.as_count()"
               }
             }
           }
