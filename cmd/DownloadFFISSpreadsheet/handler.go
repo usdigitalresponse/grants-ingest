@@ -63,6 +63,7 @@ func downloadFile(ctx context.Context, msg ffis.FFISMessageDownload, httpClient 
 		return nil, fmt.Errorf("error downloading file: %w", ErrDownloadFailed)
 	}
 	log.Debug(logger, "Downloaded file", "url", msg.DownloadURL)
+	sendMetric("source_size", float64(resp.ContentLength))
 	return resp.Body, nil
 }
 
