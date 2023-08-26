@@ -335,7 +335,7 @@ data "aws_iam_policy_document" "ses_source_data_s3_access" {
     ]
 
     resources = [
-      "arn:aws:s3:::${var.namespace}-emaildelivery-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}/ses/*",
+      "arn:aws:s3:::${module.s3_label.namespace}-emaildelivery-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}/ses/*",
     ]
 
     condition {
