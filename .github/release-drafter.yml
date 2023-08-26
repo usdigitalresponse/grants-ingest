@@ -28,6 +28,8 @@ categories:
 category-template: '### $TITLE'
 exclude-labels:
   - skip-changelog
+exclude-contributors:
+  - dependabot
 autolabeler:
   - label: go
     files:
