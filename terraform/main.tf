@@ -334,7 +334,9 @@ data "aws_iam_policy_document" "ses_source_data_s3_access" {
       "s3:PutObject",
     ]
 
-    resources = ["${module.email_delivery_bucket.bucket_arn}/ses/*"]
+    resources = [
+      "arn:aws:s3:::${var.namespace}-emaildelivery-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}/ses/*",
+    ]
 
     condition {
       test     = "StringEquals"
