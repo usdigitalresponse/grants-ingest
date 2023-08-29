@@ -22,7 +22,7 @@ jobs:
         id: next_version
         run: |
           chmod +x .github/next_release_version.bash
-          .github/next_release_version.bash
+          echo "result=$(bash .github/next_release_version.bash)" >> $GITHUB_OUTPUT
       - uses: release-drafter/release-drafter@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
