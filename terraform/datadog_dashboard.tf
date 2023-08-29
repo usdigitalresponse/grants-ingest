@@ -1438,7 +1438,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "published"
-                query = "sum:grants_ingest.PublishGrantEvents.event.published{$env,$service,$version}.as_count()"
+                query = "sum:grants_ingest.PublishGrantEvents.event.published{$env,$service,$version} by {ddb_event_name}.as_count()"
               }
             }
           }
@@ -1470,7 +1470,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "failures"
-                query = "sum:grants_ingest.PublishGrantEvents.record.failed{$env,$service,$version}.as_count()"
+                query = "sum:grants_ingest.PublishGrantEvents.record.failed{$env,$service,$version} by {ddb_event_name}.as_count()"
               }
             }
           }
