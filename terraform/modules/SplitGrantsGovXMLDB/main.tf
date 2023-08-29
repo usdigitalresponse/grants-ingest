@@ -73,7 +73,7 @@ module "lambda_artifact" {
 
 module "lambda_function" {
   source  = "terraform-aws-modules/lambda/aws"
-  version = "5.3.0"
+  version = "6.0.0"
 
   function_name = "${var.namespace}-${var.function_name}"
   description   = "Creates per-grant XML data files from a source Grants.gov XML DB extract."
