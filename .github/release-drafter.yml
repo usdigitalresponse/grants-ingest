@@ -69,6 +69,9 @@ autolabeler:
     title:
       - '/\bfeat(ure)?\b/i'
       - '/\benhance(s|ment)?\b/i'
+  - label: github
+    files:
+      - '.github/**'
 change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
 change-title-escapes: '\<*_&'
 template: |
