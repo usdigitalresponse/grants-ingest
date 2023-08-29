@@ -32,7 +32,7 @@ func handleEvent(ctx context.Context, pub EventBridgePutEventsAPI, event events.
 		if err := handleRecord(ctx, pub, record); err != nil {
 			seq := record.Change.SequenceNumber
 			log.Error(logger, "Failed to handle record in batch", err, "sequence_number", seq)
-			sendMetric("record.failed", 1, fmt.Sprintf("event_name:%s", record.EventName))
+			sendMetric("record.failed", 1, fmt.Sprintf("ddb_event_name:%s", record.EventName))
 			failures = append(failures, events.DynamoDBBatchItemFailure{ItemIdentifier: seq})
 			break
 		}
@@ -67,7 +67,7 @@ func handleRecord(ctx context.Context, pub EventBridgePutEventsAPI, rec events.D
 		return log.Errorf(logger, "error publishing to EventBridge", err)
 	}
 
-	sendMetric("event.published", 1)
+	sendMetric("event.published", 1, fmt.Sprintf("ddb_event_name:%s", rec.EventName))
 	log.Info(logger, "Published GrantModificationEvent")
 	return nil
 }
