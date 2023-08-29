@@ -8,10 +8,10 @@ next_version_release_number=1
 git fetch --prune --unshallow
 
 tag=$(git describe --tags --match='release/[0-9][0-9][0-9][0-9].[0-9]*' refs/heads/main)
-regex='release\/([0-9]{4})\.([0-9]{0,})'
+regex='release\/[0-9]{4}\.([0-9]+)'
 if [[ $tag =~ $regex ]]; then
     echo "Found tag for previous release: $tag"
-    prev_version_release_number="${BASH_REMATCH[2]}"
+    prev_version_release_number="${BASH_REMATCH[1]}"
     echo "Previous version number: $prev_version_release_number"
     ((next_version_release_number=prev_version_release_number+1))
 else
