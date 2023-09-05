@@ -17,6 +17,14 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
+      - name: "Determine next version"
+        id: next_version
+        run: |
+          chmod +x .github/next_release_version.bash
+          echo "result=$(bash .github/next_release_version.bash)" >> $GITHUB_OUTPUT
       - uses: release-drafter/release-drafter@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          version: ${{ steps.next_version.outputs.result }}
