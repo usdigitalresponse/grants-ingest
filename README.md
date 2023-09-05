@@ -112,8 +112,8 @@ this bucket is named `local-terraform` and has a region of `us-west-2`.
 
 To create this bucket, you can run the following command:
 
-```cli
-$ awslocal s3 mb s3://local-terraform
+```bash
+awslocal s3 mb s3://local-terraform
 ```
 
 Next, initialize the Terraform project using the `local.s3.tfbackend` Terraform state backend
@@ -121,15 +121,15 @@ configuration file provided by this repository. Note that you may need to modify
 setting in this file if your LocalStack environment uses a different host/port other than the
 default of `localhost:4566`.
 
-```cli
-$ tflocal init -backend-config="local.s3.tfbackend" -reconfigure
+```bash
+tflocal init -backend-config="local.s3.tfbackend" -reconfigure
 ```
 
 Once this command completes successfully, you use `tflocal` to "provision" mock infrastructure
 in your LocalStack environment, using the `local.tfvars` file provided by this repository:
-
-```cli
-$ tflocal apply -var-file=local.tfvars
+dfdf
+```bash
+tflocal apply -var-file=local.tfvars
 ```
 
 
@@ -157,8 +157,8 @@ must be provided as a Base64-encoded encoded representation of the payload. The 
 demonstrates an invocation of a Lambda function named `grants-ingest-DownloadGrantsGovDB`
 that provides the above example JSON in Base64 encoding and prints the Lambda output to stdout:
 
-```cli
-$ awslocal lambda invoke \
+```bash
+awslocal lambda invoke \
     --function-name grants-ingest-DownloadGrantsGovDB \
     --payload $(printf '{"timestamp": "2023-03-20T05:00:00-04:00"}' | base64) \
     /dev/stdout
@@ -178,8 +178,8 @@ In order to view execution logs outputted during Lambda invocation, use CloudWat
 you would when conducting tests against a genuine AWS environment). The following command can
 be used to observe log output in real-time:
 
-```cli
-$ awslocal logs tail /aws/lambda/grants-ingest-DownloadGrantsGovDB --follow
+```bash
+awslocal logs tail /aws/lambda/grants-ingest-DownloadGrantsGovDB --follow
 ```
 
 When actively debugging, it is useful to run a command similar to the above in a separate terminal
@@ -188,6 +188,6 @@ prior to invoking the Lambda function under test, as it only displays logs emitt
 in order to display historical logs from previous invocations. For example, the following command
 shows logs emitted in the past 1 hour, and will continue to display new logs as they are emitted:
 
-```cli
-$ awslocal logs tail /aws/lambda/grants-ingest-DownloadGrantsGovDB --since 1h --follow
+```bash
+awslocal logs tail /aws/lambda/grants-ingest-DownloadGrantsGovDB --since 1h --follow
 ```
