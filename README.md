@@ -107,15 +107,15 @@ with LocalStack:
 
 #### Provisioning Infrastructure
 
-After starting LocalStack, create a terraform state deployment bucket in the localstack environment.
-This guide, as well as the provided Terraform backend file for local development, assumes that
+After starting LocalStack, create a terraform state deployment bucket in the localstack environment.  This guide, as well as the provided Terraform backend file for local development, assumes that
 this bucket is named `local-terraform` and has a region of `us-west-2`.
 
-To create this bucket, you can run the following command:
-
+To create this bucket, navigate to the terraform folder, then run the following command:
 ```bash
 awslocal s3 mb s3://local-terraform
 ```
+If using the provided [docker-compose](https://github.com/usdigitalresponse/grants-ingest/blob/cf8a6220ed4e7332978520ec1d63bb344b738972/docker-compose.yml#L21) then this runs when the localstack 
+container is started. 
 
 Next, initialize the Terraform project using the `local.s3.tfbackend` Terraform state backend
 configuration file provided by this repository. Note that you may need to modify the `endpoint`
@@ -126,9 +126,9 @@ default of `localhost:4566`.
 tflocal init -backend-config="local.s3.tfbackend" -reconfigure
 ```
 
-Once this command completes successfully, you use `tflocal` to "provision" mock infrastructure
-in your LocalStack environment, using the `local.tfvars` file provided by this repository:
-dfdf
+Once this command completes successfully, use `tflocal` to "provision" mock infrastructure in your LocalStack environment.  This will create the llambda functions, so it requires the functions to be 
+built first.  Use `task build` to build the functions.  Then use the `local.tfvars` file provided by this 
+repository to provision the mock infrastructure:
 ```bash
 tflocal apply -var-file=local.tfvars
 ```
