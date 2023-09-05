@@ -126,7 +126,7 @@ default of `localhost:4566`.
 tflocal init -backend-config="local.s3.tfbackend" -reconfigure
 ```
 
-Once this command completes successfully, use `tflocal` to "provision" mock infrastructure in your LocalStack environment.  This will create the llambda functions, so it requires the functions to be 
+Once this command completes successfully, use `tflocal` to "provision" mock infrastructure in your LocalStack environment.  This will create the Lambda functions, so it requires the functions to be 
 built first.  Use `task build` to build the functions.  Then use the `local.tfvars` file provided by this 
 repository to provision the mock infrastructure:
 ```bash
