@@ -79,9 +79,10 @@ is unavailable.
 To begin, make sure the following tools are available in your development workspace:
 - [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 - [Terraform](https://developer.hashicorp.com/terraform/downloads)
+  - Download the version found in [.terraform-version](https://github.com/usdigitalresponse/grants-ingest/blob/main/terraform/.terraform-version)
 - [LocalStack](https://docs.localstack.cloud/getting-started/installation)
 - [tflocal](https://github.com/localstack/terraform-local)
-- [awslocal](https://github.com/localstack/awscli-local) *Optional, but recommended.*
+- [awslocal](https://github.com/localstack/awscli-local)
 - [tfenv](https://github.com/tfutils/tfenv) *Optional, but recommended.*
 
 **Note:** This document assumes usage of [Docker-Compose method](https://docs.localstack.cloud/getting-started/installation/#docker-compose).
