@@ -13,7 +13,11 @@ jobs:
     steps:
       - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
         with:
-          egress-policy: audit
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
       - uses: actions/checkout@v4
         with:
           show-progress: 'false'
@@ -28,7 +32,15 @@ jobs:
     steps:
       - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
         with:
-          egress-policy: audit
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            actions-results-receiver-production.githubapp.com:443
+            api.github.com:443
+            github.com:443
+            objects.githubusercontent.com:443
+            proxy.golang.org:443
+            sum.golang.org:443
       - uses: actions/checkout@v4
         with:
           show-progress: 'false'
@@ -70,7 +82,15 @@ jobs:
     steps:
       - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
         with:
-          egress-policy: audit
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            actions-results-receiver-production.githubapp.com:443
+            api.github.com:443
+            github.com:443
+            objects.githubusercontent.com:443
+            proxy.golang.org:443
+            sum.golang.org:443
       - uses: actions/checkout@v4
         with:
           show-progress: 'false'
@@ -94,7 +114,7 @@ jobs:
         run: task prebuild-lambda
       - name: Build Lambda handler binaries
         run: task build
-      - name: Store executable artifacts
+      - name: Store build artifacts
         uses: actions/upload-artifact@v3
         with:
           name: bin-${{ github.sha }}
@@ -106,7 +126,13 @@ jobs:
     steps:
       - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
         with:
-          egress-policy: audit
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            actions-results-receiver-production.githubapp.com:443
+            api.github.com:443
+            github.com:443
+            objects.githubusercontent.com:443
       - uses: actions/checkout@v4
         with:
           show-progress: 'false'
