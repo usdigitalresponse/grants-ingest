@@ -61,6 +61,12 @@ variable "lambda_binaries_base_path" {
   default     = ""
 }
 
+variable "lambda_binaries_autobuild" {
+  description = "Whether to use Taskfile to compile missing/outdated Lambda handler binaries. Set to false during CI/CD."
+  type        = bool
+  default     = false
+}
+
 variable "lambda_arch" {
   description = "The target build architecture for Lambda functions (either x86_64 or arm64)."
   type        = string
