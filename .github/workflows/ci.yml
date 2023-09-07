@@ -267,9 +267,9 @@ jobs:
           allowed-endpoints: >
             api.github.com:443
       - name: Reformat Plan
-        if: always() && needs.terraform.plan_outcome != 'cancelled' && needs.terraform.plan_outcome != 'skipped'
+        if: always() && needs.terraform.outputs.plan_outcome != 'cancelled' && needs.terraform.outputs.plan_outcome != 'skipped'
         run: |
-          echo '${{ needs.terraform.plan_output }}' | sed -E 's/^([[:space:]]+)([-+])/\2\1/g' > plan.txt
+          echo '${{ needs.terraform.outputs.plan_output }}' | sed -E 's/^([[:space:]]+)([-+])/\2\1/g' > plan.txt
           PLAN=$(cat plan.txt | head -c 65300) # Observe GitHub's 65535 character limit
           echo "PLAN<<EOF" >> $GITHUB_ENV
           echo "$PLAN" >> $GITHUB_ENV
@@ -284,10 +284,10 @@ jobs:
 
           | Step                         | Result  |
           |:-----------------------------|:-------:|
-          | 🖌  Terraform Format & Style | ${{ (needs.terraform.fmt_outcome == 'success' && '✅') || (needs.terraform.fmt_outcome == 'skipped' && '➖') || '❌'  }} |
-          | ⚙️  Terraform Initialization | ${{ (needs.terraform.init_outcome == 'success' && '✅') || (needs.terraform.init_outcome == 'skipped' && '➖') || '❌' }} |
-          | 🤖  Terraform Validation     | ${{ (needs.terraform.validate_outcome == 'success' && '✅') || (needs.terraform.validate_outcome == 'skipped' && '➖') || '❌' }} |
-          | 📖  Terraform Plan           | ${{ (needs.terraform.plan_outcome == 'success' && '✅') || (needs.terraform.plan_outcome == 'skipped' && '➖') || '❌' }} |
+          | 🖌  Terraform Format & Style | ${{ (needs.terraform.outputs.fmt_outcome == 'success' && '✅') || (needs.terraform.outputs.fmt_outcome == 'skipped' && '➖') || '❌'  }} |
+          | ⚙️  Terraform Initialization | ${{ (needs.terraform.outputs.init_outcome == 'success' && '✅') || (needs.terraform.outputs.init_outcome == 'skipped' && '➖') || '❌' }} |
+          | 🤖  Terraform Validation     | ${{ (needs.terraform.outputs.validate_outcome == 'success' && '✅') || (needs.terraform.outputs.validate_outcome == 'skipped' && '➖') || '❌' }} |
+          | 📖  Terraform Plan           | ${{ (needs.terraform.outputs.plan_outcome == 'success' && '✅') || (needs.terraform.outputs.plan_outcome == 'skipped' && '➖') || '❌' }} |
 
           ### Output
 
@@ -295,7 +295,7 @@ jobs:
           <summary>Validation Output</summary>
 
           ```
-          ${{ needs.terraform.validate_output }}
+          ${{ needs.terraform.outputs.validate_output }}
           ```
 
           </details>
