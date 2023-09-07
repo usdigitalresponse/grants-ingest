@@ -183,7 +183,17 @@ jobs:
     steps:
       - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
         with:
-          egress-policy: audit
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            *.amazonaws.com:443
+            actions-results-receiver-production.githubapp.com:443
+            api.datadoghq.com:443
+            checkpoint-api.hashicorp.com:443
+            github.com:443
+            objects.githubusercontent.com:443
+            registry.terraform.io:443
+            releases.hashicorp.com:443
       - uses: actions/checkout@v4
         with:
           show-progress: 'false'
@@ -252,7 +262,10 @@ jobs:
     steps:
       - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
         with:
-          egress-policy: audit
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
       - name: Reformat Plan
         if: always() && needs.terraform.plan_outcome != 'cancelled' && needs.terraform.plan_outcome != 'skipped'
         run: |
