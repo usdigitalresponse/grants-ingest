@@ -5,15 +5,19 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
-  id-token: write
 
 jobs:
   dependency-review:
     name: Dependency Review
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@v4
+        with:
+          show-progress: 'false'
+          persist-credentials: 'false'
       - uses: actions/dependency-review-action@v3
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
@@ -22,7 +26,13 @@ jobs:
     name: QA
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@v4
+        with:
+          show-progress: 'false'
+          persist-credentials: 'false'
       - name: Restore/save Taskfile cache
         uses: actions/cache@v3
         with:
@@ -53,17 +63,55 @@ jobs:
         uses: dominikh/staticcheck-action@v1.3.0
         with:
           install-go: false
-      - name: Build Lambdas
+      - name: Ensure all go binaries compile
+        run: task build build-cli
+
+  build_lambdas:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@v4
+        with:
+          show-progress: 'false'
+          persist-credentials: 'false'
+      - name: Restore/save Taskfile cache
+        uses: actions/cache@v3
+        with:
+          key: ${{ runner.os }}-taskfile
+          path: |
+            ~/.task
+            ~/bin
+      - uses: actions/setup-go@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          go-version-file: go.mod
+      - uses: arduino/setup-task@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          version: 3.x
+      - name: Pre-build optimization
+        run: task prebuild-lambda
+      - name: Build Lambda handler binaries
         run: task build
-      - name: Build CLI
-        run: task build-cli
+      - name: Store executable artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: bin-${{ github.sha }}
+          path: ${{ github.workspace }}/bin
 
   tflint:
     name: Lint terraform
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-        name: Checkout source code
+      - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@v4
+        with:
+          show-progress: 'false'
+          persist-credentials: 'false'
       - uses: actions/cache@v3
         name: Cache plugin dir
         with:
@@ -83,52 +131,47 @@ jobs:
       - name: Run TFLint
         run: tflint -f compact --recursive
 
-  terraform_validate_plan_report:
+  terraform:
     name: Validate and plan terraform
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     if: always()
+    needs:
+      - build_lambdas
     defaults:
       run:
         working-directory: terraform
+    outputs:
+      fmt_outcome: ${{ steps.fmt.outcome }}
+      init_outcome: ${{ steps.init.outcome }}
+      validate_outcome: ${{ steps.validate.outcome }}
+      validate_output: ${{ steps.validate.outputs.stdout }}
+      plan_outcome: ${{ steps.plan.outcome }}
+      plan_output: ${{ steps.plan.outputs.stdout || steps.plan.outputs.stderr }}
     env:
       TF_PLUGIN_CACHE_DIR: ~/.terraform.d/plugin-cache
-      TF_VAR_version_identifier: ${{ github.sha }}
-      TF_VAR_git_commit_sha: ${{ github.sha }}
-      TF_VAR_datadog_api_key: ${{ secrets.DATADOG_API_KEY }}
-      TF_VAR_datadog_app_key: ${{ secrets.DATADOG_APP_KEY }}
     concurrency:
       group: run_terraform-staging
       cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
+      - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
         with:
-          key: ${{ runner.os }}-taskfile
-          path: |
-            ~/.task
-            ~/bin
-            ~/build
-            ~/terraform/builds
-      - uses: actions/cache@v3
+          egress-policy: audit
+      - uses: actions/checkout@v4
         with:
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-      - name: Setup Go
-        uses: actions/setup-go@v4
+          show-progress: 'false'
+          persist-credentials: 'false'
+      - name: Restore executable artifacts
+        uses: actions/download-artifact@v3
         with:
-          go-version-file: go.mod
-      - name: Install Taskfile
-        uses: arduino/setup-task@v1
-        with:
-          version: 3.x
-      - name: Pre-build optimization
-        run: task prebuild-lambda
+          name: bin-${{ github.sha }}
+          path: ${{ github.workspace }}/bin
       - name: Get project TF version
         id: get_version
         run: echo "TF_VERSION=$(cat .terraform-version | tr -d '[:space:]')" | tee -a $GITHUB_OUTPUT
-      - uses: hashicorp/setup-terraform@v2
+      - uses: hashicorp/setup-terraform@633666f66e0061ca3b725c73b2ec20cd13a8fdd1 # v2.0.3
         with:
           terraform_version: ${{ steps.get_version.outputs.TF_VERSION }}
       - name: Ensure Terraform plugin cache exists
@@ -140,16 +183,16 @@ jobs:
           key: ${{ runner.os }}-terraform-${{ hashFiles('**/.terraform.lock.hcl') }}
           restore-keys: |
             ${{ runner.os }}-terraform-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-region: us-west-2
-          role-to-assume: "${{ secrets.CI_ROLE_ARN }}"
       - name: Terraform fmt
         id: fmt
         run: terraform fmt -check -diff -recursive
       - name: Ensure Terraform plugin cache still exists
         run: mkdir -p $TF_PLUGIN_CACHE_DIR
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@04b98b3f9e85f563fb061be8751a0352327246b0 # v3.0.1
+        with:
+          aws-region: us-west-2
+          role-to-assume: "${{ secrets.CI_ROLE_ARN }}"
       - name: Terraform Init
         id: init
         run: terraform init -backend-config="staging.s3.tfbackend"
@@ -160,11 +203,35 @@ jobs:
         if: steps.validate.outcome == 'success'
         id: plan
         run: terraform plan -input=false -no-color -out=tfplan -var-file="staging.tfvars" && terraform show -no-color tfplan
+        env:
+          TF_VAR_version_identifier: ${{ github.sha }}
+          TF_VAR_git_commit_sha: ${{ github.sha }}
+          TF_VAR_datadog_api_key: ${{ secrets.DATADOG_API_KEY }}
+          TF_VAR_datadog_app_key: ${{ secrets.DATADOG_APP_KEY }}
+      - name: Print zip md5s
+        if: always()
+        run: md5sum builds/*
+      - name: Print bin md5s
+        if: always()
+        run: md5sum ../bin/*/*
+
+  publish_terraform_results:
+    name: Publish Terraform Results
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    if: always()
+    needs:
+      - terraform
+    steps:
+      - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+        with:
+          egress-policy: audit
       - name: Reformat Plan
-        if: always() && steps.plan.outcome != 'cancelled' && steps.plan.outcome != 'skipped'
+        if: always() && needs.terraform.plan_outcome != 'cancelled' && needs.terraform.plan_outcome != 'skipped'
         run: |
-          echo '${{ steps.plan.outputs.stdout || steps.plan.outputs.stderr }}' \
-            | sed -E 's/^([[:space:]]+)([-+])/\2\1/g' > plan.txt
+          echo '${{ needs.terraform.plan_output }}' | sed -E 's/^([[:space:]]+)([-+])/\2\1/g' > plan.txt
           PLAN=$(cat plan.txt | head -c 65300) # Observe GitHub's 65535 character limit
           echo "PLAN<<EOF" >> $GITHUB_ENV
           echo "$PLAN" >> $GITHUB_ENV
@@ -179,10 +246,10 @@ jobs:
 
           | Step                         | Result  |
           |:-----------------------------|:-------:|
-          | 🖌  Terraform Format & Style | ${{ (steps.fmt.outcome == 'success' && '✅') || (steps.fmt.outcome == 'skipped' && '➖') || '❌'  }} |
-          | ⚙️  Terraform Initialization | ${{ (steps.init.outcome == 'success' && '✅') || (steps.init.outcome == 'skipped' && '➖') || '❌' }} |
-          | 🤖  Terraform Validation     | ${{ (steps.validate.outcome == 'success' && '✅') || (steps.validate.outcome == 'skipped' && '➖') || '❌' }} |
-          | 📖  Terraform Plan           | ${{ (steps.plan.outcome == 'success' && '✅') || (steps.plan.outcome == 'skipped' && '➖') || '❌' }} |
+          | 🖌  Terraform Format & Style | ${{ (needs.terraform.fmt_outcome == 'success' && '✅') || (needs.terraform.fmt_outcome == 'skipped' && '➖') || '❌'  }} |
+          | ⚙️  Terraform Initialization | ${{ (needs.terraform.init_outcome == 'success' && '✅') || (needs.terraform.init_outcome == 'skipped' && '➖') || '❌' }} |
+          | 🤖  Terraform Validation     | ${{ (needs.terraform.validate_outcome == 'success' && '✅') || (needs.terraform.validate_outcome == 'skipped' && '➖') || '❌' }} |
+          | 📖  Terraform Plan           | ${{ (needs.terraform.plan_outcome == 'success' && '✅') || (needs.terraform.plan_outcome == 'skipped' && '➖') || '❌' }} |
 
           ### Output
 
@@ -190,7 +257,7 @@ jobs:
           <summary>Validation Output</summary>
 
           ```
-          ${{ steps.validate.outputs.stdout }}
+          ${{ needs.terraform.validate_output }}
           ```
 
           </details>
@@ -209,8 +276,10 @@ jobs:
 
       - name: Write the step summary
         if: always()
+        run: cat $REPORT_FILE | head -c 65300 >> $GITHUB_STEP_SUMMARY # Observe GitHub's 65535 character limit
+      - name: Write the comment body
+        if: always()
         run: |
-          cat $REPORT_FILE >> $GITHUB_STEP_SUMMARY
           CONTENT=$(cat $REPORT_FILE)
           echo "REPORT_CONTENT<<ENDOFREPORT" >> $GITHUB_ENV
           echo "$CONTENT" >> $GITHUB_ENV
@@ -231,9 +300,3 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body: ${{ env.REPORT_CONTENT }}
           edit-mode: replace
-      - name: Print zip md5s
-        if: always()
-        run: md5sum builds/*
-      - name: Print bin md5s
-        if: always()
-        run: md5sum ../bin/*/*
