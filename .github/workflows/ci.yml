@@ -40,7 +40,6 @@ jobs:
           path: |
             ~/.task
             ~/bin
-            ~/build
             ~/cover.out
             ~/cover.html
       - uses: actions/setup-go@v4
