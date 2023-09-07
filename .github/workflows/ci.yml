@@ -50,10 +50,10 @@ jobs:
         with:
           key: ${{ runner.os }}-taskfile
           path: |
-            ~/.task
-            ~/bin
-            ~/cover.out
-            ~/cover.html
+            ./.task
+            ./bin
+            ./cover.out
+            ./cover.html
       - uses: actions/setup-go@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -100,8 +100,8 @@ jobs:
         with:
           key: ${{ runner.os }}-taskfile
           path: |
-            ~/.task
-            ~/bin
+            ./.task
+            ./bin
       - uses: actions/setup-go@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -140,7 +140,7 @@ jobs:
       - uses: actions/cache@v3
         name: Cache plugin dir
         with:
-          path: ~/.tflint.d/plugins
+          path: .tflint.d/plugins
           key: ${{ runner.os }}-tflint-${{ hashFiles('terraform/.tflint.hcl') }}
       - uses: terraform-linters/setup-tflint@v3
         name: Setup TFLint
