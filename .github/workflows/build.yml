@@ -1,0 +1,195 @@
+name: Build
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+        required: true
+      build-cli:
+        type: boolean
+        default: false
+      build-lambdas:
+        type: boolean
+        default: false
+    outputs:
+      build-cli-result:
+        value: ${{ jobs.build-cli.result }}
+      build-lambdas-result:
+        value: ${{ jobs.build-lambdas.result }}
+      cli-artifacts-key:
+        value: ${{ jobs.build-cli.outputs.artifacts-key }}
+      cli-artifacts-path:
+        value: ${{ jobs.build-cli.outputs.artifacts-path }}
+      lambda-artifacts-key:
+        value: ${{ jobs.build-lambdas.outputs.artifacts-key }}
+      lambda-artifacts-path:
+        value: ${{ jobs.build-lambdas.outputs.artifacts-path }}
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    env:
+      SOURCES_KEY: go-sources-${{ inputs.ref }}
+      SOURCES_PATH: |
+        ${{ github.workspace }}/cli
+        ${{ github.workspace }}/cmd
+        ${{ github.workspace }}/internal
+        ${{ github.workspace }}/pkg
+        ${{ github.workspace }}/openapi/openapi.yaml
+        ${{ github.workspace }}/go.mod
+        ${{ github.workspace }}/go.sum
+        ${{ github.workspace }}/Taskfile.yml
+      TASKFILE_CACHE_KEY: ${{ inputs.ref }}-taskfile-cache
+      TASKFILE_CACHE_PATHS: |
+        ${{ github.workspace }}/.task
+    outputs:
+      sources-key: ${{ env.SOURCES_KEY }}
+      sources-path: ${{ env.SOURCES_PATH }}
+      taskfile-key: ${{ env.TASKFILE_CACHE_KEY }}
+      taskfile-path: ${{ env.TASKFILE_CACHE_PATHS }}
+    steps:
+      - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            actions-results-receiver-production.githubapp.com:443
+            api.github.com:443
+            github.com:443
+            objects.githubusercontent.com:443
+            proxy.golang.org:443
+            sum.golang.org:443
+      - uses: actions/checkout@v4
+        with:
+          show-progress: 'false'
+          persist-credentials: 'false'
+      - name: Restore/save Taskfile cache
+        uses: actions/cache@v3
+        with:
+          key: ${{ env.TASKFILE_CACHE_KEY }}
+          path: ${{ env.TASKFILE_CACHE_PATHS }}
+      - uses: actions/setup-go@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          go-version-file: go.mod
+      - uses: arduino/setup-task@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          version: 3.x
+      - name: Pre-build optimization
+        run: task prebuild-lambda
+      - name: Store build sources
+        id: store
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.SOURCES_KEY }}
+          path: ${{ env.SOURCES_PATH }}
+
+  build-lambdas:
+    name: Build Lambdas
+    if: always() && ${{ inputs.build-lambdas }} && ${{ needs.prepare.result == 'success' }}
+    runs-on: ubuntu-latest
+    needs:
+      - prepare
+    env:
+      ARTIFACTS_KEY: lambdas-${{ inputs.ref }}
+      ARTIFACTS_PATH: ${{ github.workspace }}/bin
+    outputs:
+      artifacts-key: ${{ env.ARTIFACTS_KEY }}
+      artifacts-path: ${{ env.ARTIFACTS_PATH }}
+    steps:
+      - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            actions-results-receiver-production.githubapp.com:443
+            api.github.com:443
+            github.com:443
+            objects.githubusercontent.com:443
+            proxy.golang.org:443
+            sum.golang.org:443
+      - name: Restore Go build sources
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ needs.prepare.outputs.sources-key }}
+          path: ${{ needs.prepare.outputs.sources-path }}
+      - name: Restore/save Taskfile cache
+        uses: actions/cache@v3
+        with:
+          key: ${{ needs.prepare.outputs.taskfile-key }}
+          path: ${{ needs.prepare.outputs.taskfile-path }}
+      - uses: actions/setup-go@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          go-version-file: go.mod
+      - uses: arduino/setup-task@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          version: 3.x
+      - run: mkdir -p ${{ env.BIN_OUTPUT_DIR }}
+        env:
+          BIN_OUTPUT_DIR: ${{ env.ARTIFACTS_PATH }}
+      - name: Build Lambdas
+        id: build
+        run: task build
+      - name: Store build artifacts
+        id: store
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.ARTIFACTS_KEY }}
+          path: ${{ env.ARTIFACTS_PATH }}
+
+  build-cli:
+    name: Build CLI
+    if: always() && ${{ inputs.build-cli }} && ${{ needs.prepare.result == 'success' }}
+    runs-on: ubuntu-latest
+    needs:
+      - prepare
+    env:
+      ARTIFACTS_KEY: cli-${{ inputs.ref }}
+      ARTIFACTS_PATH: ${{ github.workspace }}/bin/grants-ingest
+    outputs:
+      artifacts-key: ${{ env.ARTIFACTS_KEY }}
+      artifacts-path: ${{ env.ARTIFACTS_PATH }}
+    steps:
+      - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            actions-results-receiver-production.githubapp.com:443
+            api.github.com:443
+            github.com:443
+            objects.githubusercontent.com:443
+            proxy.golang.org:443
+            sum.golang.org:443
+      - name: Restore Go build sources
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ needs.prepare.outputs.sources-key }}
+          path: ${{ needs.prepare.outputs.sources-path }}
+      - name: Restore/save Taskfile cache
+        uses: actions/cache@v3
+        with:
+          key: ${{ needs.prepare.outputs.taskfile-key }}
+          path: ${{ needs.prepare.outputs.taskfile-path }}
+      - uses: actions/setup-go@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          go-version-file: go.mod
+      - uses: arduino/setup-task@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          version: 3.x
+      - run: mkdir -p $(dirname $ARTIFACTS_PATH)
+      - name: Build Lambdas
+        id: build
+        run: task build
+      - name: Store build artifacts
+        id: store
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.ARTIFACTS_KEY }}
+          path: ${{ env.ARTIFACTS_PATH }}
