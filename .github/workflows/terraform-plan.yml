@@ -97,6 +97,11 @@ jobs:
             objects.githubusercontent.com:443
             registry.terraform.io:443
             releases.hashicorp.com:443
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          show-progress: 'false'
+          persist-credentials: 'false'
       - name: Validate workflow configuration
         if: inputs.upload-artifacts && (env.GPG_PASSPHRASE == '')
         run: |
@@ -114,11 +119,6 @@ jobs:
           AWS_ACCESS_KEY_ID: "${{ secrets.aws-access-key-id }}"
           AWS_SECRET_ACCESS_KEY: "${{ secrets.aws-secret-access-key }}"
           AWS_SESSION_TOKEN: "${{ secrets.aws-session-token }}"
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.ref }}
-          show-progress: 'false'
-          persist-credentials: 'false'
       - name: Download Lambda handler artifacts
         uses: actions/download-artifact@v3
         with:
