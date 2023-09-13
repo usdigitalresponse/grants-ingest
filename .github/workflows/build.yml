@@ -118,11 +118,13 @@ jobs:
         with:
           name: ${{ needs.prepare.outputs.sources-key }}
           path: .
-      - name: Restore/save Taskfile cache
-        uses: actions/cache@v3
+      - name: Restore Taskfile cache
+        uses: actions/cache/restore@v3
         with:
           key: ${{ needs.prepare.outputs.taskfile-key }}
           path: ${{ needs.prepare.outputs.taskfile-path }}
+      - name: Debug cache restore
+        run: ls -lah
       - uses: actions/setup-go@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -174,7 +176,7 @@ jobs:
           name: ${{ needs.prepare.outputs.sources-key }}
           path: .
       - name: Restore/save Taskfile cache
-        uses: actions/cache@v3
+        uses: actions/cache/restore@v3
         with:
           key: ${{ needs.prepare.outputs.taskfile-key }}
           path: ${{ needs.prepare.outputs.taskfile-path }}
