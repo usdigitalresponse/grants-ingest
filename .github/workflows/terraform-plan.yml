@@ -1,0 +1,170 @@
+name: Terraform Plan
+
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+        required: true
+      bin-artifacts-key:
+        type: string
+        required: true
+      bin-artifacts-path:
+        type: string
+        required: true
+      aws-region:
+        type: string
+        required: true
+      tf-backend-config-file:
+        type: string
+        required: true
+      tf-var-file:
+        type: string
+        required: true
+      upload-artifacts:
+        type: boolean
+        default: false
+    secrets:
+      aws-access-key-id:
+        required: true
+      aws-secret-access-key:
+        required: true
+      aws-session-token:
+        required: true
+      datadog-api-key:
+        required: true
+      datadog-app-key:
+        required: true
+      gpg-passphrase:
+        required: false
+    outputs:
+      fmt-outcome:
+        value: ${{ jobs.do.outputs.fmt_outcome }}
+      init-outcome:
+        value: ${{ jobs.do.outputs.init_outcome }}
+      validate-outcome:
+        value: ${{ jobs.do.outputs.validate_outcome }}
+      validate-output:
+        value: ${{ jobs.do.outputs.validate_output }}
+      plan-outcome:
+        value: ${{ jobs.do.outputs.plan_outcome }}
+      plan-output:
+        value: ${{ jobs.do.outputs.plan_output }}
+
+jobs:
+  do:
+    name: Validate and plan terraform
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    if: always()
+    defaults:
+      run:
+        working-directory: terraform
+    outputs:
+      artifacts-key: ${{ env.ARTIFACTS_KEY }}
+      fmt_outcome: ${{ steps.fmt.outcome }}
+      init_outcome: ${{ steps.init.outcome }}
+      validate_outcome: ${{ steps.validate.outcome }}
+      validate_output: ${{ steps.validate.outputs.stdout }}
+      plan_outcome: ${{ steps.plan.outcome }}
+      plan_output: ${{ steps.plan.outputs.stdout || steps.plan.outputs.stderr }}
+    env:
+      ARTIFACTS_KEY: terraform-${{ inputs.ref }}
+      AWS_DEFAULT_REGION: ${{ inputs.aws-region }}
+      AWS_REGION: ${{ inputs.aws-region }}
+      TF_CLI_ARGS: "-no-color"
+      TF_IN_AUTOMATION: "true"
+      TF_INPUT: 0
+      TF_PLUGIN_CACHE_DIR: ~/.terraform.d/plugin-cache
+    concurrency:
+      group: run_terraform-staging
+      cancel-in-progress: false
+    steps:
+      - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            *.amazonaws.com:443
+            actions-results-receiver-production.githubapp.com:443
+            api.datadoghq.com:443
+            checkpoint-api.hashicorp.com:443
+            github.com:443
+            objects.githubusercontent.com:443
+            registry.terraform.io:443
+            releases.hashicorp.com:443
+      - name: Validate workflow configuration
+        if: inputs.upload-artifacts && (env.GPG_PASSPHRASE == '')
+        run: |
+          echo 'gpg-passphrase is required when upload-artifacts is true'
+          exit 1
+        env:
+          GPG_PASSPHRASE: ${{ secrets.gpg-passphrase }}
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          show-progress: 'false'
+          persist-credentials: 'false'
+      - name: Restore executable artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ inputs.bin-artifacts-key }}
+          path: ${{ inputs.bin-artifacts-path }}
+      - name: Get project TF version
+        id: get_tf_version
+        run: echo "TF_VERSION=$(cat .terraform-version | tr -d '[:space:]')" | tee -a $GITHUB_OUTPUT
+      - uses: hashicorp/setup-terraform@633666f66e0061ca3b725c73b2ec20cd13a8fdd1 # v2.0.3
+        with:
+          terraform_version: ${{ steps.get_tf_version.outputs.TF_VERSION }}
+      - name: Terraform fmt
+        id: fmt
+        run: terraform fmt -check -diff -recursive
+      - name: Terraform Init
+        id: init
+        run: terraform init
+        env:
+          AWS_ACCESS_KEY_ID: "${{ secrets.aws-access-key-id }}"
+          AWS_SECRET_ACCESS_KEY: "${{ secrets.aws-secret-access-key }}"
+          AWS_SESSION_TOKEN: "${{ secrets.aws-session-token }}"
+          TF_CLI_ARGS_init: "-backend-config=${{ inputs.tf-backend-config-file }}"
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+      - name: Terraform Plan
+        if: always() && steps.validate.outcome == 'success'
+        id: plan
+        run: terraform plan -out="tfplan" -detailed-exitcode
+        env:
+          AWS_ACCESS_KEY_ID: "${{ secrets.aws-access-key-id }}"
+          AWS_SECRET_ACCESS_KEY: "${{ secrets.aws-secret-access-key }}"
+          AWS_SESSION_TOKEN: "${{ secrets.aws-session-token }}"
+          TF_CLI_ARGS_plan: "-var-file=${{ inputs.tf-var-file }}"
+          TF_VAR_version_identifier: ${{ inputs.ref }}
+          TF_VAR_git_commit_sha: ${{ inputs.ref }}
+          TF_VAR_datadog_api_key: ${{ secrets.DATADOG_API_KEY }}
+          TF_VAR_datadog_app_key: ${{ secrets.DATADOG_APP_KEY }}
+      - name: Generate plaintext plan
+        id: show_plan
+        run: terraform show tfplan
+      - name: Encrypt terraform plan file
+        id: encrypt_plan
+        if: always() && inputs.upload-artifacts
+        env:
+          PASSPHRASE: ${{ secrets.gpg-passphrase }}
+        run: |
+          test -z $PASSPHRASE && (echo "Error: GPG passphrase cannot be empty"; exit 1)
+          echo "$PASSPHRASE" | gpg --batch --yes --passphrase-fd 0 -c --cipher-algo AES256 tfplan
+          rm tfplan
+      - name: Store terraform artifacts
+        if: always() && inputs.upload-artifacts && steps.encrypt_plan.outcome == 'success'
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.ARTIFACTS_KEY }}
+          path: |
+            ${{ github.workspace }}/terraform
+            !${{ github.workspace }}/terraform/.terraform
