@@ -115,7 +115,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: ${{ needs.prepare.outputs.sources-key }}
-          path: ${{ needs.prepare.outputs.sources-path }}
+          path: .
       - name: Restore/save Taskfile cache
         uses: actions/cache@v3
         with:
