@@ -124,7 +124,7 @@ jobs:
           key: ${{ needs.prepare.outputs.taskfile-key }}
           path: ${{ needs.prepare.outputs.taskfile-path }}
       - name: Debug cache restore
-        run: ls -lah
+        run: ls -lahR .task
       - uses: actions/setup-go@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -148,7 +148,7 @@ jobs:
 
   build-cli:
     name: Build CLI
-    if: always() && ${{ inputs.build-cli }} && ${{ needs.prepare.result == 'success' }}
+    if: ${{ needs.prepare.result == 'success' }} && ${{ inputs.build-cli }}
     runs-on: ubuntu-latest
     needs:
       - prepare
