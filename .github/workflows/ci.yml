@@ -1,340 +1,62 @@
 name: Continuous Integration
 
 on:
-  pull_request: {}
+  pull_request_target: {}
 
 permissions:
   contents: read
 
 jobs:
-  dependency-review:
-    name: Dependency Review
-    runs-on: ubuntu-latest
-    steps:
-      - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
-        with:
-          disable-sudo: true
-          egress-policy: block
-          allowed-endpoints: >
-            api.github.com:443
-            github.com:443
-      - uses: actions/checkout@v4
-        with:
-          show-progress: 'false'
-          persist-credentials: 'false'
-      - uses: actions/dependency-review-action@v3
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-
   qa:
-    name: QA
-    runs-on: ubuntu-latest
-    steps:
-      - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
-        with:
-          disable-sudo: true
-          egress-policy: block
-          allowed-endpoints: >
-            actions-results-receiver-production.githubapp.com:443
-            api.github.com:443
-            github.com:443
-            objects.githubusercontent.com:443
-            proxy.golang.org:443
-            sum.golang.org:443
-      - uses: actions/checkout@v4
-        with:
-          show-progress: 'false'
-          persist-credentials: 'false'
-      - name: Restore/save Taskfile cache
-        uses: actions/cache@v3
-        with:
-          key: ${{ runner.os }}-taskfile
-          path: |
-            ./.task
-            ./bin
-            ./cover.out
-            ./cover.html
-      - uses: actions/setup-go@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          go-version-file: go.mod
-      - uses: arduino/setup-task@v1
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          version: 3.x
-      - name: Pre-build optimization
-        run: task prebuild-lambda
-      - name: Check Formatting
-        run: test -z "$(go fmt ./...)" || echo "Formatting check failed."
-      - name: Test
-        run: task test
-      - name: Vet
-        run: go vet ./...
-      - name: Lint
-        uses: dominikh/staticcheck-action@v1.3.0
-        with:
-          install-go: false
-      - name: Ensure all go binaries compile
-        run: task build build-cli
+    uses: ./.github/workflows/qa.yml
+    with:
+      ref: ${{ github.event.pull_request.head.sha }}
 
-  build_lambdas:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
-        with:
-          disable-sudo: true
-          egress-policy: block
-          allowed-endpoints: >
-            actions-results-receiver-production.githubapp.com:443
-            api.github.com:443
-            github.com:443
-            objects.githubusercontent.com:443
-            proxy.golang.org:443
-            sum.golang.org:443
-      - uses: actions/checkout@v4
-        with:
-          show-progress: 'false'
-          persist-credentials: 'false'
-      - name: Restore/save Taskfile cache
-        uses: actions/cache@v3
-        with:
-          key: ${{ runner.os }}-taskfile
-          path: |
-            ./.task
-            ./bin
-      - uses: actions/setup-go@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          go-version-file: go.mod
-      - uses: arduino/setup-task@v1
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          version: 3.x
-      - name: Pre-build optimization
-        run: task prebuild-lambda
-      - name: Build Lambda handler binaries
-        run: task build
-      - name: Store build artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: bin-${{ github.sha }}
-          path: ${{ github.workspace }}/bin
+  build-lambdas:
+    name: Build Lambda handlers
+    uses: ./.github/workflows/build.yml
+    with:
+      ref: ${{ github.event.pull_request.head.sha }}
+      build-cli: false
+      build-lambdas: true
 
-  tflint:
-    name: Lint terraform
-    runs-on: ubuntu-latest
-    steps:
-      - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
-        with:
-          disable-sudo: true
-          egress-policy: block
-          allowed-endpoints: >
-            actions-results-receiver-production.githubapp.com:443
-            api.github.com:443
-            github.com:443
-            objects.githubusercontent.com:443
-      - uses: actions/checkout@v4
-        with:
-          show-progress: 'false'
-          persist-credentials: 'false'
-      - uses: actions/cache@v3
-        name: Cache plugin dir
-        with:
-          path: .tflint.d/plugins
-          key: ${{ runner.os }}-tflint-${{ hashFiles('terraform/.tflint.hcl') }}
-      - uses: terraform-linters/setup-tflint@v3
-        name: Setup TFLint
-        with:
-          tflint_version: latest
-      - name: Show TFLint version
-        run: tflint --version
-      - name: Init TFLint
-        run: tflint --init
-        working-directory: terraform
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-      - name: Run TFLint
-        run: tflint -f compact --recursive
-
-  terraform:
-    name: Validate and plan terraform
+  aws-auth:
+    name: Configure AWS Credentials
     runs-on: ubuntu-latest
     permissions:
-      contents: read
       id-token: write
-    if: always()
-    needs:
-      - build_lambdas
-    defaults:
-      run:
-        working-directory: terraform
     outputs:
-      fmt_outcome: ${{ steps.fmt.outcome }}
-      init_outcome: ${{ steps.init.outcome }}
-      validate_outcome: ${{ steps.validate.outcome }}
-      validate_output: ${{ steps.validate.outputs.stdout }}
-      plan_outcome: ${{ steps.plan.outcome }}
-      plan_output: ${{ steps.plan.outputs.stdout || steps.plan.outputs.stderr }}
-    env:
-      TF_PLUGIN_CACHE_DIR: ~/.terraform.d/plugin-cache
-    concurrency:
-      group: run_terraform-staging
-      cancel-in-progress: false
+      aws-access-key-id: ${{ steps.auth.outputs.aws-access-key-id }}
+      aws-secret-access-key: ${{ steps.auth.outputs.aws-secret-access-key }}
+      aws-session-token: ${{ steps.auth.outputs.aws-session-token }}
     steps:
       - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
         with:
           disable-sudo: true
-          egress-policy: block
-          allowed-endpoints: >
-            *.amazonaws.com:443
-            actions-results-receiver-production.githubapp.com:443
-            api.datadoghq.com:443
-            checkpoint-api.hashicorp.com:443
-            github.com:443
-            objects.githubusercontent.com:443
-            registry.terraform.io:443
-            releases.hashicorp.com:443
-      - uses: actions/checkout@v4
-        with:
-          show-progress: 'false'
-          persist-credentials: 'false'
-      - name: Restore executable artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: bin-${{ github.sha }}
-          path: ${{ github.workspace }}/bin
-      - name: Get project TF version
-        id: get_version
-        run: echo "TF_VERSION=$(cat .terraform-version | tr -d '[:space:]')" | tee -a $GITHUB_OUTPUT
-      - uses: hashicorp/setup-terraform@633666f66e0061ca3b725c73b2ec20cd13a8fdd1 # v2.0.3
-        with:
-          terraform_version: ${{ steps.get_version.outputs.TF_VERSION }}
-      - name: Ensure Terraform plugin cache exists
-        run: mkdir -p $TF_PLUGIN_CACHE_DIR
-      - name: Save/Restore Terraform plugin cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
-          key: ${{ runner.os }}-terraform-${{ hashFiles('**/.terraform.lock.hcl') }}
-          restore-keys: |
-            ${{ runner.os }}-terraform-
-      - name: Terraform fmt
-        id: fmt
-        run: terraform fmt -check -diff -recursive
-      - name: Ensure Terraform plugin cache still exists
-        run: mkdir -p $TF_PLUGIN_CACHE_DIR
-      - name: Configure AWS Credentials
+          egress-policy: audit
+      - id: auth
         uses: aws-actions/configure-aws-credentials@04b98b3f9e85f563fb061be8751a0352327246b0 # v3.0.1
         with:
           aws-region: us-west-2
           role-to-assume: "${{ secrets.CI_ROLE_ARN }}"
-      - name: Terraform Init
-        id: init
-        run: terraform init -backend-config="staging.s3.tfbackend"
-      - name: Terraform Validate
-        id: validate
-        run: terraform validate -no-color
-      - name: Terraform Plan
-        if: steps.validate.outcome == 'success'
-        id: plan
-        run: terraform plan -input=false -no-color -out=tfplan -var-file="staging.tfvars" && terraform show -no-color tfplan
-        env:
-          TF_VAR_version_identifier: ${{ github.sha }}
-          TF_VAR_git_commit_sha: ${{ github.sha }}
-          TF_VAR_datadog_api_key: ${{ secrets.DATADOG_API_KEY }}
-          TF_VAR_datadog_app_key: ${{ secrets.DATADOG_APP_KEY }}
-      - name: Print zip md5s
-        if: always()
-        run: md5sum builds/*
-      - name: Print bin md5s
-        if: always()
-        run: md5sum ../bin/*/*
 
-  publish_terraform_results:
-    name: Publish Terraform Results
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-    if: always()
+  tf-plan:
     needs:
-      - terraform
-    steps:
-      - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
-        with:
-          disable-sudo: true
-          egress-policy: block
-          allowed-endpoints: >
-            api.github.com:443
-      - name: Reformat Plan
-        if: always() && needs.terraform.outputs.plan_outcome != 'cancelled' && needs.terraform.outputs.plan_outcome != 'skipped'
-        run: |
-          echo '${{ needs.terraform.outputs.plan_output }}' | sed -E 's/^([[:space:]]+)([-+])/\2\1/g' > plan.txt
-          PLAN=$(cat plan.txt | head -c 65300) # Observe GitHub's 65535 character limit
-          echo "PLAN<<EOF" >> $GITHUB_ENV
-          echo "$PLAN" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-      - name: Write the report markdown file
-        if: always()
-        run: |
-          REPORT_FILE=$(mktemp -t summary.md.XXXXX )
-          echo "REPORT_FILE=$REPORT_FILE" >> $GITHUB_ENV
-          cat >> $REPORT_FILE << 'ENDOFREPORT'
-          ## Terraform Summary
-
-          | Step                         | Result  |
-          |:-----------------------------|:-------:|
-          | 🖌  Terraform Format & Style | ${{ (needs.terraform.outputs.fmt_outcome == 'success' && '✅') || (needs.terraform.outputs.fmt_outcome == 'skipped' && '➖') || '❌'  }} |
-          | ⚙️  Terraform Initialization | ${{ (needs.terraform.outputs.init_outcome == 'success' && '✅') || (needs.terraform.outputs.init_outcome == 'skipped' && '➖') || '❌' }} |
-          | 🤖  Terraform Validation     | ${{ (needs.terraform.outputs.validate_outcome == 'success' && '✅') || (needs.terraform.outputs.validate_outcome == 'skipped' && '➖') || '❌' }} |
-          | 📖  Terraform Plan           | ${{ (needs.terraform.outputs.plan_outcome == 'success' && '✅') || (needs.terraform.outputs.plan_outcome == 'skipped' && '➖') || '❌' }} |
-
-          ### Output
-
-          <details>
-          <summary>Validation Output</summary>
-
-          ```
-          ${{ needs.terraform.outputs.validate_output }}
-          ```
-
-          </details>
-
-          <details>
-          <summary>Plan Output</summary>
-
-          ```diff
-          ${{ env.PLAN }}
-          ```
-
-          </details>
-
-          *Pusher: @${{ github.actor }}, Action: `${{ github.event_name }}`, Workflow: [`${{ github.workflow }}`](${{ github.server_url}}/${{ github.repository }}/actions/runs/${{ github.run_id }})*
-          ENDOFREPORT
-
-      - name: Write the step summary
-        if: always()
-        run: cat $REPORT_FILE | head -c 65300 >> $GITHUB_STEP_SUMMARY # Observe GitHub's 65535 character limit
-      - name: Write the comment body
-        if: always()
-        run: |
-          CONTENT=$(cat $REPORT_FILE)
-          echo "REPORT_CONTENT<<ENDOFREPORT" >> $GITHUB_ENV
-          echo "$CONTENT" >> $GITHUB_ENV
-          echo "ENDOFREPORT" >> $GITHUB_ENV
-      - name: Find previous report comment
-        if: always()
-        uses: peter-evans/find-comment@v2
-        id: fc
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          comment-author: 'github-actions[bot]'
-          body-includes: Terraform Summary
-      - name: Create or update comment
-        if: always()
-        uses: peter-evans/create-or-update-comment@v2
-        with:
-          comment-id: ${{ steps.fc.outputs.comment-id }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body: ${{ env.REPORT_CONTENT }}
-          edit-mode: replace
+      - aws-auth
+      - build-lambdas
+    uses: ./.github/workflows/terraform-plan.yml
+    if: always() && needs.build-lambdas.outputs.build-lambdas-result == 'success' && needs.aws-auth.result == 'success'
+    with:
+      ref: ${{ github.event.pull_request.head.sha }}
+      bin-artifacts-key: ${{ needs.build-lambdas.outputs.lambda-artifacts-key }}
+      bin-artifacts-path: ${{ needs.build-lambdas.outputs.lambda-artifacts-path }}
+      aws-region: us-west-2
+      tf-backend-config-file: staging.s3.tfbackend
+      tf-var-file: staging.tfvars
+      upload-artifacts: false
+    secrets:
+      aws-access-key-id: ${{ needs.aws-auth.outputs.aws-access-key-id }}
+      aws-secret-access-key: ${{ needs.aws-auth.outputs.aws-secret-access-key }}
+      aws-session-token: ${{ needs.aws-auth.outputs.aws-session-token }}
+      datadog-api-key: ${{ secrets.DATADOG_API_KEY }}
+      datadog-app-key: ${{ secrets.DATADOG_APP_KEY }}
