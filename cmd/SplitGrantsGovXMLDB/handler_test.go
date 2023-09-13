@@ -31,8 +31,8 @@ import (
 )
 
 func TestOpportunityS3ObjectKey(t *testing.T) {
-	opp := &opportunity{OpportunityID: "123456789"}
-	assert.Equal(t, opp.S3ObjectKey(), "123/123456789/grants.gov/v2.xml")
+	opp := opportunity{OpportunityID: "123456789"}
+	assert.Equal(t, opp.s3ObjectKey(), "123/123456789/grants.gov/v2.OpportunitySynopsisDetail_1_0.xml")
 }
 
 func setupLambdaEnvForTesting(t *testing.T) {
@@ -230,7 +230,7 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 				"LastUpdatedDate": values.LastUpdatedDate,
 			}))
 			if values.isExtant {
-				extantKey := fmt.Sprintf("%s/%s/grants.gov/v2.xml",
+				extantKey := fmt.Sprintf("%s/%s/grants.gov/v2.OpportunitySynopsisDetail_1_0.xml",
 					values.OpportunityID[0:3], values.OpportunityID)
 				_, err := s3client.PutObject(context.TODO(), &s3.PutObjectInput{
 					Bucket: aws.String(env.DestinationBucket),
@@ -282,7 +282,7 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 			}
 
 			for _, v := range tt.grantValues {
-				key := fmt.Sprintf("%s/%s/grants.gov/v2.xml",
+				key := fmt.Sprintf("%s/%s/grants.gov/v2.OpportunitySynopsisDetail_1_0.xml",
 					v.OpportunityID[0:3], v.OpportunityID)
 				resp, err := s3client.GetObject(context.TODO(), &s3.GetObjectInput{
 					Bucket: aws.String(env.DestinationBucket),
@@ -352,7 +352,7 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 
 		_, err = s3client.GetObject(context.Background(), &s3.GetObjectInput{
 			Bucket: aws.String(env.DestinationBucket),
-			Key:    aws.String("123/12345/grants.gov/v2.xml"),
+			Key:    aws.String("123/12345/grants.gov/v2.OpportunitySynopsisDetail_1_0.xml"),
 		})
 		assert.NoError(t, err, "Expected destination object was not created")
 	})
@@ -394,11 +394,16 @@ func (r *MockReader) Read(p []byte) (int, error) {
 
 func TestReadOpportunities(t *testing.T) {
 	t.Run("Context cancelled between reads", func(t *testing.T) {
+		setupLambdaEnvForTesting(t)
+		ch := make(chan grantRecord, 10)
 		ctx, cancel := context.WithCancel(context.TODO())
-		err := readOpportunities(ctx, &MockReader{func(p []byte) (int, error) {
-			cancel()
-			return int(copy(p, []byte("<Grants>"))), nil
-		}}, make(chan<- opportunity, 10))
+		err := readOpportunities(ctx,
+			&MockReader{func(p []byte) (int, error) {
+				cancel()
+				return int(copy(p, []byte("<Grants>"))), nil
+			}},
+			ch,
+		)
 		assert.ErrorIs(t, err, context.Canceled)
 	})
 }
@@ -422,7 +427,7 @@ func TestProcessOpportunity(t *testing.T) {
 			mockGetObjectAPI(nil),
 			mockPutObjectAPI(nil),
 		}
-		err := processOpportunity(context.TODO(), c, testOpportunity)
+		err := processOpportunity(context.TODO(), c, &testOpportunity)
 		assert.ErrorContains(t, err, "Error determining last modified time for remote opportunity")
 	})
 
@@ -450,7 +455,7 @@ func TestProcessOpportunity(t *testing.T) {
 			}),
 		}
 		fmt.Printf("%T", s3Client)
-		err := processOpportunity(context.TODO(), s3Client, testOpportunity)
+		err := processOpportunity(context.TODO(), s3Client, &testOpportunity)
 		assert.ErrorContains(t, err, "Error uploading prepared grant opportunity to S3")
 	})
 }

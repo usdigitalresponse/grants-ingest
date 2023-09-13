@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/xml"
-	"fmt"
 	"io"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -14,21 +13,14 @@ import (
 	"github.com/go-kit/log/level"
 	"github.com/hashicorp/go-multierror"
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
-	grantsgov "github.com/usdigitalresponse/grants-ingest/pkg/grantsSchemas/grants.gov"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
 const (
 	MB                         = int64(1024 * 1024)
 	GRANT_OPPORTUNITY_XML_NAME = "OpportunitySynopsisDetail_1_0"
+	GRANT_FORECAST_XML_NAME    = "OpportunityForecastDetail_1_0"
 )
-
-type opportunity grantsgov.OpportunitySynopsisDetail_1_0
-
-// S3ObjectKey returns a string to use as the object key when saving the opportunity to an S3 bucket.
-func (o *opportunity) S3ObjectKey() string {
-	return fmt.Sprintf("%s/%s/grants.gov/v2.xml", o.OpportunityID[0:3], o.OpportunityID)
-}
 
 // handleS3Event handles events representing S3 bucket notifications of type "ObjectCreated:*"
 // for XML DB extracts saved from Grants.gov. The XML data from the source S3 object provided
@@ -49,7 +41,7 @@ func handleS3EventWithConfig(cfg aws.Config, ctx context.Context, s3Event events
 
 	// Create an opportunities channel to direct grantOpportunity values parsed from the source
 	// record to individual S3 object uploads
-	opportunities := make(chan opportunity)
+	opportunities := make(chan grantRecord)
 
 	// Create a pool of workers to consume and upload values received from the opportunities channel
 	processingSpan, processingCtx := tracer.StartSpanFromContext(ctx, "processing")
@@ -134,7 +126,7 @@ func handleS3EventWithConfig(cfg aws.Config, ctx context.Context, s3Event events
 // Returns nil when the end of the file is reached.
 // readOpportunities stops and returns an error when the context is canceled
 // or an error is encountered while reading.
-func readOpportunities(ctx context.Context, r io.Reader, ch chan<- opportunity) error {
+func readOpportunities(ctx context.Context, r io.Reader, ch chan<- grantRecord) error {
 	span, ctx := tracer.StartSpanFromContext(ctx, "read.xml")
 
 	d := xml.NewDecoder(r)
@@ -157,19 +149,28 @@ func readOpportunities(ctx context.Context, r io.Reader, ch chan<- opportunity) 
 			return err
 		}
 
-		// When reading the start of a new element, check if it is a grant opportunity
-		se, ok := token.(xml.StartElement)
-		if ok && se.Name.Local == GRANT_OPPORTUNITY_XML_NAME {
-			var opportunity opportunity
-			if err := d.DecodeElement(&opportunity, &se); err != nil {
-				level.Error(logger).Log("msg", "Error decoding XML token", "error", err)
+		// When reading the start of a new se, check if it is a grant opportunity or forecast
+		if se, ok := token.(xml.StartElement); ok {
+			var err error
+			if se.Name.Local == GRANT_OPPORTUNITY_XML_NAME {
+				var o opportunity
+				if err = d.DecodeElement(&o, &se); err == nil {
+					ch <- &o
+				}
+			} else if se.Name.Local == GRANT_FORECAST_XML_NAME {
+				var f forecast
+				if err = d.DecodeElement(&f, &se); err == nil {
+					ch <- &f
+				}
+			}
+			if err != nil {
+				log.Error(logger, "Error decoding XML", err, "element_name", se.Name.Local)
 				span.Finish(tracer.WithError(err))
 				return err
 			}
-			ch <- opportunity
 		}
 	}
-	log.Info(logger, "Finished reading opportunities from source")
+	log.Info(logger, "Finished reading source XML")
 	span.Finish()
 	return nil
 }
@@ -179,7 +180,7 @@ func readOpportunities(ctx context.Context, r io.Reader, ch chan<- opportunity) 
 // It returns a multi-error containing any errors encountered while processing a received
 // grantOpportunity as well as the reason for the context cancelation, if any.
 // Returns nil if all opportunities were processed successfully until the channel was closed.
-func processOpportunities(ctx context.Context, svc *s3.Client, ch <-chan opportunity) (errs error) {
+func processOpportunities(ctx context.Context, svc *s3.Client, ch <-chan grantRecord) (errs error) {
 	span, ctx := tracer.StartSpanFromContext(ctx, "processing.worker")
 
 	whenCanceled := func() error {
@@ -226,19 +227,17 @@ func processOpportunities(ctx context.Context, svc *s3.Client, ch <-chan opportu
 // any extant S3 object with a matching key in the bucket named by env.DestinationBucket
 // is compared with the opportunity. An upload is initiated when the opportunity was updated
 // more recently than the extant object was last modified, or when no extant object exists.
-func processOpportunity(ctx context.Context, svc S3ReadWriteObjectAPI, opp opportunity) error {
-	logger := log.With(logger,
-		"opportunity_id", opp.OpportunityID, "opportunity_number", opp.OpportunityNumber)
+func processOpportunity(ctx context.Context, svc S3ReadWriteObjectAPI, opp grantRecord) error {
+	logger := opp.logWith(logger)
 
-	lastModified, err := opp.LastUpdatedDate.Time()
+	lastModified, err := opp.lastModified()
 	if err != nil {
 		return log.Errorf(logger, "Error getting last modified time for opportunity", err)
 	}
-	log.Debug(logger, "Parsed last modified time from opportunity last update date",
-		"raw_value", opp.LastUpdatedDate, "parsed_value", lastModified)
 	logger = log.With(logger, "opportunity_last_modified", lastModified)
+	log.Debug(logger, "Parsed last modified time from opportunity last update date")
 
-	key := opp.S3ObjectKey()
+	key := opp.s3ObjectKey()
 	logger = log.With(logger, "bucket", env.DestinationBucket, "key", key)
 	remoteLastModified, err := GetS3LastModified(ctx, svc, env.DestinationBucket, key)
 	if err != nil {
@@ -259,7 +258,7 @@ func processOpportunity(ctx context.Context, svc S3ReadWriteObjectAPI, opp oppor
 		log.Debug(logger, "Uploading new opportunity")
 	}
 
-	b, err := xml.Marshal(grantsgov.OpportunitySynopsisDetail_1_0(opp))
+	b, err := opp.toXML()
 	if err != nil {
 		return log.Errorf(logger, "Error marshaling XML for opportunity", err)
 	}
