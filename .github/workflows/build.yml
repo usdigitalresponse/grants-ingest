@@ -70,6 +70,8 @@ jobs:
         with:
           key: ${{ env.TASKFILE_CACHE_KEY }}
           path: ${{ env.TASKFILE_CACHE_PATHS }}
+      - name: Ensure Taskfile cache paths exist
+        run: mkdir -p ${{ env.TASKFILE_CACHE_PATHS }}
       - uses: actions/setup-go@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -170,7 +172,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: ${{ needs.prepare.outputs.sources-key }}
-          path: ${{ needs.prepare.outputs.sources-path }}
+          path: .
       - name: Restore/save Taskfile cache
         uses: actions/cache@v3
         with:
