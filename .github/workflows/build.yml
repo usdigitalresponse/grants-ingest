@@ -40,14 +40,9 @@ jobs:
         ${{ github.workspace }}/go.mod
         ${{ github.workspace }}/go.sum
         ${{ github.workspace }}/Taskfile.yml
-      TASKFILE_CACHE_KEY: ${{ inputs.ref }}-taskfile-cache
-      TASKFILE_CACHE_PATHS: |
-        ${{ github.workspace }}/.task
     outputs:
       sources-key: ${{ env.SOURCES_KEY }}
       sources-path: ${{ env.SOURCES_PATH }}
-      taskfile-key: ${{ env.TASKFILE_CACHE_KEY }}
-      taskfile-path: ${{ env.TASKFILE_CACHE_PATHS }}
     steps:
       - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
         with:
@@ -65,13 +60,6 @@ jobs:
         with:
           show-progress: 'false'
           persist-credentials: 'false'
-      - name: Restore/save Taskfile cache
-        uses: actions/cache@v3
-        with:
-          key: ${{ env.TASKFILE_CACHE_KEY }}
-          path: ${{ env.TASKFILE_CACHE_PATHS }}
-      - name: Ensure Taskfile cache paths exist
-        run: mkdir -p ${{ env.TASKFILE_CACHE_PATHS }}
       - uses: actions/setup-go@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -118,13 +106,6 @@ jobs:
         with:
           name: ${{ needs.prepare.outputs.sources-key }}
           path: .
-      - name: Restore Taskfile cache
-        uses: actions/cache/restore@v3
-        with:
-          key: ${{ needs.prepare.outputs.taskfile-key }}
-          path: ${{ needs.prepare.outputs.taskfile-path }}
-      - name: Debug cache restore
-        run: ls -lahR .task
       - uses: actions/setup-go@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -175,11 +156,6 @@ jobs:
         with:
           name: ${{ needs.prepare.outputs.sources-key }}
           path: .
-      - name: Restore/save Taskfile cache
-        uses: actions/cache/restore@v3
-        with:
-          key: ${{ needs.prepare.outputs.taskfile-key }}
-          path: ${{ needs.prepare.outputs.taskfile-path }}
       - uses: actions/setup-go@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
