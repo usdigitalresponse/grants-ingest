@@ -104,12 +104,21 @@ jobs:
           exit 1
         env:
           GPG_PASSPHRASE: ${{ secrets.gpg-passphrase }}
+      - name: Validate AWS credentials are present
+        if: (env.AWS_ACCESS_KEY_ID == '') || (env.AWS_SECRET_ACCESS_KEY == '') || (env.AWS_SESSION_TOKEN == '')
+        run: |
+          echo 'AWS credentials are required to plan terraform'
+          exit 1
+        env:
+          AWS_ACCESS_KEY_ID: "${{ secrets.aws-access-key-id }}"
+          AWS_SECRET_ACCESS_KEY: "${{ secrets.aws-secret-access-key }}"
+          AWS_SESSION_TOKEN: "${{ secrets.aws-session-token }}"
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref }}
           show-progress: 'false'
           persist-credentials: 'false'
-      - name: Restore executable artifacts
+      - name: Download Lambda handler artifacts
         uses: actions/download-artifact@v3
         with:
           name: ${{ inputs.bin-artifacts-key }}
