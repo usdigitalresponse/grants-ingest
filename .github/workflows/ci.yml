@@ -4,16 +4,17 @@ on:
   # pull_request_target: {}
   pull_request: {}
 
-permissions:
-  contents: read
-
 jobs:
   qa:
+    permissions:
+      contents: read
     uses: ./.github/workflows/qa.yml
     with:
       ref: ${{ github.event.pull_request.head.sha }}
 
   build-lambdas:
+    permissions:
+      contents: read
     name: Build Lambda handlers
     uses: ./.github/workflows/build.yml
     with:
@@ -25,6 +26,7 @@ jobs:
     name: Configure AWS Credentials
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       id-token: write
     outputs:
       aws-access-key-id: ${{ steps.auth.outputs.aws-access-key-id }}
@@ -42,6 +44,9 @@ jobs:
           role-to-assume: "${{ secrets.CI_ROLE_ARN }}"
 
   tf-plan:
+    name: Plan Terraform
+    permissions:
+      contents: read
     needs:
       - aws-auth
       - build-lambdas
