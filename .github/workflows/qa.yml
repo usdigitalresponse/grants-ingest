@@ -1,0 +1,101 @@
+name: QA Checks
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  qa_go:
+    name: QA for Go
+    runs-on: ubuntu-latest
+    steps:
+      - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            actions-results-receiver-production.githubapp.com:443
+            api.github.com:443
+            github.com:443
+            objects.githubusercontent.com:443
+            proxy.golang.org:443
+            sum.golang.org:443
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          show-progress: 'false'
+          persist-credentials: 'false'
+      - name: Restore/save Taskfile cache
+        uses: actions/cache@v3
+        with:
+          key: ${{ runner.os }}-qa-taskfile
+          path: |
+            ./.task
+            ./bin
+            ./cover.out
+            ./cover.html
+      - uses: actions/setup-go@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          go-version-file: go.mod
+      - uses: arduino/setup-task@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          version: 3.x
+      - name: Pre-build optimization
+        run: task prebuild-lambda
+      - name: Check Formatting
+        run: test -z "$(go fmt ./...)" || echo "Formatting check failed."
+      - name: Test
+        run: task test
+      - name: Vet
+        run: go vet ./...
+      - name: Lint
+        uses: dominikh/staticcheck-action@v1.3.0
+        with:
+          install-go: false
+      - name: Ensure all go binaries compile
+        run: task build build-cli
+
+  tflint:
+    name: Lint terraform
+    runs-on: ubuntu-latest
+    steps:
+      - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            actions-results-receiver-production.githubapp.com:443
+            api.github.com:443
+            github.com:443
+            objects.githubusercontent.com:443
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          show-progress: 'false'
+          persist-credentials: 'false'
+      - uses: actions/cache@v3
+        name: Cache plugin dir
+        with:
+          path: .tflint.d/plugins
+          key: ${{ runner.os }}-tflint-${{ hashFiles('terraform/.tflint.hcl') }}
+      - uses: terraform-linters/setup-tflint@v3
+        name: Setup TFLint
+        with:
+          tflint_version: latest
+      - name: Show TFLint version
+        run: tflint --version
+      - name: Init TFLint
+        run: tflint --init
+        working-directory: terraform
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: Run TFLint
+        run: tflint -f compact --recursive
