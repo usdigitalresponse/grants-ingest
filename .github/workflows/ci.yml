@@ -161,7 +161,7 @@ jobs:
         id: comment-body
         run: |
           {
-            echo 'content=<<ENDOFREPORT'
+            echo 'content<<ENDOFREPORT'
             echo $(cat "$REPORT_FILE")
             echo 'ENDOFREPORT'
           } >> $GITHUB_OUTPUT
