@@ -29,9 +29,9 @@ jobs:
       contents: read
       id-token: write
     outputs:
-      aws-access-key-id: ${{ steps.auth.outputs.aws-access-key-id }}
-      aws-secret-access-key: ${{ steps.auth.outputs.aws-secret-access-key }}
-      aws-session-token: ${{ steps.auth.outputs.aws-session-token }}
+      aws-access-key-id: ${{ steps.encrypt-aws-access-key-id.outputs.out }}
+      aws-secret-access-key: ${{ steps.encrypt-aws-secret-access-key.outputs.out }}
+      aws-session-token: ${{ steps.encrypt-aws-session-token.outputs.out }}
     steps:
       - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
         with:
@@ -42,6 +42,24 @@ jobs:
         with:
           aws-region: us-west-2
           role-to-assume: "${{ secrets.CI_ROLE_ARN }}"
+      - id: encrypt-aws-access-key-id
+        uses: cloudposse/github-action-secret-outputs@60479d3a8f6726504d00a65d3cf4226c1ae8c661 # v0.1.1
+        with:
+          in: ${{ steps.auth.outputs.aws-access-key-id }}
+          op: encode
+          secret: ${{ secrets.TFPLAN_SECRET }}
+      - id: encrypt-aws-secret-access-key
+        uses: cloudposse/github-action-secret-outputs@60479d3a8f6726504d00a65d3cf4226c1ae8c661 # v0.1.1
+        with:
+          in: ${{ steps.auth.outputs.aws-secret-access-key }}
+          op: encode
+          secret: ${{ secrets.TFPLAN_SECRET }}
+      - id: encrypt-aws-session-token
+        uses: cloudposse/github-action-secret-outputs@60479d3a8f6726504d00a65d3cf4226c1ae8c661 # v0.1.1
+        with:
+          in: ${{ steps.auth.outputs.aws-session-token }}
+          op: encode
+          secret: ${{ secrets.TFPLAN_SECRET }}
 
   tf-plan:
     name: Plan Terraform
@@ -66,3 +84,4 @@ jobs:
       aws-session-token: ${{ needs.aws-auth.outputs.aws-session-token }}
       datadog-api-key: ${{ secrets.DATADOG_API_KEY }}
       datadog-app-key: ${{ secrets.DATADOG_APP_KEY }}
+      gpg-passphrase: ${{ secrets.TFPLAN_SECRET }}

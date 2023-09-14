@@ -39,7 +39,7 @@ on:
       datadog-app-key:
         required: true
       gpg-passphrase:
-        required: false
+        required: true
     outputs:
       fmt-outcome:
         value: ${{ jobs.do.outputs.fmt_outcome }}
@@ -133,13 +133,31 @@ jobs:
       - name: Terraform fmt
         id: fmt
         run: terraform fmt -check -diff -recursive
+      - id: decrypt-aws-access-key-id
+        uses: cloudposse/github-action-secret-outputs@60479d3a8f6726504d00a65d3cf4226c1ae8c661 # v0.1.1
+        with:
+          in: ${{ secrets.aws-access-key-id }}
+          op: decode
+          secret: ${{ secrets.TFPLAN_SECRET }}
+      - id: decrypt-aws-secret-access-key
+        uses: cloudposse/github-action-secret-outputs@60479d3a8f6726504d00a65d3cf4226c1ae8c661 # v0.1.1
+        with:
+          in: ${{ secrets.aws-secret-access-key }}
+          op: decode
+          secret: ${{ secrets.TFPLAN_SECRET }}
+      - id: decrypt-aws-session-token
+        uses: cloudposse/github-action-secret-outputs@60479d3a8f6726504d00a65d3cf4226c1ae8c661 # v0.1.1
+        with:
+          in: ${{ secrets.aws-session-token }}
+          op: decode
+          secret: ${{ secrets.TFPLAN_SECRET }}
       - name: Terraform Init
         id: init
         run: terraform init
         env:
-          AWS_ACCESS_KEY_ID: "${{ secrets.aws-access-key-id }}"
-          AWS_SECRET_ACCESS_KEY: "${{ secrets.aws-secret-access-key }}"
-          AWS_SESSION_TOKEN: "${{ secrets.aws-session-token }}"
+          AWS_ACCESS_KEY_ID: "${{ steps.decrypt-aws-access-key-id.outputs.out }}"
+          AWS_SECRET_ACCESS_KEY: "${{ steps.decrypt-aws-secret-access-key.outputs.out }}"
+          AWS_SESSION_TOKEN: "${{ steps.decrypt-aws-session-token.outputs.out }}"
           TF_CLI_ARGS_init: "-backend-config=${{ inputs.tf-backend-config-file }}"
       - name: Terraform Validate
         id: validate
@@ -149,9 +167,9 @@ jobs:
         id: plan
         run: terraform plan -out="tfplan" -detailed-exitcode
         env:
-          AWS_ACCESS_KEY_ID: "${{ secrets.aws-access-key-id }}"
-          AWS_SECRET_ACCESS_KEY: "${{ secrets.aws-secret-access-key }}"
-          AWS_SESSION_TOKEN: "${{ secrets.aws-session-token }}"
+          AWS_ACCESS_KEY_ID: "${{ steps.decrypt-aws-access-key-id.outputs.out }}"
+          AWS_SECRET_ACCESS_KEY: "${{ steps.decrypt-aws-secret-access-key.outputs.out }}"
+          AWS_SESSION_TOKEN: "${{ steps.decrypt-aws-session-token.outputs.out }}"
           TF_CLI_ARGS_plan: "-var-file=${{ inputs.tf-var-file }}"
           TF_VAR_version_identifier: ${{ inputs.ref }}
           TF_VAR_git_commit_sha: ${{ inputs.ref }}
@@ -162,7 +180,7 @@ jobs:
         run: terraform show tfplan
       - name: Encrypt terraform plan file
         id: encrypt_plan
-        if: always() && inputs.upload-artifacts
+        if: success() && inputs.upload-artifacts
         env:
           PASSPHRASE: ${{ secrets.gpg-passphrase }}
         run: |
@@ -170,7 +188,7 @@ jobs:
           echo "$PASSPHRASE" | gpg --batch --yes --passphrase-fd 0 -c --cipher-algo AES256 tfplan
           rm tfplan
       - name: Store terraform artifacts
-        if: always() && inputs.upload-artifacts && steps.encrypt_plan.outcome == 'success'
+        if: success() && inputs.upload-artifacts
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.ARTIFACTS_KEY }}
