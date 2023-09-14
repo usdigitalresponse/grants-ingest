@@ -125,7 +125,7 @@ jobs:
         run: terraform fmt -check -diff -recursive
       - id: decrypt-aws-access-key-id
         run: |
-          decrypted=$(gpg -qd --batch --yes --passphrase "$SECRET" -o - <(echo "$VALUE" | base64 -d))
+          decrypted=$(gpg -qd --batch --yes --passphrase "$GPG_PASSPHRASE" -o - <(echo "$VALUE" | base64 -d))
           echo "::add-mask::${decrypted}"
           echo "out=${decrypted}" >> $GITHUB_OUTPUT
         env:
@@ -133,7 +133,7 @@ jobs:
           VALUE: ${{ secrets.aws-access-key-id }}
       - id: decrypt-aws-secret-access-key
         run: |
-          decrypted=$(gpg -qd --batch --yes --passphrase "$SECRET" -o - <(echo "$VALUE" | base64 -d))
+          decrypted=$(gpg -qd --batch --yes --passphrase "$GPG_PASSPHRASE" -o - <(echo "$VALUE" | base64 -d))
           echo "::add-mask::${decrypted}"
           echo "out=${decrypted}" >> $GITHUB_OUTPUT
         env:
@@ -141,7 +141,7 @@ jobs:
           VALUE: ${{ secrets.aws-secret-access-key }}
       - id: decrypt-aws-session-token
         run: |
-          decrypted=$(gpg -qd --batch --yes --passphrase "$SECRET" -o - <(echo "$VALUE" | base64 -d))
+          decrypted=$(gpg -qd --batch --yes --passphrase "$GPG_PASSPHRASE" -o - <(echo "$VALUE" | base64 -d))
           echo "::add-mask::${decrypted}"
           echo "out=${decrypted}" >> $GITHUB_OUTPUT
         env:
