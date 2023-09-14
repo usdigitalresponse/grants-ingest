@@ -158,7 +158,11 @@ jobs:
           echo "ENDOFREPORT" >> $GITHUB_ENV
       - name: Write the comment body to step output
         id: comment-body
-        run: echo "content=$(cat $REPORT_FILE)" >> $GITHOUT_OUTPUT
+        run: |
+          echo "content=$(cat $REPORT_FILE)" >> $GITHOUT_OUTPUT
+          echo "content=<<ENDOFREPORT" >> $GITHUB_OUTPUT
+          cat "$REPORT_FILE" >> $GITHUB_OUTPUT
+          echo "ENDOFREPORT" >> $GITHUB_OUTPUT
       - name: Find previous report comment
         uses: peter-evans/find-comment@v2
         id: find-comment
