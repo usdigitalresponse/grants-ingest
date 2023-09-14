@@ -109,16 +109,6 @@ jobs:
           exit 1
         env:
           GPG_PASSPHRASE: ${{ secrets.gpg-passphrase }}
-      - name: Validate AWS credentials are present
-        run: |
-          [[ -n $AWS_ACCESS_KEY_ID ]] || echo AWS_ACCESS_KEY is empty
-          [[ -n $AWS_SECRET_ACCESS_KEY ]] || echo AWS_SECRET_ACCESS_KEY is empty
-          [[ -n $AWS_SESSION_TOKEN ]] || echo AWS_SESSION_TOKEN is empty
-          exit 1
-        env:
-          AWS_ACCESS_KEY_ID: "${{ secrets.aws-access-key-id }}"
-          AWS_SECRET_ACCESS_KEY: "${{ secrets.aws-secret-access-key }}"
-          AWS_SESSION_TOKEN: "${{ secrets.aws-session-token }}"
       - name: Download Lambda handler artifacts
         uses: actions/download-artifact@v3
         with:
