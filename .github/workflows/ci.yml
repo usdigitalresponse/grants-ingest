@@ -152,7 +152,6 @@ jobs:
         run: cat $REPORT_FILE | head -c 65500 >> $GITHUB_STEP_SUMMARY # Observe GitHub's 65535 character limit
       - name: Write the comment body
         id: comment-body
-        if: false
         run: |
           CONTENT=$(cat $REPORT_FILE)
           echo "REPORT_CONTENT<<ENDOFREPORT" >> $GITHUB_ENV
