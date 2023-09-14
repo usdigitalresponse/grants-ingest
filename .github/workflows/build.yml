@@ -114,9 +114,7 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           version: 3.x
-      - run: mkdir -p ${{ env.BIN_OUTPUT_DIR }}
-        env:
-          BIN_OUTPUT_DIR: ${{ env.ARTIFACTS_PATH }}
+      - run: mkdir -p $ARTIFACTS_PATH
       - name: Build Lambdas
         id: build
         run: task build
@@ -165,9 +163,9 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           version: 3.x
       - run: mkdir -p $(dirname $ARTIFACTS_PATH)
-      - name: Build Lambdas
+      - name: Build CLI
         id: build
-        run: task build
+        run: task build-cli
       - name: Store build artifacts
         id: store
         uses: actions/upload-artifact@v3
