@@ -79,7 +79,7 @@ jobs:
 
   build-lambdas:
     name: Build Lambdas
-    if: always() && ${{ inputs.build-lambdas }} && ${{ needs.prepare.result == 'success' }}
+    if: needs.prepare.result == 'success' && inputs.build-lambdas
     runs-on: ubuntu-latest
     needs:
       - prepare
@@ -127,7 +127,7 @@ jobs:
 
   build-cli:
     name: Build CLI
-    if: ${{ needs.prepare.result == 'success' }} && ${{ inputs.build-cli }}
+    if: needs.prepare.result == 'success' && inputs.build-cli
     runs-on: ubuntu-latest
     needs:
       - prepare
