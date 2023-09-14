@@ -128,19 +128,19 @@ jobs:
         with:
           in: ${{ secrets.aws-access-key-id }}
           op: decode
-          secret: ${{ secrets.TFPLAN_SECRET }}
+          secret: ${{ secrets.gpg-passphrase }}
       - id: decrypt-aws-secret-access-key
         uses: cloudposse/github-action-secret-outputs@60479d3a8f6726504d00a65d3cf4226c1ae8c661 # v0.1.1
         with:
           in: ${{ secrets.aws-secret-access-key }}
           op: decode
-          secret: ${{ secrets.TFPLAN_SECRET }}
+          secret: ${{ secrets.gpg-passphrase }}
       - id: decrypt-aws-session-token
         uses: cloudposse/github-action-secret-outputs@60479d3a8f6726504d00a65d3cf4226c1ae8c661 # v0.1.1
         with:
           in: ${{ secrets.aws-session-token }}
           op: decode
-          secret: ${{ secrets.TFPLAN_SECRET }}
+          secret: ${{ secrets.gpg-passphrase }}
       - name: Terraform Init
         id: init
         run: terraform init
