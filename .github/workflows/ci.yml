@@ -154,9 +154,9 @@ jobs:
         id: comment-body
         run: |
           CONTENT=$(cat $REPORT_FILE)
-          echo "REPORT_CONTENT<<ENDOFREPORT" >> $GITHUB_ENV
-          echo "$CONTENT" >> $GITHUB_ENV
-          echo "ENDOFREPORT" >> $GITHUB_ENV
+          echo "REPORT_CONTENT<<ENDOFREPORT" >> $GITHUB_OUTPUT
+          echo "$CONTENT" >> $GITHUB_OUTPUT
+          echo "ENDOFREPORT" >> $GITHUB_OUTPUT
       - name: Find previous report comment
         uses: peter-evans/find-comment@v2
         id: find-comment
@@ -170,5 +170,5 @@ jobs:
         with:
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
-          body: ${{ steps.comment-body.outputs.content }}
+          body: ${{ steps.comment-body.outputs.REPORT_CONTENT }}
           edit-mode: replace
