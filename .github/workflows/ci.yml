@@ -151,20 +151,13 @@ jobs:
       - name: Write the step summary
         run: cat $REPORT_FILE | head -c 65500 >> $GITHUB_STEP_SUMMARY # Observe GitHub's 65535 character limit
       - name: Write the comment body
+        id: comment-body
         if: false
         run: |
           CONTENT=$(cat $REPORT_FILE)
           echo "REPORT_CONTENT<<ENDOFREPORT" >> $GITHUB_ENV
           echo "$CONTENT" >> $GITHUB_ENV
           echo "ENDOFREPORT" >> $GITHUB_ENV
-      - name: Write the comment body to step output
-        id: comment-body
-        run: |
-          {
-            echo 'content<<ENDOFREPORT'
-            echo $(cat "$REPORT_FILE")
-            echo 'ENDOFREPORT'
-          } >> $GITHUB_OUTPUT
       - name: Find previous report comment
         uses: peter-evans/find-comment@v2
         id: find-comment
