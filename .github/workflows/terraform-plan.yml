@@ -70,8 +70,9 @@ jobs:
       init_outcome: ${{ steps.init.outcome }}
       validate_outcome: ${{ steps.validate.outcome }}
       validate_output: ${{ steps.validate.outputs.stdout }}
+      plan_exitcode: ${{ steps.plan.outputs.exitcode }}
       plan_outcome: ${{ steps.plan.outcome }}
-      plan_output: ${{ steps.plan.outputs.stdout || steps.plan.outputs.stderr }}
+      plan_output: ${{ steps.show_plan.outputs.stdout || steps.show_plan.outputs.stderr }}
     env:
       ARTIFACTS_KEY: terraform-${{ inputs.ref }}
       AWS_DEFAULT_REGION: ${{ inputs.aws-region }}
