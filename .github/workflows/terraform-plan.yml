@@ -169,8 +169,8 @@ jobs:
           TF_CLI_ARGS_plan: "-var-file=${{ inputs.tf-var-file }}"
           TF_VAR_version_identifier: ${{ inputs.ref }}
           TF_VAR_git_commit_sha: ${{ inputs.ref }}
-          TF_VAR_datadog_api_key: ${{ secrets.DATADOG_API_KEY }}
-          TF_VAR_datadog_app_key: ${{ secrets.DATADOG_APP_KEY }}
+          TF_VAR_datadog_api_key: ${{ secrets.datadog-api-key }}
+          TF_VAR_datadog_app_key: ${{ secrets.datadog-app-key }}
       - name: Generate plaintext plan
         id: show_plan
         run: terraform show tfplan
