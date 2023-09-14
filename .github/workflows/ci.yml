@@ -43,23 +43,23 @@ jobs:
           aws-region: us-west-2
           role-to-assume: "${{ secrets.CI_ROLE_ARN }}"
       - id: encrypt-aws-access-key-id
-        uses: cloudposse/github-action-secret-outputs@60479d3a8f6726504d00a65d3cf4226c1ae8c661 # v0.1.1
-        with:
-          in: ${{ steps.auth.outputs.aws-access-key-id }}
-          op: encode
-          secret: ${{ secrets.TFPLAN_SECRET }}
+        run: |
+          encrypted=$(gpg --batch --yes --passphrase "$GPG_PASSPHRASE" -c --cipher-algo AES256 -o - <(echo "$AWS_ACCESS_KEY_ID") | base64 -w0)
+          echo "out=$encrypted" >> $GITHUB_OUTPUT
+        env:
+          GPG_PASSPHRASE: ${{ secrets.TFPLAN_SECRET }}
       - id: encrypt-aws-secret-access-key
-        uses: cloudposse/github-action-secret-outputs@60479d3a8f6726504d00a65d3cf4226c1ae8c661 # v0.1.1
-        with:
-          in: ${{ steps.auth.outputs.aws-secret-access-key }}
-          op: encode
-          secret: ${{ secrets.TFPLAN_SECRET }}
+        run: |
+          encrypted=$(gpg --batch --yes --passphrase "$GPG_PASSPHRASE" -c --cipher-algo AES256 -o - <(echo "$AWS_SECRET_ACCESS_KEY") | base64 -w0)
+          echo "out=$encrypted" >> $GITHUB_OUTPUT
+        env:
+          GPG_PASSPHRASE: ${{ secrets.TFPLAN_SECRET }}
       - id: encrypt-aws-session-token
-        uses: cloudposse/github-action-secret-outputs@60479d3a8f6726504d00a65d3cf4226c1ae8c661 # v0.1.1
-        with:
-          in: ${{ steps.auth.outputs.aws-session-token }}
-          op: encode
-          secret: ${{ secrets.TFPLAN_SECRET }}
+        run: |
+          encrypted=$(gpg --batch --yes --passphrase "$GPG_PASSPHRASE" -c --cipher-algo AES256 -o - <(echo "$AWS_SESSION_TOKEN") | base64 -w0)
+          echo "out=$encrypted" >> $GITHUB_OUTPUT
+        env:
+          GPG_PASSPHRASE: ${{ secrets.TFPLAN_SECRET }}
 
   tf-plan:
     name: Plan Terraform
