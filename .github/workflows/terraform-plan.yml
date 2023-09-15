@@ -24,6 +24,10 @@ on:
       tf-var-file:
         type: string
         required: true
+      artifacts-retention-days:
+        description: Number of days to retain build artifacts
+        type: number
+        default: 90
       upload-artifacts:
         type: boolean
         default: false
@@ -192,3 +196,5 @@ jobs:
           path: |
             ${{ github.workspace }}/terraform
             !${{ github.workspace }}/terraform/.terraform
+          if-no-files-found: error
+          retention-days: ${{ inputs.artifacts-retention-days }}

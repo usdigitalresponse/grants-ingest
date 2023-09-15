@@ -6,6 +6,10 @@ on:
       ref:
         type: string
         required: true
+      artifacts-retention-days:
+        description: Number of days to retain build artifacts
+        type: number
+        default: 90
       build-cli:
         type: boolean
         default: false
@@ -80,6 +84,8 @@ jobs:
         with:
           name: ${{ env.SOURCES_KEY }}
           path: ${{ env.SOURCES_PATH }}
+          if-no-files-found: error
+          retention-days: ${{ inputs.artifacts-retention-days }}
 
   build-lambdas:
     name: Build Lambdas
@@ -195,6 +201,8 @@ jobs:
         with:
           name: ${{ env.ARTIFACTS_KEY }}
           path: ${{ env.ARTIFACTS_PATH }}
+          if-no-files-found: error
+          retention-days: ${{ inputs.artifacts-retention-days }}
 
   build-cli:
     name: Build CLI
@@ -310,3 +318,5 @@ jobs:
         with:
           name: ${{ env.ARTIFACTS_KEY }}
           path: ${{ env.ARTIFACTS_PATH }}
+          if-no-files-found: error
+          retention-days: ${{ inputs.artifacts-retention-days }}

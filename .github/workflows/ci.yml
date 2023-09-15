@@ -21,6 +21,7 @@ jobs:
       ref: ${{ github.event.pull_request.head.sha }}
       build-cli: false
       build-lambdas: true
+      artifacts-retention-days: 14
 
   aws-auth:
     name: Configure AWS Credentials
@@ -78,6 +79,7 @@ jobs:
       tf-backend-config-file: staging.s3.tfbackend
       tf-var-file: staging.tfvars
       upload-artifacts: false
+      artifacts-retention-days: 14
     secrets:
       aws-access-key-id: ${{ needs.aws-auth.outputs.aws-access-key-id }}
       aws-secret-access-key: ${{ needs.aws-auth.outputs.aws-secret-access-key }}
