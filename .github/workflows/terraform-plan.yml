@@ -167,6 +167,7 @@ jobs:
           AWS_ACCESS_KEY_ID: "${{ steps.decrypt-aws-access-key-id.outputs.out }}"
           AWS_SECRET_ACCESS_KEY: "${{ steps.decrypt-aws-secret-access-key.outputs.out }}"
           AWS_SESSION_TOKEN: "${{ steps.decrypt-aws-session-token.outputs.out }}"
+          GPG_PASSPHRASE: "" # Just in case
           TF_CLI_ARGS_plan: "-var-file=${{ inputs.tf-var-file }}"
           TF_VAR_version_identifier: ${{ inputs.ref }}
           TF_VAR_git_commit_sha: ${{ inputs.ref }}
@@ -179,10 +180,9 @@ jobs:
         id: encrypt_plan
         if: success() && inputs.upload-artifacts
         env:
-          PASSPHRASE: ${{ secrets.gpg-passphrase }}
+          GPG_PASSPHRASE: ${{ secrets.gpg-passphrase }}
         run: |
-          test -z $PASSPHRASE && (echo "Error: GPG passphrase cannot be empty"; exit 1)
-          echo "$PASSPHRASE" | gpg --batch --yes --passphrase-fd 0 -c --cipher-algo AES256 tfplan
+          gpg --batch --yes --passphrase "$GPG_PASSPHRASE" 0 -c --cipher-algo AES256 tfplan
           rm tfplan
       - name: Store terraform artifacts
         if: success() && inputs.upload-artifacts
