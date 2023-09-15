@@ -159,8 +159,6 @@ jobs:
           cat >> $REPORT_FILE << 'ENDOFREPORT'
           ## Build Lambdas Summary
 
-          ### Checksums
-
           <details>
           <summary>Compiled Checksums (before packing)</summary>
 
@@ -177,12 +175,14 @@ jobs:
           ```
 
           </details>
-
-          ### UPX Packing Results
+          <details>
+          <summary>UPX Packing Results</summary>
 
           ```
           ${{ env.UPX_RESULT }}
           ```
+
+          </details>
           ENDOFREPORT
           cat "$REPORT_FILE" >> $GITHUB_STEP_SUMMARY
         env:
@@ -208,7 +208,7 @@ jobs:
     outputs:
       artifacts-key: ${{ env.ARTIFACTS_KEY }}
       artifacts-path: ${{ env.ARTIFACTS_PATH }}
-      checksums-sha256: ${{ steps.final-checksums.outputs.checksums }}
+      checksums-sha256: ${{ steps.final-checksums.outputs.sha256 }}
     steps:
       - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
         with:
@@ -235,29 +235,75 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           version: 3.x
-      - run: mkdir -p $(dirname $ARTIFACTS_PATH)
+      - name: Prepare artifacts output directory
+        run: |
+          mkdir -p $(dirname $ARTIFACTS_PATH)
+          rm "$ARTIFACTS_PATH"
       - name: Build CLI
         id: build
         run: task build-cli
-      - name: Compiled checksums
-        run: sha256sum -b "$ARTIFACTS_PATH" >> $GITHUB_STEP_SUMMARY
-      - name: Run UPX
-        id: pack
+      - name: Get compiled checksums
+        id: compiled-checksums
+        run: |
+          COMPILED_CHECKSUMS=$(sha256sum -b "$ARTIFACTS_PATH")
+          echo "sha256<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMPILED_CHECKSUMS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      - name: Install UPX
         uses: crazy-max/ghaction-upx@0fc45e912669ba9e8fa2b430e97c8da2a632e29b # v3.0.0
         with:
           version: v4.1.0
-          files: bin/**
-          args: -5 -q
-      - name: Publish UPX results
-        run: echo "$UPX_RESULTS" >> $GITHUB_STEP_SUMMARY
-        env:
-          UPX_RESULTS: ${{ steps.pack.outputs.stdout }}
-      - name: Final checksums
+          install-only: true
+      - name: Run UPX
+        id: pack
+        run: |
+          UPX_RESULT=$(upx -5 -q "$ARTIFACTS_PATH")
+          echo "result<<EOF" >> $GITHUB_OUTPUT
+          echo "$UPX_RESULT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      - name: Get final checksums
         id: final-checksums
         run: |
-          CHECKSUMS=$(sha256sum -b "$ARTIFACTS_PATH")
-          echo $CHECKSUMS >> $GITHUB_STEP_SUMMARY
-          echo "checksums=$CHECKSUMS" >> $GITHUB_OUTPUT
+          FINAL_CHECKSUMS=$(sha256sum -b "$ARTIFACTS_PATH")
+          echo "sha256<<EOF" >> $GITHUB_OUTPUT
+          echo "$FINAL_CHECKSUMS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      - name: Publish build results
+        run: |
+          REPORT_FILE=$(mktemp -t summary.md.XXXXX)
+          cat >> $REPORT_FILE << 'ENDOFREPORT'
+          ## Build Lambdas Summary
+
+          <details>
+          <summary>Compiled Checksums (before packing)</summary>
+
+          ```
+          ${{ env.COMPILED_CHECKSUMS }}
+          ```
+
+          </details>
+          <details>
+          <summary>Final Checksums</summary>
+
+          ```
+          ${{ env.FINAL_CHECKSUMS }}
+          ```
+
+          </details>
+          <details>
+          <summary>UPX Packing Results</summary>
+
+          ```
+          ${{ env.UPX_RESULT }}
+          ```
+
+          </details>
+          ENDOFREPORT
+          cat "$REPORT_FILE" >> $GITHUB_STEP_SUMMARY
+        env:
+          COMPILED_CHECKSUMS: ${{ steps.compiled-checksums.outputs.sha256 }}
+          FINAL_CHECKSUMS: ${{ steps.final-checksums.outputs.sha256 }}
+          UPX_RESULT: ${{ steps.pack.outputs.result }}
       - name: Store build artifacts
         id: store
         uses: actions/upload-artifact@v3
