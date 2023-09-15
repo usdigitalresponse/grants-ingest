@@ -25,42 +25,15 @@ jobs:
 
   aws-auth:
     name: Configure AWS Credentials
-    runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
-    outputs:
-      aws-access-key-id: ${{ steps.encrypt-aws-access-key-id.outputs.out }}
-      aws-secret-access-key: ${{ steps.encrypt-aws-secret-access-key.outputs.out }}
-      aws-session-token: ${{ steps.encrypt-aws-session-token.outputs.out }}
-    steps:
-      - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
-        with:
-          disable-sudo: true
-          egress-policy: audit
-      - id: auth
-        uses: aws-actions/configure-aws-credentials@04b98b3f9e85f563fb061be8751a0352327246b0 # v3.0.1
-        with:
-          aws-region: us-west-2
-          role-to-assume: "${{ secrets.CI_ROLE_ARN }}"
-      - id: encrypt-aws-access-key-id
-        run: |
-          encrypted=$(gpg --batch --yes --passphrase "$GPG_PASSPHRASE" -c --cipher-algo AES256 -o - <(echo "$AWS_ACCESS_KEY_ID") | base64 -w0)
-          echo "out=$encrypted" >> $GITHUB_OUTPUT
-        env:
-          GPG_PASSPHRASE: ${{ secrets.TFPLAN_SECRET }}
-      - id: encrypt-aws-secret-access-key
-        run: |
-          encrypted=$(gpg --batch --yes --passphrase "$GPG_PASSPHRASE" -c --cipher-algo AES256 -o - <(echo "$AWS_SECRET_ACCESS_KEY") | base64 -w0)
-          echo "out=$encrypted" >> $GITHUB_OUTPUT
-        env:
-          GPG_PASSPHRASE: ${{ secrets.TFPLAN_SECRET }}
-      - id: encrypt-aws-session-token
-        run: |
-          encrypted=$(gpg --batch --yes --passphrase "$GPG_PASSPHRASE" -c --cipher-algo AES256 -o - <(echo "$AWS_SESSION_TOKEN") | base64 -w0)
-          echo "out=$encrypted" >> $GITHUB_OUTPUT
-        env:
-          GPG_PASSPHRASE: ${{ secrets.TFPLAN_SECRET }}
+    uses: ./.github/workflows/aws-auth.yml
+    with:
+      aws-region: us-west-2
+    secrets:
+      role-to-assume: ${{ secrets.CI_ROLE_ARN }}
+      gpg-passphrase: ${{ secrets.TFPLAN_SECRET }}
 
   tf-plan:
     name: Plan Terraform
@@ -73,9 +46,11 @@ jobs:
     if: always() && needs.build-lambdas.outputs.build-lambdas-result == 'success' && needs.aws-auth.result == 'success'
     with:
       ref: ${{ github.event.pull_request.head.sha }}
+      concurrency-group: run_terraform-staging
       bin-artifacts-key: ${{ needs.build-lambdas.outputs.lambda-artifacts-key }}
       bin-artifacts-path: ${{ needs.build-lambdas.outputs.lambda-artifacts-path }}
       aws-region: us-west-2
+      environment-key: staging
       tf-backend-config-file: staging.s3.tfbackend
       tf-var-file: staging.tfvars
       upload-artifacts: false
