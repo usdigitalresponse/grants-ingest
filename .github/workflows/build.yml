@@ -21,10 +21,14 @@ on:
         value: ${{ jobs.build-cli.outputs.artifacts-key }}
       cli-artifacts-path:
         value: ${{ jobs.build-cli.outputs.artifacts-path }}
+      cli-checksums-sha256:
+        value: ${{ jobs.build-cli.outputs.checksums-sha256 }}
       lambda-artifacts-key:
         value: ${{ jobs.build-lambdas.outputs.artifacts-key }}
       lambda-artifacts-path:
         value: ${{ jobs.build-lambdas.outputs.artifacts-path }}
+      lambda-checksums-sha256:
+        value: ${{ jobs.build-lambdas.outputs.checksums-sha256 }}
 
 jobs:
   prepare:
@@ -89,6 +93,7 @@ jobs:
     outputs:
       artifacts-key: ${{ env.ARTIFACTS_KEY }}
       artifacts-path: ${{ env.ARTIFACTS_PATH }}
+      checksums-sha256: ${{ steps.final-checksums.outputs.checksums }}
     steps:
       - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
         with:
@@ -114,10 +119,32 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           version: 3.x
-      - run: mkdir -p $ARTIFACTS_PATH
+      - name: Prepare artifacts output directory
+        run: |
+          mkdir -p "$ARTIFACTS_PATH"
+          rm -rf "$ARTIFACTS_PATH/*"
       - name: Build Lambdas
         id: build
         run: task build
+      - name: Compiled checksums
+        run: find bin -type f -exec sha256sum -b {} \; >> $GITHUB_STEP_SUMMARY
+      - name: Run UPX
+        id: pack
+        uses: crazy-max/ghaction-upx@0fc45e912669ba9e8fa2b430e97c8da2a632e29b # v3.0.0
+        with:
+          version: 4.1.0
+          files: bin/**
+          args: -5 -q
+      - name: Publish UPX results
+        run: echo "$UPX_RESULTS" >> $GITHUB_STEP_SUMMARY
+        env:
+          UPX_RESULTS: ${{ steps.pack.outputs.stdout }}
+      - name: Final checksums
+        id: final-checksums
+        run: |
+          CHECKSUMS=$(find bin -type f -exec sha256sum -b {} \;)
+          echo $CHECKSUMS >> $GITHUB_STEP_SUMMARY
+          echo "checksums=$CHECKSUMS" >> $GITHUB_OUTPUT
       - name: Store build artifacts
         id: store
         uses: actions/upload-artifact@v3
@@ -137,6 +164,7 @@ jobs:
     outputs:
       artifacts-key: ${{ env.ARTIFACTS_KEY }}
       artifacts-path: ${{ env.ARTIFACTS_PATH }}
+      checksums-sha256: ${{ steps.final-checksums.outputs.checksums }}
     steps:
       - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
         with:
@@ -166,6 +194,25 @@ jobs:
       - name: Build CLI
         id: build
         run: task build-cli
+      - name: Compiled checksums
+        run: sha256sum -b "$ARTIFACTS_PATH" >> $GITHUB_STEP_SUMMARY
+      - name: Run UPX
+        id: pack
+        uses: crazy-max/ghaction-upx@0fc45e912669ba9e8fa2b430e97c8da2a632e29b # v3.0.0
+        with:
+          version: 4.1.0
+          files: bin/**
+          args: -5 -q
+      - name: Publish UPX results
+        run: echo "$UPX_RESULTS" >> $GITHUB_STEP_SUMMARY
+        env:
+          UPX_RESULTS: ${{ steps.pack.outputs.stdout }}
+      - name: Final checksums
+        id: final-checksums
+        run: |
+          CHECKSUMS=$(sha256sum -b "$ARTIFACTS_PATH")
+          echo $CHECKSUMS >> $GITHUB_STEP_SUMMARY
+          echo "checksums=$CHECKSUMS" >> $GITHUB_OUTPUT
       - name: Store build artifacts
         id: store
         uses: actions/upload-artifact@v3
