@@ -15,6 +15,9 @@ on:
       bin-artifacts-path:
         type: string
         required: true
+      environment-key:
+        type: string
+        required: true
       aws-region:
         type: string
         required: true
@@ -31,6 +34,10 @@ on:
       upload-artifacts:
         type: boolean
         default: false
+      concurrency-group:
+        description: Name of the concurrency group (avoids simultaneous Terraform execution against the same environment)
+        type: string
+        default: run_terraform
     secrets:
       aws-access-key-id:
         required: true
@@ -45,6 +52,8 @@ on:
       gpg-passphrase:
         required: true
     outputs:
+      artifacts-key:
+        value: ${{ jobs.do.outputs.artifacts-key }}
       fmt-outcome:
         value: ${{ jobs.do.outputs.fmt_outcome }}
       init-outcome:
@@ -53,6 +62,8 @@ on:
         value: ${{ jobs.do.outputs.validate_outcome }}
       validate-output:
         value: ${{ jobs.do.outputs.validate_output }}
+      plan-exitcode:
+        value: ${{ jobs.do.outputs.plan_exitcode }}
       plan-outcome:
         value: ${{ jobs.do.outputs.plan_outcome }}
       plan-output:
@@ -64,7 +75,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    if: always()
     defaults:
       run:
         working-directory: terraform
@@ -78,7 +88,7 @@ jobs:
       plan_outcome: ${{ steps.plan.outcome }}
       plan_output: ${{ steps.show_plan.outputs.stdout || steps.show_plan.outputs.stderr }}
     env:
-      ARTIFACTS_KEY: terraform-${{ inputs.ref }}
+      ARTIFACTS_KEY: terraform-${{ inputs.environment-key }}-${{ inputs.ref }}
       AWS_DEFAULT_REGION: ${{ inputs.aws-region }}
       AWS_REGION: ${{ inputs.aws-region }}
       TF_CLI_ARGS: "-no-color"
@@ -86,7 +96,7 @@ jobs:
       TF_INPUT: 0
       TF_PLUGIN_CACHE_DIR: ~/.terraform.d/plugin-cache
     concurrency:
-      group: run_terraform-staging
+      group: ${{ inputs.concurrency-group }}
       cancel-in-progress: false
     steps:
       - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
