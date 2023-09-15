@@ -133,7 +133,7 @@ jobs:
         id: pack
         uses: crazy-max/ghaction-upx@0fc45e912669ba9e8fa2b430e97c8da2a632e29b # v3.0.0
         with:
-          version: 4.1.0
+          version: v4.1.0
           files: bin/**
           args: -5 -q
       - name: Publish UPX results
@@ -202,7 +202,7 @@ jobs:
         id: pack
         uses: crazy-max/ghaction-upx@0fc45e912669ba9e8fa2b430e97c8da2a632e29b # v3.0.0
         with:
-          version: 4.1.0
+          version: v4.1.0
           files: bin/**
           args: -5 -q
       - name: Publish UPX results
