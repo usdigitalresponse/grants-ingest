@@ -142,7 +142,7 @@ jobs:
       - name: Run UPX
         id: pack
         run: |
-          UPX_RESULT=$(upx -5 -q "${ARTIFACTS_PATH}/*/bootstrap")
+          UPX_RESULT=$(upx -5 -q "$ARTIFACTS_PATH"/*/bootstrap)
           echo "result<<EOF" >> $GITHUB_OUTPUT
           echo "$UPX_RESULT" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
