@@ -119,10 +119,10 @@ jobs:
 
           | Step                         | Result  |
           |:-----------------------------|:-------:|
-          | 🖌  Terraform Format & Style | ${{ (needs.tf-plan.outputs.fmt-outcome == 'success' && '✅') || (needs.tf-plan.outputs.fmt-outcome == 'skipped' && '➖') || '❌'  }} |
-          | ⚙️  Terraform Initialization | ${{ (needs.tf-plan.outputs.init-outcome == 'success' && '✅') || (needs.tf-plan.outputs.init-outcome == 'skipped' && '➖') || '❌' }} |
-          | 🤖  Terraform Validation     | ${{ (needs.tf-plan.outputs.validate-outcome == 'success' && '✅') || (needs.tf-plan.outputs.validate-outcome == 'skipped' && '➖') || '❌' }} |
-          | 📖  Terraform Plan           | ${{ (needs.tf-plan.outputs.plan-outcome == 'success' && '✅') || (needs.tf-plan.outputs.plan-outcome == 'skipped' && '➖') || '❌' }} |
+          | 🖌  Terraform Format & Style | ${{ (env.TF_FMT_OUTCOME == 'success' && '✅') || (env.TF_FMT_OUTCOME == 'skipped' && '➖') || '❌'  }} |
+          | ⚙️  Terraform Initialization | ${{ (env.TF_INIT_OUTCOME == 'success' && '✅') || (env.TF_INIT_OUTCOME == 'skipped' && '➖') || '❌' }} |
+          | 🤖  Terraform Validation     | ${{ (env.TF_VALIDATE_OUTCOME == 'success' && '✅') || (env.TF_VALIDATE_OUTCOME == 'skipped' && '➖') || '❌' }} |
+          | 📖  Terraform Plan           | ${{ (env.TF_PLAN_OUTCOME == 'success' && '✅') || (env.TF_PLAN_OUTCOME == 'skipped' && '➖') || '❌' }} |
 
           ### Output
 
@@ -130,7 +130,7 @@ jobs:
           <summary>Validation Output</summary>
 
           ```
-          ${{ needs.tf-plan.outputs.validate-output }}
+          ${{ env.TF_VALIDATE_OUTPUT }}
           ```
 
           </details>
@@ -139,15 +139,26 @@ jobs:
           <summary>Plan Output</summary>
 
           ```diff
-          ${{ env.PLAN }}
+          ${{ env.TF_PLAN_OUTPUT }}
           ```
 
           </details>
 
-          *Pusher: @${{ github.actor }}, Action: `${{ github.event_name }}`, Workflow: [`${{ github.workflow }}`](${{ github.server_url}}/${{ github.repository }}/actions/runs/${{ github.run_id }})*
+          *Pusher: @${{ env.GH_ACTOR }}, Action: `${{ env.GH_ACTION }}`, Workflow: [`${{ env.GH_WORKFLOW }}`](${{ env.GH_SERVER}}/${{ env.GH_REPO }}/actions/runs/${{ env.GH_RUN_ID }})*
           ENDOFREPORT
         env:
-          PLAN: ${{ env.PLAN }}
+          TF_FMT_OUTCOME: ${{ needs.tf-plan.outputs.fmt-outcome }}
+          TF_INIT_OUTCOME: ${{ needs.tf-plan.outputs.init-outcome }}
+          TF_VALIDATE_OUTCOME: ${{ needs.tf-plan.outputs.validate-outcome }}
+          TF_VALIDATE_OUTPUT: ${{ needs.tf-plan.outputs.validate-output }}
+          TF_PLAN_OUTCOME: ${{ needs.tf-plan.outputs.plan-outcome }}
+          TF_PLAN_OUTPUT: ${{ env.PLAN }}
+          GH_ACTOR: ${{ github.actor }}
+          GH_ACTION: ${{ github.event_name }}
+          GH_WORKFLOW: ${{ github.workflow }}
+          GH_SERVER: ${{ github.server_url }}
+          GH_REPO: ${{ github.repository }}
+          GH_RUN_ID: ${{ github.run_id }}
       - name: Write the step summary
         run: cat $REPORT_FILE | head -c 65500 >> $GITHUB_STEP_SUMMARY # Observe GitHub's 65535 character limit
       - name: Write the comment body
