@@ -246,7 +246,7 @@ jobs:
       - name: Prepare artifacts output directory
         run: |
           mkdir -p $(dirname $ARTIFACTS_PATH)
-          rm "$ARTIFACTS_PATH"
+          rm -f "$ARTIFACTS_PATH"
       - name: Build CLI
         id: build
         run: task build-cli
