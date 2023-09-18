@@ -77,6 +77,8 @@ jobs:
         with:
           name: ${{ inputs.tf-plan-artifacts-key }}
           path: ${{ github.workspace }}/terraform
+      - name: Clear any cached provider plugins in artifact
+        run: rm -rf "$TF_PLUGIN_CACHE_DIR"
       - name: Get project TF version
         id: get_tf_version
         run: echo "TF_VERSION=$(cat .terraform-version | tr -d '[:space:]')" | tee -a $GITHUB_OUTPUT
