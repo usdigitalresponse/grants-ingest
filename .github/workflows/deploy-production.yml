@@ -6,7 +6,7 @@ on:
       - 'release/**'
 
 concurrency:
-  group: production
+  group: deploy-production
   cancel-in-progress: false
 
 permissions:
@@ -14,144 +14,103 @@ permissions:
   id-token: write
 
 jobs:
-  plan:
-    name: Plan Deployment
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: terraform
-    outputs:
-      terraform_plan_exitcode: ${{ steps.terraform_plan.outputs.exitcode }}
-    env:
-      TF_CLI_ARGS: "-no-color"
-      TF_INPUT: 0
-      TF_VAR_version_identifier: ${{ github.ref_name }}
-      TF_VAR_git_commit_sha: ${{ github.sha }}
-      TF_VAR_datadog_api_key: ${{ secrets.DATADOG_API_KEY }}
-      TF_VAR_datadog_app_key: ${{ secrets.DATADOG_APP_KEY }}
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          go-version-file: go.mod
-      - name: Install Taskfile
-        uses: arduino/setup-task@v1
-        with:
-          version: 3.x
-      - name: Pre-plan build optimizations
-        run: |
-          task prebuild-lambda
-          task build
-      - name: Get project TF version
-        id: get_version
-        run: echo "TF_VERSION=$(cat .terraform-version | tr -d '[:space:]')" | tee -a $GITHUB_OUTPUT
-        working-directory: terraform
-      - uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_wrapper: true
-          terraform_version: ${{ steps.get_version.outputs.TF_VERSION }}
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-region: us-west-2
-          role-to-assume: "${{ secrets.PRODUCTION_ROLE_ARN }}"
-      - name: Terraform Init
-        run: terraform init -backend-config="production.s3.tfbackend"
-      - name: Terraform Plan
-        id: terraform_plan
-        run: terraform plan -var-file="prod.tfvars" -out="tfplan" -detailed-exitcode
-      - name: Generate plaintext plan
-        id: show_plan
-        run: terraform show tfplan
-      - name: Reformat plan
-        run: |
-          echo '${{ steps.show_plan.outputs.stdout || steps.show_plan.outputs.stderr }}' \
-            | sed -E 's/^([[:space:]]+)([-+])/\2\1/g' > plan.txt
-          PLAN=$(cat plan.txt | head -c 65300)
-          echo "PLAN<<EOF" >> $GITHUB_ENV
-          echo "$PLAN" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-      - name: Write the step summary
-        run: |
-          REPORT_FILE=$(mktemp -t summary.md.XXXXX )
-          echo "REPORT_FILE=$REPORT_FILE" >> $GITHUB_ENV
-          cat >> $REPORT_FILE << 'ENDOFREPORT'
-          ## Terraform Plan Result
+  build-lambdas:
+    name: Build Lambda handlers
+    permissions:
+      contents: read
+    uses: ./.github/workflows/build.yml
+    with:
+      ref: ${{ github.sha }}
+      build-cli: true
+      build-lambdas: true
+      artifacts-retention-days: 90
 
-          <details>
-          <summary>Output</summary>
+  aws-auth:
+    name: Configure AWS Credentials
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/aws-auth.yml
+    with:
+      aws-region: us-west-2
+    secrets:
+      gpg-passphrase: ${{ secrets.PRODUCTION_GPG_PASSPHRASE }}
+      role-to-assume: ${{ secrets.PRODUCTION_ROLE_ARN }}
 
-          ```diff
-          ${{ env.PLAN }}
-          ```
-
-          </details>
-          ENDOFREPORT
-          cat $REPORT_FILE >> $GITHUB_STEP_SUMMARY
-      - name: Encrypt terraform plan file
-        env:
-          PASSPHRASE: ${{ secrets.TFPLAN_SECRET }}
-        run: |
-          echo "$PASSPHRASE" | gpg --batch --yes --passphrase-fd 0 -c --cipher-algo AES256 tfplan
-          rm tfplan
-      - name: Store terraform artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: terraform-${{ github.sha }}
-          path: |
-            ${{ github.workspace }}/terraform
-            !${{ github.workspace }}/terraform/.terraform
-      - name: Store executable artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: bin-${{ github.sha }}
-          path: ${{ github.workspace }}/bin
-
-  deploy:
-    name: Deploy to Production
-    runs-on: ubuntu-latest
-    environment: production
+  tf-plan:
+    name: Plan Terraform
+    permissions:
+      contents: read
     needs:
-      - plan
-    if: always() && needs.plan.outputs.terraform_plan_exitcode == 2
-    defaults:
-      run:
-        working-directory: terraform
-    env:
-      TF_CLI_ARGS: "-no-color"
-      TF_INPUT: 0
-    steps:
-      - uses: hashicorp/setup-terraform@v2
-      - name: Restore terraform artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: terraform-${{ github.sha }}
-          path: ${{ github.workspace }}/terraform
-      - name: Restore executable artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: bin-${{ github.sha }}
-          path: ${{ github.workspace }}/bin
-      - name: Decrypt terraform plan file
-        env:
-          GPG_PASSPHRASE: ${{ secrets.TFPLAN_SECRET }}
-        run: echo "$GPG_PASSPHRASE" | gpg -qd --batch --yes --passphrase-fd 0 -o tfplan tfplan.gpg
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-region: us-west-2
-          role-to-assume: "${{ secrets.PRODUCTION_ROLE_ARN }}"
-      - name: Terraform Init
-        run: terraform init -backend-config="production.s3.tfbackend"
-      - name: Terraform Apply
-        run: terraform apply tfplan
+      - aws-auth
+      - build-lambdas
+    uses: ./.github/workflows/terraform-plan.yml
+    with:
+      ref: ${{ github.sha }}
+      concurrency-group: run_terraform-production
+      bin-artifacts-key: ${{ needs.build-lambdas.outputs.lambda-artifacts-key }}
+      bin-artifacts-path: ${{ needs.build-lambdas.outputs.lambda-artifacts-path }}
+      aws-region: us-west-2
+      environment-key: production
+      tf-backend-config-file: production.s3.tfbackend
+      tf-var-file: production.tfvars
+      upload-artifacts: true
+      artifacts-retention-days: 90
+    secrets:
+      aws-access-key-id: ${{ needs.aws-auth.outputs.aws-access-key-id }}
+      aws-secret-access-key: ${{ needs.aws-auth.outputs.aws-secret-access-key }}
+      aws-session-token: ${{ needs.aws-auth.outputs.aws-session-token }}
+      datadog-api-key: ${{ secrets.DATADOG_API_KEY }}
+      datadog-app-key: ${{ secrets.DATADOG_APP_KEY }}
+      gpg-passphrase: ${{ secrets.PRODUCTION_GPG_PASSPHRASE }}
+
+  publish-tf-plan:
+    name: Publish Terraform Plan
+    permissions:
+      contents: read
+      pull-requests: write
+    if: needs.tf-plan.result != 'skipped' || needs.tf-plan.result != 'cancelled'
+    needs:
+      - tf-plan
+    uses: ./.github/workflows/publish-terraform-plan.yml
+    with:
+      write-summary: true
+      write-comment: false
+      tf-fmt-outcome: ${{ needs.tf-plan.outputs.fmt-outcome }}
+      tf-init-outcome: ${{ needs.tf-plan.outputs.init-outcome }}
+      tf-plan-outcome: ${{ needs.tf-plan.outputs.plan-outcome }}
+      tf-plan-output: ${{ needs.tf-plan.outputs.plan-output }}
+      tf-validate-outcome: ${{ needs.tf-plan.outputs.validate-outcome }}
+      tf-validate-output: ${{ needs.tf-plan.outputs.validate-output }}
+
+  tf-apply:
+    name: Deploy to Staging
+    needs:
+      - build-lambdas
+      - aws-auth
+      - tf-plan
+    if: needs.tf-plan.outputs.plan-exitcode == 2
+    uses: ./.github/workflows/terraform-apply.yml
+    with:
+      bin-artifacts-key: ${{ needs.build-lambdas.outputs.lambda-artifacts-key }}
+      bin-artifacts-path: ${{ needs.build-lambdas.outputs.lambda-artifacts-path }}
+      tf-plan-artifacts-key: ${{ needs.tf-plan.outputs.artifacts-key }}
+      aws-region: us-west-2
+      concurrency-group: run_terraform-production
+      tf-backend-config-file: production.s3.tfbackend
+    secrets:
+      aws-access-key-id: ${{ needs.aws-auth.outputs.aws-access-key-id }}
+      aws-secret-access-key: ${{ needs.aws-auth.outputs.aws-secret-access-key }}
+      aws-session-token: ${{ needs.aws-auth.outputs.aws-session-token }}
+      datadog-api-key: ${{ secrets.DATADOG_API_KEY }}
+      datadog-app-key: ${{ secrets.DATADOG_APP_KEY }}
+      gpg-passphrase: ${{ secrets.PRODUCTION_GPG_PASSPHRASE }}
 
   update_release:
     name: Update release
     runs-on: ubuntu-latest
     needs:
-      - deploy
+      - tf-apply
     env:
       GH_TOKEN: ${{ github.token }}
       RELEASE_TAG: ${{ github.ref_name }}

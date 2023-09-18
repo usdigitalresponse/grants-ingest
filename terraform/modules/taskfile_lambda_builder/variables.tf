@@ -31,6 +31,12 @@ variable "override_taskfile_command" {
   default     = null
 }
 
+variable "autobuild" {
+  description = "Whether to issue a Taskfile command to compile the Lambda handler binary when missing or outdated. When false, only a preexisting binary will be used. Recommendation: 'true' for development; 'false' for CI/CD."
+  type        = bool
+  default     = true
+}
+
 variable "override_path_to_binary" {
   description = "Explicit path to the file (outputted by the Taskfile command) that will be zipped. Uses '<binary_base_path>/<function_name>/bootstrap' by default."
   type        = string

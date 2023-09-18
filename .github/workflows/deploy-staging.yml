@@ -6,7 +6,7 @@ on:
       - main
 
 concurrency:
-  group: run_terraform-staging
+  group: deploy-staging
   cancel-in-progress: false
 
 permissions:
@@ -14,13 +14,94 @@ permissions:
   id-token: write
 
 jobs:
-  build_and_deploy:
-    name: Build and Deploy to Staging
-    uses: "./.github/workflows/build-and-deploy.yml"
+  build-lambdas:
+    name: Build Lambda handlers
+    permissions:
+      contents: read
+    uses: ./.github/workflows/build.yml
     with:
-      tf_backend_config_file: staging.s3.tfbackend
-      tf_var_file: staging.tfvars
+      ref: ${{ github.sha }}
+      build-cli: true
+      build-lambdas: true
+      artifacts-retention-days: 30
+
+  aws-auth:
+    name: Configure AWS Credentials
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/aws-auth.yml
+    with:
+      aws-region: us-west-2
     secrets:
-      AWS_ROLE_TO_ASSUME: "${{ secrets.STAGING_ROLE_ARN }}"
-      DATADOG_API_KEY: "${{ secrets.DATADOG_API_KEY }}"
-      DATADOG_APP_KEY: "${{ secrets.DATADOG_APP_KEY }}"
+      gpg-passphrase: ${{ secrets.STAGING_GPG_PASSPHRASE }}
+      role-to-assume: ${{ secrets.STAGING_ROLE_ARN }}
+
+  tf-plan:
+    name: Plan Terraform
+    permissions:
+      contents: read
+    needs:
+      - aws-auth
+      - build-lambdas
+    uses: ./.github/workflows/terraform-plan.yml
+    with:
+      ref: ${{ github.sha }}
+      concurrency-group: run_terraform-staging
+      bin-artifacts-key: ${{ needs.build-lambdas.outputs.lambda-artifacts-key }}
+      bin-artifacts-path: ${{ needs.build-lambdas.outputs.lambda-artifacts-path }}
+      aws-region: us-west-2
+      environment-key: staging
+      tf-backend-config-file: staging.s3.tfbackend
+      tf-var-file: staging.tfvars
+      upload-artifacts: true
+      artifacts-retention-days: 30
+    secrets:
+      aws-access-key-id: ${{ needs.aws-auth.outputs.aws-access-key-id }}
+      aws-secret-access-key: ${{ needs.aws-auth.outputs.aws-secret-access-key }}
+      aws-session-token: ${{ needs.aws-auth.outputs.aws-session-token }}
+      datadog-api-key: ${{ secrets.DATADOG_API_KEY }}
+      datadog-app-key: ${{ secrets.DATADOG_APP_KEY }}
+      gpg-passphrase: ${{ secrets.STAGING_GPG_PASSPHRASE }}
+
+  publish-tf-plan:
+    name: Publish Terraform Plan
+    permissions:
+      contents: read
+      pull-requests: write
+    if: needs.tf-plan.result != 'skipped' || needs.tf-plan.result != 'cancelled'
+    needs:
+      - tf-plan
+    uses: ./.github/workflows/publish-terraform-plan.yml
+    with:
+      write-summary: true
+      write-comment: false
+      tf-fmt-outcome: ${{ needs.tf-plan.outputs.fmt-outcome }}
+      tf-init-outcome: ${{ needs.tf-plan.outputs.init-outcome }}
+      tf-plan-outcome: ${{ needs.tf-plan.outputs.plan-outcome }}
+      tf-plan-output: ${{ needs.tf-plan.outputs.plan-output }}
+      tf-validate-outcome: ${{ needs.tf-plan.outputs.validate-outcome }}
+      tf-validate-output: ${{ needs.tf-plan.outputs.validate-output }}
+
+  tf-apply:
+    name: Deploy to Staging
+    needs:
+      - build-lambdas
+      - aws-auth
+      - tf-plan
+    if: needs.tf-plan.outputs.plan-exitcode == 2
+    uses: ./.github/workflows/terraform-apply.yml
+    with:
+      bin-artifacts-key: ${{ needs.build-lambdas.outputs.lambda-artifacts-key }}
+      bin-artifacts-path: ${{ needs.build-lambdas.outputs.lambda-artifacts-path }}
+      tf-plan-artifacts-key: ${{ needs.tf-plan.outputs.artifacts-key }}
+      aws-region: us-west-2
+      concurrency-group: run_terraform-staging
+      tf-backend-config-file: staging.s3.tfbackend
+    secrets:
+      aws-access-key-id: ${{ needs.aws-auth.outputs.aws-access-key-id }}
+      aws-secret-access-key: ${{ needs.aws-auth.outputs.aws-secret-access-key }}
+      aws-session-token: ${{ needs.aws-auth.outputs.aws-session-token }}
+      datadog-api-key: ${{ secrets.DATADOG_API_KEY }}
+      datadog-app-key: ${{ secrets.DATADOG_APP_KEY }}
+      gpg-passphrase: ${{ secrets.STAGING_GPG_PASSPHRASE }}

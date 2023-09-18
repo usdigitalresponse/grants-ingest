@@ -17,6 +17,8 @@ locals {
 }
 
 data "external" "build_command" {
+  count = var.autobuild ? 1 : 0
+
   program = ["${path.module}/script.bash"]
   query   = { task_command = local.task_command }
 }

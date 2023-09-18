@@ -79,9 +79,10 @@ is unavailable.
 To begin, make sure the following tools are available in your development workspace:
 - [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 - [Terraform](https://developer.hashicorp.com/terraform/downloads)
+  - Download the version found in [.terraform-version](https://github.com/usdigitalresponse/grants-ingest/blob/main/terraform/.terraform-version)
 - [LocalStack](https://docs.localstack.cloud/getting-started/installation)
 - [tflocal](https://github.com/localstack/terraform-local)
-- [awslocal](https://github.com/localstack/awscli-local) *Optional, but recommended.*
+- [awslocal](https://github.com/localstack/awscli-local)
 - [tfenv](https://github.com/tfutils/tfenv) *Optional, but recommended.*
 
 **Note:** This document assumes usage of [Docker-Compose method](https://docs.localstack.cloud/getting-started/installation/#docker-compose).
@@ -106,30 +107,30 @@ with LocalStack:
 
 #### Provisioning Infrastructure
 
-After starting LocalStack, create a terraform state deployment bucket in the localstack environment.
-This guide, as well as the provided Terraform backend file for local development, assumes that
+After starting LocalStack, create a terraform state deployment bucket in the localstack environment.  This guide, as well as the provided Terraform backend file for local development, assumes that
 this bucket is named `local-terraform` and has a region of `us-west-2`.
 
-To create this bucket, you can run the following command:
-
-```cli
-$ awslocal s3 mb s3://local-terraform
+To create this bucket, navigate to the terraform folder, then run the following command:
+```bash
+awslocal s3 mb s3://local-terraform
 ```
+If using the provided [docker-compose](https://github.com/usdigitalresponse/grants-ingest/blob/cf8a6220ed4e7332978520ec1d63bb344b738972/docker-compose.yml#L21) then this runs when the localstack 
+container is started. 
 
 Next, initialize the Terraform project using the `local.s3.tfbackend` Terraform state backend
 configuration file provided by this repository. Note that you may need to modify the `endpoint`
 setting in this file if your LocalStack environment uses a different host/port other than the
 default of `localhost:4566`.
 
-```cli
-$ tflocal init -backend-config="local.s3.tfbackend" -reconfigure
+```bash
+tflocal init -backend-config="local.s3.tfbackend" -reconfigure
 ```
 
-Once this command completes successfully, you use `tflocal` to "provision" mock infrastructure
-in your LocalStack environment, using the `local.tfvars` file provided by this repository:
-
-```cli
-$ tflocal apply -var-file=local.tfvars
+Once this command completes successfully, use `tflocal` to "provision" mock infrastructure in your LocalStack environment.  This will create the Lambda functions, so it requires the functions to be 
+built first.  Use `task build` to build the functions.  Then use the `local.tfvars` file provided by this 
+repository to provision the mock infrastructure:
+```bash
+tflocal apply -var-file=local.tfvars
 ```
 
 
@@ -157,8 +158,8 @@ must be provided as a Base64-encoded encoded representation of the payload. The 
 demonstrates an invocation of a Lambda function named `grants-ingest-DownloadGrantsGovDB`
 that provides the above example JSON in Base64 encoding and prints the Lambda output to stdout:
 
-```cli
-$ awslocal lambda invoke \
+```bash
+awslocal lambda invoke \
     --function-name grants-ingest-DownloadGrantsGovDB \
     --payload $(printf '{"timestamp": "2023-03-20T05:00:00-04:00"}' | base64) \
     /dev/stdout
@@ -178,8 +179,8 @@ In order to view execution logs outputted during Lambda invocation, use CloudWat
 you would when conducting tests against a genuine AWS environment). The following command can
 be used to observe log output in real-time:
 
-```cli
-$ awslocal logs tail /aws/lambda/grants-ingest-DownloadGrantsGovDB --follow
+```bash
+awslocal logs tail /aws/lambda/grants-ingest-DownloadGrantsGovDB --follow
 ```
 
 When actively debugging, it is useful to run a command similar to the above in a separate terminal
@@ -188,6 +189,6 @@ prior to invoking the Lambda function under test, as it only displays logs emitt
 in order to display historical logs from previous invocations. For example, the following command
 shows logs emitted in the past 1 hour, and will continue to display new logs as they are emitted:
 
-```cli
-$ awslocal logs tail /aws/lambda/grants-ingest-DownloadGrantsGovDB --since 1h --follow
+```bash
+awslocal logs tail /aws/lambda/grants-ingest-DownloadGrantsGovDB --since 1h --follow
 ```
