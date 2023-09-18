@@ -5,6 +5,7 @@ permissions_boundary_policy_name      = ""
 datadog_enabled                       = false
 datadog_dashboards_enabled            = false
 datadog_lambda_extension_version      = "38"
+lambda_binaries_autobuild             = true
 lambda_default_log_retention_in_days  = 7
 lambda_default_log_level              = "DEBUG"
 eventbridge_scheduler_enabled         = false

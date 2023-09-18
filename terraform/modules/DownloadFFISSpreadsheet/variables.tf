@@ -31,6 +31,11 @@ variable "lambda_binaries_base_path" {
   type        = string
 }
 
+variable "lambda_autobuild" {
+  description = "When true, a Lambda handler binary will be compiled when missing or outdated. When false, the compiled Lambda handler binary must already exist under `lambda_binaries_base_path`."
+  type        = bool
+}
+
 variable "lambda_arch" {
   description = "The target build architecture for Lambda functions (either x86_64 or arm64)."
   type        = string
