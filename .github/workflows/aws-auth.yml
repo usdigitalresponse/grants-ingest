@@ -1,0 +1,64 @@
+name: Configure AWS Credentials
+
+on:
+  workflow_call:
+    inputs:
+      aws-region:
+        type: string
+        required: true
+    secrets:
+      role-to-assume:
+        required: true
+      gpg-passphrase:
+        required: true
+    outputs:
+      aws-access-key-id:
+        value: ${{ jobs.oidc-auth.outputs.aws-access-key-id }}
+      aws-secret-access-key:
+        value: ${{ jobs.oidc-auth.outputs.aws-secret-access-key }}
+      aws-session-token:
+        value: ${{ jobs.oidc-auth.outputs.aws-session-token }}
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  oidc-auth:
+    name: OIDC Auth
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      aws-access-key-id: ${{ steps.encrypt-aws-access-key-id.outputs.out }}
+      aws-secret-access-key: ${{ steps.encrypt-aws-secret-access-key.outputs.out }}
+      aws-session-token: ${{ steps.encrypt-aws-session-token.outputs.out }}
+    steps:
+      - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+        with:
+          disable-sudo: true
+          egress-policy: audit
+      - id: auth
+        uses: aws-actions/configure-aws-credentials@8c3f20df09ac63af7b3ae3d7c91f105f857d8497 # v4.0.0
+        with:
+          aws-region: us-west-2
+          role-to-assume: "${{ secrets.role-to-assume }}"
+      - id: encrypt-aws-access-key-id
+        run: |
+          encrypted=$(gpg --batch --yes --passphrase "$GPG_PASSPHRASE" -c --cipher-algo AES256 -o - <(echo "$AWS_ACCESS_KEY_ID") | base64 -w0)
+          echo "out=$encrypted" >> $GITHUB_OUTPUT
+        env:
+          GPG_PASSPHRASE: ${{ secrets.gpg-passphrase }}
+      - id: encrypt-aws-secret-access-key
+        run: |
+          encrypted=$(gpg --batch --yes --passphrase "$GPG_PASSPHRASE" -c --cipher-algo AES256 -o - <(echo "$AWS_SECRET_ACCESS_KEY") | base64 -w0)
+          echo "out=$encrypted" >> $GITHUB_OUTPUT
+        env:
+          GPG_PASSPHRASE: ${{ secrets.gpg-passphrase }}
+      - id: encrypt-aws-session-token
+        run: |
+          encrypted=$(gpg --batch --yes --passphrase "$GPG_PASSPHRASE" -c --cipher-algo AES256 -o - <(echo "$AWS_SESSION_TOKEN") | base64 -w0)
+          echo "out=$encrypted" >> $GITHUB_OUTPUT
+        env:
+          GPG_PASSPHRASE: ${{ secrets.gpg-passphrase }}

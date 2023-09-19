@@ -478,6 +478,7 @@ module "DownloadGrantsGovDB" {
   lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
   log_retention_in_days                        = var.lambda_default_log_retention_in_days
   log_level                                    = var.lambda_default_log_level
+  lambda_autobuild                             = var.lambda_binaries_autobuild
   lambda_binaries_base_path                    = local.lambda_binaries_base_path
   lambda_arch                                  = var.lambda_arch
   additional_environment_variables             = local.lambda_environment_variables
@@ -498,6 +499,7 @@ module "SplitGrantsGovXMLDB" {
   lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
   log_retention_in_days                        = var.lambda_default_log_retention_in_days
   log_level                                    = var.lambda_default_log_level
+  lambda_autobuild                             = var.lambda_binaries_autobuild
   lambda_binaries_base_path                    = local.lambda_binaries_base_path
   lambda_arch                                  = var.lambda_arch
   additional_environment_variables             = local.lambda_environment_variables
@@ -517,6 +519,7 @@ module "ReceiveFFISEmail" {
   lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
   log_retention_in_days                        = var.lambda_default_log_retention_in_days
   log_level                                    = var.lambda_default_log_level
+  lambda_autobuild                             = var.lambda_binaries_autobuild
   lambda_binaries_base_path                    = local.lambda_binaries_base_path
   lambda_arch                                  = var.lambda_arch
   additional_environment_variables             = local.lambda_environment_variables
@@ -544,6 +547,7 @@ module "EnqueueFFISDownload" {
   lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
   log_retention_in_days                        = var.lambda_default_log_retention_in_days
   log_level                                    = var.lambda_default_log_level
+  lambda_autobuild                             = var.lambda_binaries_autobuild
   lambda_binaries_base_path                    = local.lambda_binaries_base_path
   lambda_arch                                  = var.lambda_arch
   additional_environment_variables             = local.lambda_environment_variables
@@ -568,6 +572,7 @@ module "PersistGrantsGovXMLDB" {
   lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
   log_retention_in_days                        = var.lambda_default_log_retention_in_days
   log_level                                    = var.lambda_default_log_level
+  lambda_autobuild                             = var.lambda_binaries_autobuild
   lambda_binaries_base_path                    = local.lambda_binaries_base_path
   lambda_arch                                  = var.lambda_arch
   additional_environment_variables             = local.lambda_environment_variables
@@ -588,6 +593,7 @@ module "DownloadFFISSpreadsheet" {
   lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
   log_retention_in_days                        = var.lambda_default_log_retention_in_days
   log_level                                    = var.lambda_default_log_level
+  lambda_autobuild                             = var.lambda_binaries_autobuild
   lambda_binaries_base_path                    = local.lambda_binaries_base_path
   lambda_arch                                  = var.lambda_arch
   additional_environment_variables             = local.lambda_environment_variables
@@ -612,6 +618,7 @@ module "SplitFFISSpreadsheet" {
   lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
   log_retention_in_days                        = var.lambda_default_log_retention_in_days
   log_level                                    = var.lambda_default_log_level
+  lambda_autobuild                             = var.lambda_binaries_autobuild
   lambda_binaries_base_path                    = local.lambda_binaries_base_path
   lambda_arch                                  = var.lambda_arch
   additional_environment_variables             = local.lambda_environment_variables
@@ -637,6 +644,7 @@ module "PersistFFISData" {
   lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
   log_retention_in_days                        = var.lambda_default_log_retention_in_days
   log_level                                    = var.lambda_default_log_level
+  lambda_autobuild                             = var.lambda_binaries_autobuild
   lambda_binaries_base_path                    = local.lambda_binaries_base_path
   lambda_arch                                  = var.lambda_arch
   additional_environment_variables             = local.lambda_environment_variables
@@ -661,6 +669,7 @@ module "ExtractGrantsGovDBToXML" {
   lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
   log_retention_in_days                        = var.lambda_default_log_retention_in_days
   log_level                                    = var.lambda_default_log_level
+  lambda_autobuild                             = var.lambda_binaries_autobuild
   lambda_binaries_base_path                    = local.lambda_binaries_base_path
   lambda_arch                                  = var.lambda_arch
   additional_environment_variables             = local.lambda_environment_variables
@@ -684,6 +693,7 @@ module "PublishGrantEvents" {
   lambda_artifact_bucket                       = module.lambda_artifacts_bucket.bucket_id
   log_retention_in_days                        = var.lambda_default_log_retention_in_days
   log_level                                    = var.lambda_default_log_level
+  lambda_autobuild                             = var.lambda_binaries_autobuild
   lambda_binaries_base_path                    = local.lambda_binaries_base_path
   lambda_arch                                  = var.lambda_arch
   additional_environment_variables             = local.lambda_environment_variables

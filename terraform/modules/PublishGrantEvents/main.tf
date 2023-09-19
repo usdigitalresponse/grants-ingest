@@ -41,6 +41,7 @@ data "aws_dynamodb_table" "source" {
 module "lambda_artifact" {
   source = "../taskfile_lambda_builder"
 
+  autobuild        = var.lambda_autobuild
   binary_base_path = var.lambda_binaries_base_path
   function_name    = var.function_name
   s3_bucket        = var.lambda_artifact_bucket
