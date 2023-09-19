@@ -312,7 +312,7 @@ resource "aws_ses_receipt_rule" "ffis_ingest" {
 }
 
 resource "aws_sqs_queue" "ffis_downloads" {
-  name = "ffis_downloads"
+  name = "${var.namespace}-ffis_downloads"
 
   delay_seconds              = 0
   visibility_timeout_seconds = 15 * 60
