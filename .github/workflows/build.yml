@@ -280,7 +280,7 @@ jobs:
         run: |
           REPORT_FILE=$(mktemp -t summary.md.XXXXX)
           cat >> $REPORT_FILE << 'ENDOFREPORT'
-          ## Build Lambdas Summary
+          ## Build CLI Summary
 
           <details>
           <summary>Compiled Checksums (before packing)</summary>

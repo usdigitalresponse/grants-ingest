@@ -109,6 +109,8 @@ jobs:
   update_release:
     name: Update release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     needs:
       - tf-apply
     env:
