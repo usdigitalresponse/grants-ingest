@@ -24,7 +24,7 @@ data "aws_cloudwatch_event_bus" "target" {
 }
 
 resource "aws_sqs_queue" "dlq" {
-  name = "publish_grant_events_dlq"
+  name = "${var.namespace}-${var.function_name}-dlq"
 
   visibility_timeout_seconds = 3600 // 1 hour
   delay_seconds              = 0
