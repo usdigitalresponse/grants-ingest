@@ -205,7 +205,7 @@ jobs:
           name: ${{ env.ARTIFACTS_KEY }}
           path: |
             ${{ github.workspace }}/terraform
-            !${{ env.TF_PLUGIN_CACHE_DIR }}
+            !**/${{ env.TF_PLUGIN_CACHE_DIR }}/**
             !${{ github.workspace }}/terraform/.terraform
           if-no-files-found: error
           retention-days: ${{ inputs.artifacts-retention-days }}
