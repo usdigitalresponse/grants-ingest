@@ -94,7 +94,6 @@ jobs:
       TF_CLI_ARGS: "-no-color"
       TF_IN_AUTOMATION: "true"
       TF_INPUT: 0
-      TF_PLUGIN_CACHE_DIR: ~/.terraform.d/plugin-cache
     concurrency:
       group: ${{ inputs.concurrency-group }}
       cancel-in-progress: false
@@ -192,20 +191,17 @@ jobs:
         run: terraform show tfplan
       - name: Encrypt terraform plan file
         id: encrypt_plan
-        if: success() && inputs.upload-artifacts
         env:
           GPG_PASSPHRASE: ${{ secrets.gpg-passphrase }}
         run: |
           gpg --batch --yes --passphrase "$GPG_PASSPHRASE" -c --cipher-algo AES256 tfplan
           rm tfplan
       - name: Store terraform artifacts
-        if: success() && inputs.upload-artifacts
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.ARTIFACTS_KEY }}
           path: |
             ${{ github.workspace }}/terraform
-            !**/${{ env.TF_PLUGIN_CACHE_DIR }}/**
             !${{ github.workspace }}/terraform/.terraform
           if-no-files-found: error
           retention-days: ${{ inputs.artifacts-retention-days }}
