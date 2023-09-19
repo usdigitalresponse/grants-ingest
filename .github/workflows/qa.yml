@@ -18,7 +18,13 @@ jobs:
       - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
         with:
           disable-sudo: true
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            objects.githubusercontent.com:443
+            proxy.golang.org:443
+            sum.golang.org:443
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref }}
@@ -55,7 +61,13 @@ jobs:
       - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
         with:
           disable-sudo: true
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            objects.githubusercontent.com:443
+            proxy.golang.org:443
+            sum.golang.org:443
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref }}
@@ -90,7 +102,11 @@ jobs:
       - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
         with:
           disable-sudo: true
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            github.com:443
+            proxy.golang.org:443
+            sum.golang.org:443
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref }}
@@ -112,7 +128,11 @@ jobs:
       - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
         with:
           disable-sudo: true
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            github.com:443
+            proxy.golang.org:443
+            sum.golang.org:443
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref }}
@@ -136,7 +156,13 @@ jobs:
       - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
         with:
           disable-sudo: true
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            objects.githubusercontent.com:443
+            proxy.golang.org:443
+            sum.golang.org:443
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref }}
