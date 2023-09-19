@@ -320,6 +320,10 @@ resource "aws_sqs_queue" "ffis_downloads" {
   message_retention_seconds  = 5 * 60 * 60 * 24 # 5 days
   max_message_size           = 1024             # 1 KB
   sqs_managed_sse_enabled    = true
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 data "aws_iam_policy_document" "ses_source_data_s3_access" {
