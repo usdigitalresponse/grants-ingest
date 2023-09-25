@@ -241,6 +241,10 @@ func (cmd *Cmd) purgeItems(logger log.Logger, batch []types.WriteRequest, purgeC
 	err := backoff.RetryNotify(
 		func() error {
 			thisBatchSize := len(input.RequestItems[cmd.TableName])
+			if cmd.DryRun {
+				purgeCounts <- thisBatchSize
+				return nil
+			}
 			resp, err := cmd.ddb.BatchWriteItem(cmd.ctx, &input)
 			if err != nil {
 				return backoff.Permanent(err)
