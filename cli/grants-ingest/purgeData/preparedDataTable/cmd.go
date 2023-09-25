@@ -29,13 +29,14 @@ type Cmd struct {
 	TableName string `arg:"" name:"table" help:"Name of the DynamoDB table from which to purge data."`
 
 	// Flags
-	PurgeFFIS       bool                `help:"Purge all item attributes sourced from FFIS.org data (ignored if --delete-items is given)."`
-	PurgeGov        bool                `help:"Purge all item attributes sourced from Grants.gov data (ignored if --delete-items is given)."`
-	KeepRevisionIDs bool                `name:"keep-revision-ids" help:"Retain item revision_id attributes when purging data (ignored if --delete-items is given)."`
-	DeleteItems     bool                `help:"Delete all table items completely."`
-	Concurrency     ct.ConcurrencyLimit `default:"10" help:"Max concurrent batch-write operations."`
-	TotalsAfter     ct.TotalsAfter      `default:"1000" help:"Log DynamoDB item totals after this many successful/failed deletions (silent if 0)."`
-	DryRun          bool                `help:"Dry run only - no DynamoDB table items will be modified or deleted."`
+	PurgeFFIS        bool                `help:"Purge all item attributes sourced from FFIS.org data (ignored if --delete-items is given)."`
+	PurgeGov         bool                `help:"Purge all item attributes sourced from Grants.gov data (ignored if --delete-items is given)."`
+	KeepRevisionIDs  bool                `name:"keep-revision-ids" help:"Retain item revision_id attributes when purging data (ignored if --delete-items is given)."`
+	DeleteItems      bool                `help:"Delete all table items completely."`
+	ReadConcurrency  ct.ConcurrencyLimit `default:"1" help:"Max DynamoDB parallel scan workers."`
+	WriteConcurrency ct.ConcurrencyLimit `default:"10" help:"Max concurrent batch-write operations."`
+	TotalsAfter      ct.TotalsAfter      `default:"1000" help:"Log DynamoDB item totals after this many successful/failed deletions (silent if 0)."`
+	DryRun           bool                `help:"Dry run only - no DynamoDB table items will be modified or deleted."`
 
 	// Internal
 	ctx          context.Context
@@ -69,12 +70,13 @@ func (cmd *Cmd) Run() error {
 
 	scannedItems := make(chan DDBItem)
 	batchedRequests := make(chan []types.WriteRequest)
+	purgeCounts := make(chan int)
 
 	reportingDone := make(chan struct{})
 	go func() {
 		defer func() { close(reportingDone) }()
 		var totalPurged int64
-		for nextCount := range cmd.purgeCounter {
+		for nextCount := range purgeCounts {
 			for i := 0; i < nextCount; i++ {
 				totalPurged++
 				if cmd.TotalsAfter.Check(totalPurged) {
@@ -85,12 +87,17 @@ func (cmd *Cmd) Run() error {
 	}()
 
 	go func() {
-		currentBatch := make([]types.WriteRequest, 0)
+		var totalScanned int64
+		currentBatch := make([]types.WriteRequest, 0, 25)
 		for item := range scannedItems {
-			currentBatch = append(currentBatch, cmd.prepareItemWriteRequest(item))
+			totalScanned++
+			if cmd.TotalsAfter.Check(totalScanned) {
+				log.Info(*cmd.logger, "Updated scanned items total", "count", totalScanned)
+			}
+			currentBatch = append(currentBatch, cmd.writeRequestForItem(item))
 			if len(currentBatch) == 25 {
 				batchedRequests <- currentBatch
-				currentBatch = make([]types.WriteRequest, 0)
+				currentBatch = make([]types.WriteRequest, 0, 25)
 			}
 		}
 		if len(currentBatch) > 0 {
@@ -99,13 +106,13 @@ func (cmd *Cmd) Run() error {
 	}()
 
 	var purgeItemsErr error
-	workWg := sync.WaitGroup{}
-	for i := 0; i < int(cmd.Concurrency); i++ {
+	purgeWg := sync.WaitGroup{}
+	for i := 0; i < int(cmd.WriteConcurrency); i++ {
 		logger := log.WithSuffix(*cmd.logger, "worker_id", i)
-		workWg.Add(1)
+		purgeWg.Add(1)
 		go func() {
-			defer workWg.Done()
-			err := cmd.purgeWorker(logger, batchedRequests)
+			defer purgeWg.Done()
+			err := cmd.purgeWorker(logger, batchedRequests, purgeCounts)
 			if err != nil && err != context.Canceled {
 				log.Error(*cmd.logger,
 					"Stopping application due to fatal error encountered while purging DynamoDB items",
@@ -116,58 +123,91 @@ func (cmd *Cmd) Run() error {
 		}()
 	}
 
-	var findItemsErr error
-	go func() {
-		defer close(scannedItems)
-		findItemsErr = cmd.findItems(scannedItems)
-	}()
+	var scanTableErr error
+	scanWg := sync.WaitGroup{}
+	for i := 0; i < int(cmd.ReadConcurrency); i++ {
+		scanWg.Add(1)
+		segmentId := i
+		go func() {
+			defer scanWg.Done()
+			err := cmd.scanTable(segmentId, scannedItems)
+			if err != nil && err != context.Canceled {
+				log.Error(*cmd.logger,
+					"Stopping application due to fatal error encountered while scanning DynamoDB items",
+					err)
+				scanTableErr = err
+			}
+		}()
+	}
 
-	workWg.Wait()
+	scanWg.Wait()
+	close(scannedItems)
+	purgeWg.Wait()
 	close(cmd.purgeCounter)
 	<-reportingDone
 
-	if cmd.ctx.Err() != nil || purgeItemsErr != nil || findItemsErr != nil {
+	if cmd.ctx.Err() != nil || purgeItemsErr != nil || scanTableErr != nil {
 		return fmt.Errorf("the operation completed with errors")
 	}
 
 	return nil
 }
 
-func (cmd *Cmd) findItems(ch chan<- DDBItem) error {
-	input := &dynamodb.ScanInput{TableName: aws.String(cmd.TableName)}
+func (cmd *Cmd) scanTable(segmentId int, ch chan<- DDBItem) (err error) {
+	logger := log.WithSuffix(*cmd.logger, "worker_id", segmentId)
+	defer func() {
+		msg := "Scan worker shutting down"
+		if err == nil {
+			log.Debug(logger, msg, "reason", "no more work")
+		} else if err == context.Canceled {
+			log.Warn(logger, msg, "reason", "shutdown requested")
+		} else {
+			log.Error(logger, msg, err, "reason", "fatal error")
+		}
+	}()
+
+	input := &dynamodb.ScanInput{
+		TableName:      aws.String(cmd.TableName),
+		ConsistentRead: aws.Bool(true),
+	}
+	if cmd.ReadConcurrency > 1 {
+		input.Segment = aws.Int32(int32(segmentId))
+		input.TotalSegments = aws.Int32(int32(cmd.ReadConcurrency))
+	}
 	if cmd.DeleteItems {
 		input.ProjectionExpression = aws.String("grant_id")
 	}
 
-	var totalScanned int64
 	for {
-		resp, err := cmd.ddb.Scan(cmd.ctx, input)
-		if err != nil {
-			log.Error(*cmd.logger, "Error scanning DynamoDB table items", err)
-			return err
-		}
-		for _, item := range resp.Items {
-			ch <- item
-			totalScanned++
-			if cmd.TotalsAfter.Check(totalScanned) {
-				log.Info(*cmd.logger, "Updated scanned items total", "count", totalScanned)
+		select {
+		case <-cmd.ctx.Done():
+			return cmd.ctx.Err()
+		default:
+			resp, err := cmd.ddb.Scan(cmd.ctx, input)
+			if err != nil {
+				log.Error(logger, "Error scanning DynamoDB table items", err)
+				return err
 			}
+			for _, item := range resp.Items {
+				ch <- item
+			}
+			if resp.LastEvaluatedKey == nil {
+				return nil
+			}
+			input.ExclusiveStartKey = resp.LastEvaluatedKey
 		}
-		if resp.LastEvaluatedKey == nil {
-			return nil
-		}
-		input.ExclusiveStartKey = resp.LastEvaluatedKey
 	}
 }
 
-func (cmd *Cmd) purgeWorker(logger log.Logger, batches <-chan []types.WriteRequest) (err error) {
+func (cmd *Cmd) purgeWorker(logger log.Logger, batches <-chan []types.WriteRequest, purgeCounts chan<- int) (err error) {
 	defer func() {
+		msg := "Purge worker shutting down"
 		if err == nil {
-			log.Debug(logger, "Worker shutting down", "reason", "no more work")
+			log.Debug(logger, msg, "reason", "no more work")
 		} else if err == context.Canceled {
-			log.Warn(logger, "Worker shutting down", "reason", "shutdown requested")
+			log.Warn(logger, msg, "reason", "shutdown requested")
 		} else {
-			log.Error(logger, "Worker shutting down", err, "reason", "fatal error")
+			log.Error(logger, msg, err, "reason", "fatal error")
 		}
 	}()
 
@@ -181,7 +221,7 @@ func (cmd *Cmd) purgeWorker(logger log.Logger, batches <-chan []types.WriteReque
 				if !ok {
 					return nil
 				}
-				if err := cmd.purgeItems(logger, requests); err != nil {
+				if err := cmd.purgeItems(logger, requests, purgeCounts); err != nil {
 					return err
 				}
 			case <-cmd.ctx.Done():
@@ -191,7 +231,7 @@ func (cmd *Cmd) purgeWorker(logger log.Logger, batches <-chan []types.WriteReque
 	}
 }
 
-func (cmd *Cmd) purgeItems(logger log.Logger, batch []types.WriteRequest) error {
+func (cmd *Cmd) purgeItems(logger log.Logger, batch []types.WriteRequest, purgeCounts chan<- int) error {
 	input := dynamodb.BatchWriteItemInput{
 		RequestItems: map[string][]types.WriteRequest{
 			cmd.TableName: batch,
@@ -206,7 +246,7 @@ func (cmd *Cmd) purgeItems(logger log.Logger, batch []types.WriteRequest) error 
 				return backoff.Permanent(err)
 			}
 			countUnprocessed := len(resp.UnprocessedItems)
-			cmd.purgeCounter <- thisBatchSize - countUnprocessed
+			purgeCounts <- (thisBatchSize - countUnprocessed)
 			if countUnprocessed > 0 {
 				input.RequestItems = resp.UnprocessedItems
 				return fmt.Errorf("dynamodb batch write operation returned %d unprocessed items",
@@ -228,7 +268,7 @@ func (cmd *Cmd) purgeItems(logger log.Logger, batch []types.WriteRequest) error 
 	return err
 }
 
-func (cmd *Cmd) prepareItemWriteRequest(item DDBItem) types.WriteRequest {
+func (cmd *Cmd) writeRequestForItem(item DDBItem) types.WriteRequest {
 	req := types.WriteRequest{}
 
 	if cmd.DeleteItems {
