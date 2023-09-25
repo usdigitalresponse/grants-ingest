@@ -253,7 +253,7 @@ func (cmd *Cmd) deleteObjects(logger log.Logger, keys []string, deleted, failure
 
 	resp, err := cmd.s3svc.DeleteObjects(cmd.ctx, &s3.DeleteObjectsInput{
 		Bucket: aws.String(cmd.S3Bucket),
-		Delete: &types.Delete{Objects: identifiers, Quiet: true},
+		Delete: &types.Delete{Objects: identifiers},
 	})
 
 	if err != nil {
