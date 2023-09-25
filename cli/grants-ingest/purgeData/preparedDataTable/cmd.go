@@ -293,6 +293,7 @@ func (cmd *Cmd) writeRequestForItem(item DDBItem) types.WriteRequest {
 			}
 		}
 	}
+	log.Debug(*cmd.logger, "Prepared item for PUT", "item", item)
 	req.PutRequest = &types.PutRequest{Item: item}
 	return req
 }
