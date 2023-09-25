@@ -69,6 +69,7 @@ func (cmd *Cmd) AfterApply(app *kong.Kong) error {
 			app.Errorf("It is strongly advised that you avoid purging data from a table with an active stream.")
 			app.Errorf("Therefore, this command will fail.")
 			app.Errorf("Use --ignore-streams to skip this check in the future.")
+			kong.NoDefaultHelp().Apply(app)
 			return fmt.Errorf("active streams detected on target table")
 		}
 	} else {
