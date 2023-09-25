@@ -190,6 +190,7 @@ func (cmd *Cmd) scanTable(segmentId int, ch chan<- DDBItem) (err error) {
 				return err
 			}
 			for _, item := range resp.Items {
+				log.Debug(logger, "Item found in scan", "item", item)
 				ch <- item
 			}
 			if resp.LastEvaluatedKey == nil {
@@ -301,7 +302,6 @@ func (cmd *Cmd) writeRequestForItem(item DDBItem) types.WriteRequest {
 			delete(item, k)
 		}
 	}
-	log.Debug(*cmd.logger, "Prepared item for PUT", "item", item)
 	req.PutRequest = &types.PutRequest{Item: item}
 	return req
 }
