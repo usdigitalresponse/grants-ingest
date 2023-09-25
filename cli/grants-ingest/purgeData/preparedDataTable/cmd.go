@@ -86,6 +86,7 @@ func (cmd *Cmd) Run() error {
 	}()
 
 	go func() {
+		defer close(batchedRequests)
 		var totalScanned int64
 		currentBatch := make([]types.WriteRequest, 0, 25)
 		for item := range scannedItems {
