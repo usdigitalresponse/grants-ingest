@@ -118,26 +118,28 @@ func (cmd *Cmd) Run(app *kong.Kong) error {
 	resultWg.Add(1)
 	go func() {
 		defer resultWg.Done()
-		var failedObjectCount int64
+		var totalFailedDeletions int64
 		for f := range failedDeletions {
 			failedObjectKeys = append(failedObjectKeys, f)
-			failedObjectCount++
-			if cmd.TotalsAfter.Check(failedObjectCount) {
-				log.Info(*cmd.logger, "Updated failed deletions total", "count", failedObjectCount)
+			totalFailedDeletions++
+			if cmd.TotalsAfter.Check(totalFailedDeletions) {
+				log.Info(*cmd.logger, "Updated failed deletions total", "count", totalFailedDeletions)
 			}
 		}
+		log.Info(*cmd.logger, "Final count of failed deletions", "count", totalFailedDeletions)
 	}()
 
-	var countDeletedObjects int64
 	resultWg.Add(1)
 	go func() {
 		defer resultWg.Done()
+		var totalDeletedObjects int64
 		for range successfulDeletions {
-			countDeletedObjects++
-			if cmd.TotalsAfter.Check(countDeletedObjects) {
-				log.Info(*cmd.logger, "Updated deleted objects total", "count", countDeletedObjects)
+			totalDeletedObjects++
+			if cmd.TotalsAfter.Check(totalDeletedObjects) {
+				log.Info(*cmd.logger, "Updated deleted objects total", "count", totalDeletedObjects)
 			}
 		}
+		log.Info(*cmd.logger, "Final count of deleted objects", "count", totalDeletedObjects)
 	}()
 
 	var listObjectsErr error
@@ -151,9 +153,6 @@ func (cmd *Cmd) Run(app *kong.Kong) error {
 	close(successfulDeletions)
 	resultWg.Wait()
 
-	if countDeletedObjects > 0 {
-		log.Info(*cmd.logger, "Objects were deleted", "count", countDeletedObjects)
-	}
 	if cmd.ctx.Err() != nil || listObjectsErr != nil || deleteObjectsErr != nil || len(failedObjectKeys) > 0 {
 		if len(failedObjectKeys) > 0 {
 			log.Warn(*cmd.logger, "Some objects could not be deleted",
