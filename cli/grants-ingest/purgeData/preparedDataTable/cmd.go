@@ -170,6 +170,7 @@ func (cmd *Cmd) scanTable(segmentId int, ch chan<- DDBItem) (err error) {
 	input := &dynamodb.ScanInput{
 		TableName:      aws.String(cmd.TableName),
 		ConsistentRead: aws.Bool(true),
+		Limit:          aws.Int32(1),
 	}
 	if cmd.ReadConcurrency > 1 {
 		input.Segment = aws.Int32(int32(segmentId))
@@ -193,6 +194,7 @@ func (cmd *Cmd) scanTable(segmentId int, ch chan<- DDBItem) (err error) {
 				log.Debug(logger, "Item found in scan", "item", item)
 				ch <- item
 			}
+			return nil
 			if resp.LastEvaluatedKey == nil {
 				return nil
 			}
