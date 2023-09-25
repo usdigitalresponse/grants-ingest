@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodbstreams"
 	"github.com/cenkalti/backoff/v4"
 	ct "github.com/usdigitalresponse/grants-ingest/cli/types"
 	"github.com/usdigitalresponse/grants-ingest/internal/awsHelpers"
@@ -36,6 +37,7 @@ type Cmd struct {
 	ReadConcurrency  ct.ConcurrencyLimit `default:"1" help:"Max DynamoDB parallel scan workers."`
 	WriteConcurrency ct.ConcurrencyLimit `default:"10" help:"Max concurrent batch-write operations."`
 	TotalsAfter      ct.TotalsAfter      `default:"1000" help:"Log DynamoDB item totals after this many successful/failed deletions (silent if 0)."`
+	IgnoreStreams    bool                `help:"Purge data even if the DynamoDB table has an active stream. Not recommended."`
 	DryRun           bool                `help:"Dry run only - no DynamoDB table items will be modified or deleted."`
 
 	// Internal
@@ -60,7 +62,22 @@ func (cmd *Cmd) AfterApply(app *kong.Kong) error {
 			return err
 		}
 	}
-	cmd.ddb = dynamodb.NewFromConfig(cfg, func(*dynamodb.Options) {})
+	cmd.ddb = dynamodb.NewFromConfig(cfg)
+	if !cmd.IgnoreStreams {
+		if !cmd.tableStreamsInactive(dynamodbstreams.NewFromConfig(cfg)) {
+			app.Errorf("WARNING: Active stream(s) found on the target DynamoDB table.")
+			app.Errorf("It is strongly advised that you avoid purging data from a table with an active stream.")
+			app.Errorf("Therefore, this command will fail.")
+			app.Errorf("Use --ignore-streams to skip this check in the future.")
+			return fmt.Errorf("active streams detected on target table")
+		}
+	} else {
+		wait := time.Second * 5
+		log.Warn(*cmd.logger, "Skipping DynamoDB stream check. This is NOT recommended!",
+			"proceed_after", wait)
+		time.Sleep(wait)
+	}
+
 	return nil
 }
 
@@ -306,4 +323,17 @@ func (cmd *Cmd) writeRequestForItem(item DDBItem) types.WriteRequest {
 	log.Debug(*cmd.logger, "Prepared PutRequest item", "item", item)
 	req.PutRequest = &types.PutRequest{Item: item}
 	return req
+}
+
+func (cmd *Cmd) tableStreamsInactive(c *dynamodbstreams.Client) bool {
+	resp, err := c.ListStreams(cmd.ctx, &dynamodbstreams.ListStreamsInput{
+		TableName: aws.String(cmd.TableName),
+		Limit:     aws.Int32(1),
+	})
+	if err != nil {
+		log.Error(*cmd.logger, "Error listing streams for DynamoDB table", err,
+			"table_name", cmd.TableName)
+		return false
+	}
+	return len(resp.Streams) == 0
 }
