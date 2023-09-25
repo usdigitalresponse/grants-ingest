@@ -289,9 +289,16 @@ func (cmd *Cmd) writeRequestForItem(item DDBItem) types.WriteRequest {
 	}
 	if cmd.PurgeGov {
 		for k := range item {
-			if k != "Bill" && k != "revision_id" {
-				delete(item, k)
+			if k == "grant_id" {
+				continue
 			}
+			if k == "Bill" {
+				continue
+			}
+			if k == "revision_id" {
+				continue
+			}
+			delete(item, k)
 		}
 	}
 	log.Debug(*cmd.logger, "Prepared item for PUT", "item", item)
