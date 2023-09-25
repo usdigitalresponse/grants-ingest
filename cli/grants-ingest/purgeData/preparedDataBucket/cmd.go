@@ -170,7 +170,7 @@ func (cmd *Cmd) listObjects(logger *log.Logger, ch chan<- []string) error {
 	params := &s3.ListObjectsV2Input{
 		Bucket:  aws.String(cmd.S3Bucket),
 		Prefix:  aws.String(cmd.FilterPrefix),
-		MaxKeys: 1,
+		MaxKeys: 1000,
 	}
 	for {
 		resp, err := cmd.s3svc.ListObjectsV2(cmd.ctx, params)
@@ -245,6 +245,9 @@ func (cmd *Cmd) deleteObjects(logger log.Logger, keys []string, deleted, failure
 	}
 
 	if cmd.DryRun {
+		for _, k := range keys {
+			deleted <- k
+		}
 		return nil
 	}
 
