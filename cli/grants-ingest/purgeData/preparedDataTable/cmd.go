@@ -39,11 +39,10 @@ type Cmd struct {
 	DryRun           bool                `help:"Dry run only - no DynamoDB table items will be modified or deleted."`
 
 	// Internal
-	ctx          context.Context
-	stop         context.CancelFunc
-	ddb          *dynamodb.Client
-	purgeCounter chan int
-	logger       *log.Logger
+	ctx    context.Context
+	stop   context.CancelFunc
+	ddb    *dynamodb.Client
+	logger *log.Logger
 }
 
 func (cmd *Cmd) BeforeApply(app *kong.Kong, logger *log.Logger) error {
@@ -144,7 +143,7 @@ func (cmd *Cmd) Run() error {
 	scanWg.Wait()
 	close(scannedItems)
 	purgeWg.Wait()
-	close(cmd.purgeCounter)
+	close(purgeCounts)
 	<-reportingDone
 
 	if cmd.ctx.Err() != nil || purgeItemsErr != nil || scanTableErr != nil {
