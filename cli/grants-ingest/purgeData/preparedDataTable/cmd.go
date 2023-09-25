@@ -41,10 +41,11 @@ type Cmd struct {
 	DryRun           bool                `help:"Dry run only - no DynamoDB table items will be modified or deleted."`
 
 	// Internal
-	ctx    context.Context
-	stop   context.CancelFunc
-	ddb    *dynamodb.Client
-	logger *log.Logger
+	ctx       context.Context
+	stop      context.CancelFunc
+	ddb       *dynamodb.Client
+	ddbstream *dynamodbstreams.Client
+	logger    *log.Logger
 }
 
 func (cmd *Cmd) BeforeApply(app *kong.Kong, logger *log.Logger) error {
@@ -63,26 +64,14 @@ func (cmd *Cmd) AfterApply(app *kong.Kong) error {
 		}
 	}
 	cmd.ddb = dynamodb.NewFromConfig(cfg)
-	if !cmd.IgnoreStreams {
-		if !cmd.tableStreamsInactive(dynamodbstreams.NewFromConfig(cfg)) {
-			app.Errorf("WARNING: Active stream(s) found on the target DynamoDB table.")
-			app.Errorf("It is strongly advised that you avoid purging data from a table with an active stream.")
-			app.Errorf("Therefore, this command will fail.")
-			app.Errorf("Use --ignore-streams to skip this check in the future.")
-			kong.NoDefaultHelp().Apply(app)
-			return fmt.Errorf("active streams detected on target table")
-		}
-	} else {
-		wait := time.Second * 5
-		log.Warn(*cmd.logger, "Skipping DynamoDB stream check. This is NOT recommended!",
-			"proceed_after", wait)
-		time.Sleep(wait)
-	}
-
+	cmd.ddbstream = dynamodbstreams.NewFromConfig(cfg)
 	return nil
 }
 
-func (cmd *Cmd) Run() error {
+func (cmd *Cmd) Run(app *kong.Kong) error {
+	if !cmd.tableStreamsInactive(app) {
+		return fmt.Errorf("table stream check failed")
+	}
 	defer cmd.stop()
 
 	scannedItems := make(chan DDBItem)
@@ -326,8 +315,16 @@ func (cmd *Cmd) writeRequestForItem(item DDBItem) types.WriteRequest {
 	return req
 }
 
-func (cmd *Cmd) tableStreamsInactive(c *dynamodbstreams.Client) bool {
-	resp, err := c.ListStreams(cmd.ctx, &dynamodbstreams.ListStreamsInput{
+func (cmd *Cmd) tableStreamsInactive(app *kong.Kong) bool {
+	if cmd.IgnoreStreams {
+		wait := time.Second * 5
+		log.Warn(*cmd.logger, "Skipping DynamoDB stream check. This is NOT recommended!",
+			"proceed_after", wait)
+		time.Sleep(wait)
+		return true
+	}
+
+	resp, err := cmd.ddbstream.ListStreams(cmd.ctx, &dynamodbstreams.ListStreamsInput{
 		TableName: aws.String(cmd.TableName),
 		Limit:     aws.Int32(1),
 	})
@@ -336,5 +333,13 @@ func (cmd *Cmd) tableStreamsInactive(c *dynamodbstreams.Client) bool {
 			"table_name", cmd.TableName)
 		return false
 	}
-	return len(resp.Streams) == 0
+
+	if len(resp.Streams) > 0 {
+		app.Errorf(`Active stream(s) found on the target DynamoDB table.
+It is strongly advised that you avoid purging data from a table with an active stream.
+Therefore, this command will fail.
+Use --ignore-streams to skip this check in the future.`)
+		return false
+	}
+	return true
 }
