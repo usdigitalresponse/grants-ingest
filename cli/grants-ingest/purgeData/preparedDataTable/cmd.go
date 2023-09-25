@@ -136,6 +136,7 @@ func (cmd *Cmd) Run() error {
 					"Stopping application due to fatal error encountered while scanning DynamoDB items",
 					err)
 				scanTableErr = err
+				cmd.stop()
 			}
 		}()
 	}
