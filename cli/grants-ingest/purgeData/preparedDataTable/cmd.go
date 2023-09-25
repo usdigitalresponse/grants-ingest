@@ -83,6 +83,7 @@ func (cmd *Cmd) Run() error {
 				}
 			}
 		}
+		log.Info(*cmd.logger, "Final count of purged items", "count", totalPurged)
 	}()
 
 	go func() {
