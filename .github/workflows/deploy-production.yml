@@ -83,12 +83,21 @@ jobs:
       tf-validate-outcome: ${{ needs.tf-plan.outputs.validate-outcome }}
       tf-validate-output: ${{ needs.tf-plan.outputs.validate-output }}
 
+  approve-tf-apply:
+    name: Review and Approve Deployment
+    needs:
+      - tf-plan
+    if: needs.tf-plan.outputs.plan-exitcode == 2
+    runs-on: ubuntu-latest
+    environment: production
+
   tf-apply:
     name: Deploy to Production
     needs:
       - build-lambdas
       - aws-auth
       - tf-plan
+      - approve-tf-apply
     if: needs.tf-plan.outputs.plan-exitcode == 2
     uses: ./.github/workflows/terraform-apply.yml
     with:
