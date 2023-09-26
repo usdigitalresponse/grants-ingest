@@ -25,9 +25,9 @@ type Cmd struct {
 	// Flags
 	MatchPaths     []FilePathMatcher   `placeholder:"glob" help:"Shell filename pattern (i.e. glob) for matching S3 keys to delete."`
 	MatchRegex     []RegexMatcher      `placeholder:"expression" help:"Regex pattern for matching S3 keys to delete."`
-	MatchFFIS      bool                `help:"Delete all FFIS.org S3 objects (after applying --filter-prefix, if given)."`
-	MatchGov       bool                `help:"Delete all Grants.gov S3 objects (after applying --filter-prefix, if given)."`
-	MatchAll       bool                `help:"Delete all S3 objects (after applying --filter-prefix, if given)."`
+	PurgeFFIS      bool                `help:"Delete all FFIS.org S3 objects (after applying --filter-prefix, if given)."`
+	PurgeGov       bool                `help:"Delete all Grants.gov S3 objects (after applying --filter-prefix, if given)."`
+	PurgeAll       bool                `help:"Delete all S3 objects (after applying --filter-prefix, if given)."`
 	FilterPrefix   string              `name:"s3-prefix" default:"" help:"Prevent deleting bucket objects outside this prefix."`
 	Concurrency    ct.ConcurrencyLimit `default:"10" help:"Max concurrent batch-delete operations."`
 	TotalsAfter    ct.TotalsAfter      `default:"1000" help:"Log S3 object totals after this many successful/failed deletions (silent if 0)."`
@@ -44,7 +44,7 @@ type Cmd struct {
 
 var (
 	ErrCompletion = errors.New("the operation completed with errors")
-	ErrNoMatchers = errors.New("no match options are configured")
+	ErrNoMatchers = errors.New("no match options are configured for purging data")
 )
 
 func (cmd *Cmd) BeforeApply(app *kong.Kong, logger *log.Logger) error {
@@ -65,13 +65,13 @@ func (cmd *Cmd) AfterApply(app *kong.Kong) error {
 	}
 	cmd.s3svc = s3.NewFromConfig(cfg, func(o *s3.Options) { o.UsePathStyle = cmd.S3UsePathStyle })
 
-	if cmd.MatchAll {
+	if cmd.PurgeAll {
 		cmd.matchers = append(cmd.matchers, AllMatcher)
 	} else {
-		if cmd.MatchFFIS {
+		if cmd.PurgeFFIS {
 			cmd.matchers = append(cmd.matchers, FFISMatcher)
 		}
-		if cmd.MatchGov {
+		if cmd.PurgeGov {
 			cmd.matchers = append(cmd.matchers, GrantsGovMatcher)
 		}
 		for _, m := range cmd.MatchRegex {

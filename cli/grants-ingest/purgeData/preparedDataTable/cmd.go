@@ -30,10 +30,10 @@ type Cmd struct {
 	TableName string `arg:"" name:"table" help:"Name of the DynamoDB table from which to purge data."`
 
 	// Flags
-	PurgeFFIS        bool                `help:"Purge all item attributes sourced from FFIS.org data (ignored if --delete-items is given)."`
-	PurgeGov         bool                `help:"Purge all item attributes sourced from Grants.gov data (ignored if --delete-items is given)."`
-	KeepRevisionIDs  bool                `name:"keep-revision-ids" help:"Retain item revision_id attributes when purging data (ignored if --delete-items is given)."`
-	DeleteItems      bool                `help:"Delete all table items completely."`
+	PurgeFFIS        bool                `help:"Purge all item attributes sourced from FFIS.org data (ignored if --purge-all is given)."`
+	PurgeGov         bool                `help:"Purge all item attributes sourced from Grants.gov data (ignored if --purge-all is given)."`
+	KeepRevisionIDs  bool                `name:"keep-revision-ids" help:"Retain item revision_id attributes when purging data (ignored if --purge-all is given)."`
+	PurgeAll         bool                `help:"Delete all table items completely."`
 	ReadConcurrency  ct.ConcurrencyLimit `default:"1" help:"Max DynamoDB parallel scan workers."`
 	WriteConcurrency ct.ConcurrencyLimit `default:"10" help:"Max concurrent batch-write operations."`
 	TotalsAfter      ct.TotalsAfter      `default:"1000" help:"Log DynamoDB item totals after this many successful/failed deletions (silent if 0)."`
@@ -183,7 +183,7 @@ func (cmd *Cmd) scanTable(segmentId int, ch chan<- DDBItem) (err error) {
 		input.Segment = aws.Int32(int32(segmentId))
 		input.TotalSegments = aws.Int32(int32(cmd.ReadConcurrency))
 	}
-	if cmd.DeleteItems {
+	if cmd.PurgeAll {
 		input.ProjectionExpression = aws.String("grant_id")
 	}
 
@@ -285,7 +285,7 @@ func (cmd *Cmd) purgeItems(logger log.Logger, batch []types.WriteRequest, purgeC
 func (cmd *Cmd) writeRequestForItem(item DDBItem) types.WriteRequest {
 	req := types.WriteRequest{}
 
-	if cmd.DeleteItems {
+	if cmd.PurgeAll {
 		req.DeleteRequest = &types.DeleteRequest{Key: item}
 		return req
 	}
