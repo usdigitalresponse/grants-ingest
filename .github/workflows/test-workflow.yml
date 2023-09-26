@@ -1,0 +1,53 @@
+name: Test Workflow Do Not Use
+
+on:
+  pull_request: {}
+
+jobs:
+  dependency-a:
+    name: Dependency A
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Dependency A satisfied!"
+
+  dependency-b:
+    name: Dependency B
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Dependency B satisfied!"
+
+  approval:
+    name: "Needs approval"
+    runs-on: ubuntu-latest
+    environment: "staging"
+    needs:
+      - dependency-a
+      - dependency-b
+    steps:
+      - run: echo "Permissions granted! 🚀"
+
+  goal:
+    name: "Run after approval"
+    runs-on: ubuntu-latest
+    needs:
+      - dependency-a
+      - dependency-b
+      - approval
+    steps:
+      - run: echo "We made it!"
+
+  extra:
+    name: "Extra step"
+    needs:
+      - dependency-a
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "I am superfluous"
+
+  post-goal:
+    name: "Run last"
+    runs-on: ubuntu-latest
+    needs:
+      - goal
+    steps:
+      - run: echo "What happens without approval?"
