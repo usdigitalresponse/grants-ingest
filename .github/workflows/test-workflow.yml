@@ -23,6 +23,8 @@ jobs:
     needs:
       - dependency-a
       - dependency-b
+    steps:
+      - run: echo "Permissions granted! 🚀"
 
   goal:
     name: "Run after approval"

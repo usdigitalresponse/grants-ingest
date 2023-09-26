@@ -90,6 +90,8 @@ jobs:
     if: needs.tf-plan.outputs.plan-exitcode == 2
     runs-on: ubuntu-latest
     environment: production
+    steps:
+      - run: echo "Permissions granted! 🚀"
 
   tf-apply:
     name: Deploy to Production
@@ -115,7 +117,7 @@ jobs:
       datadog-app-key: ${{ secrets.DATADOG_APP_KEY }}
       gpg-passphrase: ${{ secrets.PRODUCTION_GPG_PASSPHRASE }}
 
-  update_release:
+  update-release:
     name: Update release
     runs-on: ubuntu-latest
     permissions:
