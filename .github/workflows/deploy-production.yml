@@ -84,7 +84,7 @@ jobs:
       tf-validate-output: ${{ needs.tf-plan.outputs.validate-output }}
 
   tf-apply:
-    name: Deploy to Staging
+    name: Deploy to Production
     needs:
       - build-lambdas
       - aws-auth
