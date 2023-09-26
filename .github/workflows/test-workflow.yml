@@ -48,4 +48,4 @@ jobs:
     needs:
       - goal
     steps:
-      - run: "What happens without approval?"
+      - run: echo "What happens without approval?"
