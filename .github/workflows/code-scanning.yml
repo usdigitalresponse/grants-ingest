@@ -78,5 +78,3 @@ jobs:
       - name: Ensure GitHub action versions are pinned to SHAs
         # uses: zgosalvez/github-actions-ensure-sha-pinned-actions@f32435541e24cd6a4700a7f52bb2ec59e80603b1 # v2.1.4
         uses: zgosalvez/github-actions-ensure-sha-pinned-actions@v2.1.4 # Test - should fail
-        with:
-          dry_run: true
