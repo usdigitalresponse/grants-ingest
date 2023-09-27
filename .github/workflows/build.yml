@@ -64,7 +64,7 @@ jobs:
             proxy.golang.org:443
             sum.golang.org:443
             storage.googleapis.com:443
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
         with:
           show-progress: 'false'
           persist-credentials: 'false'
