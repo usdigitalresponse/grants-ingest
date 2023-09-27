@@ -8,6 +8,7 @@ import (
 	"github.com/go-kit/log/level"
 	"github.com/posener/complete"
 	"github.com/usdigitalresponse/grants-ingest/cli/grants-ingest/ffisImport"
+	"github.com/usdigitalresponse/grants-ingest/cli/grants-ingest/purgeData"
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
 	"github.com/willabides/kongplete"
 )
@@ -36,17 +37,14 @@ type CLI struct {
 	Globals
 
 	FFISImport ffisImport.Cmd `cmd:"ffis-import" help:"Import FFIS spreadsheets to S3."`
+	Purge      purgeData.Cmd  `cmd:"purge" help:"Purge data from various locations."`
 
 	Completion kongplete.InstallCompletions `cmd:"" help:"Install shell completions"`
 }
 
 func main() {
-	cli := CLI{
-		Globals: Globals{},
-	}
-
 	var logger log.Logger
-	parser := kong.Must(&cli,
+	parser := kong.Must(&CLI{Globals: Globals{}},
 		kong.Name("grants-ingest"),
 		kong.Description("CLI utility for the grants-ingest service."),
 		kong.UsageOnError(),
@@ -59,9 +57,9 @@ func main() {
 		kongplete.WithPredictor("dir", complete.PredictDirs("*")),
 	)
 
-	ctx, err := parser.Parse(os.Args[1:])
+	cli, err := parser.Parse(os.Args[1:])
 	parser.FatalIfErrorf(err)
-	if err := ctx.Run(&cli.Globals); err != nil {
-		ctx.Exit(1)
+	if err := cli.Run(); err != nil {
+		cli.Exit(1)
 	}
 }
