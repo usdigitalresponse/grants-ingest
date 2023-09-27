@@ -98,6 +98,7 @@ jobs:
       aws-region: us-west-2
       concurrency-group: run_terraform-staging
       tf-backend-config-file: staging.s3.tfbackend
+      environment-name: staging
     secrets:
       aws-access-key-id: ${{ needs.aws-auth.outputs.aws-access-key-id }}
       aws-secret-access-key: ${{ needs.aws-auth.outputs.aws-secret-access-key }}
