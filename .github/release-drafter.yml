@@ -31,6 +31,7 @@ exclude-labels:
   - skip-changelog
 exclude-contributors:
   - dependabot
+  - 'dependabot[bot]'
 autolabeler:
   - label: go
     files:
