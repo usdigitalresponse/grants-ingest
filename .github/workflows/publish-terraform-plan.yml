@@ -122,7 +122,7 @@ jobs:
       - name: Find previous report comment
         id: find-comment
         if: inputs.write-comment && inputs.pr-number != ''
-        uses: peter-evans/find-comment@v2
+        uses: peter-evans/find-comment@a54c31d7fa095754bfef525c0c8e5e5674c4b4b1 # v2.4.0
         with:
           issue-number: ${{ inputs.pr-number }}
           comment-author: 'github-actions[bot]'
