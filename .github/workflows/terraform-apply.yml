@@ -15,10 +15,13 @@ on:
       tf-plan-artifacts-key:
         type: string
         required: true
+      tf-backend-config-file:
+        type: string
+        required: true
       aws-region:
         type: string
         required: true
-      tf-backend-config-file:
+      environment-name:
         type: string
         required: true
       concurrency-group:
@@ -55,6 +58,7 @@ jobs:
       TF_IN_AUTOMATION: "true"
       TF_INPUT: 0
       TF_PLUGIN_CACHE_DIR: ~/.terraform.d/plugin-cache
+    environment: ${{ inputs.environment-name }}
     concurrency:
       group: ${{ inputs.concurrency-group }}
       cancel-in-progress: false

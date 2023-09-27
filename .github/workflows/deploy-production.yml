@@ -84,7 +84,7 @@ jobs:
       tf-validate-output: ${{ needs.tf-plan.outputs.validate-output }}
 
   tf-apply:
-    name: Deploy to Staging
+    name: Deploy to Production
     needs:
       - build-lambdas
       - aws-auth
@@ -98,6 +98,7 @@ jobs:
       aws-region: us-west-2
       concurrency-group: run_terraform-production
       tf-backend-config-file: production.s3.tfbackend
+      environment-name: production
     secrets:
       aws-access-key-id: ${{ needs.aws-auth.outputs.aws-access-key-id }}
       aws-secret-access-key: ${{ needs.aws-auth.outputs.aws-secret-access-key }}
@@ -106,7 +107,7 @@ jobs:
       datadog-app-key: ${{ secrets.DATADOG_APP_KEY }}
       gpg-passphrase: ${{ secrets.PRODUCTION_GPG_PASSPHRASE }}
 
-  update_release:
+  update-release:
     name: Update release
     runs-on: ubuntu-latest
     permissions:

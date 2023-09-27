@@ -113,6 +113,7 @@ jobs:
             proxy.golang.org:443
             sum.golang.org:443
             raw.githubusercontent.com:443
+            storage.googleapis.com:443
       - name: Restore Go build sources
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
         with:
@@ -230,6 +231,7 @@ jobs:
             proxy.golang.org:443
             sum.golang.org:443
             raw.githubusercontent.com:443
+            storage.googleapis.com:443
       - name: Restore Go build sources
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
         with:

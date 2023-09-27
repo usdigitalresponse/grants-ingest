@@ -3,6 +3,7 @@ package ffisImport
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/alecthomas/kong"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -16,11 +17,12 @@ type Cmd struct {
 	S3Bucket        string `arg:"" name:"bucket" help:"Destination S3 bucket name"`
 
 	// Flags
-	S3Prefix       string `name:"s3-prefix" help:"Path prefix for mapped S3 keys" default:"sources"`
-	S3DateLayout   string `name:"s3-date-layout" help:"Date layout for mapped S3 keys" default:"2006/01/02"`
-	S3Suffix       string `name:"s3-suffix" help:"Path suffix for mapped S3 keys" default:"ffis.org/download.xlsx"`
-	S3UsePathStyle bool   `name:"s3-use-path-style" help:"Use path-style addressing for S3 bucket"`
-	DryRun         bool   `help:"Dry run only - no files will be uploaded to S3"`
+	S3Prefix       string        `name:"s3-prefix" help:"Path prefix for mapped S3 keys" default:"sources"`
+	S3DateLayout   string        `name:"s3-date-layout" help:"Date layout for mapped S3 keys" default:"2006/01/02"`
+	S3Suffix       string        `name:"s3-suffix" help:"Path suffix for mapped S3 keys" default:"ffis.org/download.xlsx"`
+	S3UsePathStyle bool          `name:"s3-use-path-style" help:"Use path-style addressing for S3 bucket"`
+	DryRun         bool          `help:"Dry run only - no files will be uploaded to S3"`
+	Wait           time.Duration `help:"Duration to wait between uploads" default:"0s"`
 }
 
 func (cmd *Cmd) Help() string {
@@ -58,6 +60,10 @@ func (cmd *Cmd) Run(app *kong.Kong, logger *log.Logger) error {
 		logger := log.WithSuffix(*logger,
 			"source", src, "destination", fmt.Sprintf("s3://%s/%s", cmd.S3Bucket, dst),
 			"progress", fmt.Sprintf("%d of %d", i+1, len(srcToDst)))
+		if i > 0 && cmd.Wait > 0 {
+			log.Info(logger, fmt.Sprintf("Pausing for %s before next upload...", cmd.Wait))
+			time.Sleep(cmd.Wait)
+		}
 		log.Debug(logger, "Uploading file to S3")
 		if !cmd.DryRun {
 			if err := uploadToS3(ctx, s3svc, cmd.S3Bucket, src, dst); err != nil {
