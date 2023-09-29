@@ -39,6 +39,7 @@ resource "datadog_metric_metadata" "custom" {
   metric      = each.key
   short_name  = each.value.short_name
   description = each.value.description
+  type        = coalesce(each.value.type, "gauge")
   unit        = each.value.unit
   per_unit    = each.value.per_unit
 

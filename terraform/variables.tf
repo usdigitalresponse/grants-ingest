@@ -177,6 +177,7 @@ variable "datadog_metrics_metadata" {
   type = map(object({
     short_name  = optional(string)
     description = optional(string)
+    type        = optional(string) # https://docs.datadoghq.com/metrics/types/ (default: "gauge")
     unit        = optional(string) # https://docs.datadoghq.com/metrics/units/
     per_unit    = optional(string)
   }))
