@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Dependabot metadata
         id: dependabot-metadata
-        uses: dependabot/fetch-metadata@v1
+        uses: dependabot/fetch-metadata@c9c4182bf1b97f5224aee3906fd373f6b61b4526 # v1.6.0
       - name: Approve a PR if dependency semver changes are minor or patch
         if: ${{contains(fromJson('["version-update:semver-patch", "version-update:semver-minor"]'), steps.dependabot-metadata.outputs.update-type)}}
         run: gh pr review --approve "$PR_URL"

@@ -23,11 +23,11 @@ jobs:
           allowed-endpoints: >
             api.github.com:443
             github.com:443
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
         with:
           show-progress: 'false'
           persist-credentials: 'false'
-      - uses: actions/dependency-review-action@v3
+      - uses: actions/dependency-review-action@6c5ccdad469c9f8a2996bfecaec55a631a347034 # v3.1.0
 
   codeql:
     name: CodeQL
@@ -41,18 +41,39 @@ jobs:
         with:
           disable-sudo: true
           egress-policy: audit
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
         with:
           show-progress: 'false'
           persist-credentials: 'false'
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
+        uses: github/codeql-action/init@8e0b1c74b1d5a0077b04d064c76ee714d3da7637 # v2.14.6
         with:
           languages: go
           queries: security-extended,security-and-quality
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v2
+        uses: github/codeql-action/autobuild@8e0b1c74b1d5a0077b04d064c76ee714d3da7637 # v2.14.6
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
+        uses: github/codeql-action/analyze@8e0b1c74b1d5a0077b04d064c76ee714d3da7637 # v2.14.6
         with:
           category: "/language:go"
+
+  gha-workflow-security:
+    name: GHA Workflow Security
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+    steps:
+      - uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
+        with:
+          show-progress: 'false'
+          persist-credentials: 'false'
+      - name: Ensure GitHub action versions are pinned to SHAs
+        uses: zgosalvez/github-actions-ensure-sha-pinned-actions@f32435541e24cd6a4700a7f52bb2ec59e80603b1 # v2.1.4
