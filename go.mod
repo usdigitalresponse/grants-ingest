@@ -9,8 +9,8 @@ require (
 	github.com/aws/aws-lambda-go v1.41.0
 	github.com/aws/aws-sdk-go v1.45.19
 	github.com/aws/aws-sdk-go-v2 v1.21.0
-	github.com/aws/aws-sdk-go-v2/config v1.18.42
-	github.com/aws/aws-sdk-go-v2/credentials v1.13.40
+	github.com/aws/aws-sdk-go-v2/config v1.18.43
+	github.com/aws/aws-sdk-go-v2/credentials v1.13.41
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.10.40
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.4.67
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.87
@@ -58,9 +58,9 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/kms v1.21.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sfn v1.19.4 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sns v1.21.4 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.14.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.15.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.17.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.22.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.23.0 // indirect
 	github.com/aws/aws-xray-sdk-go v1.8.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
