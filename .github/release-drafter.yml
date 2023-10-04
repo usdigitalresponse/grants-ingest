@@ -47,7 +47,7 @@ autolabeler:
       - go.sum
       - '**/.terraform.lock.hcl'
     branch:
-      - '/dependabot\/.+/'
+      - '/^dependabot\/.+$/i'
   - label: documentation
     files:
       - README
@@ -55,11 +55,11 @@ autolabeler:
       - '**/docs/**'
       - '**/*.md'
     branch:
-      - '/docs?/'
+      - '/^docs?\/.+$/'
   - label: bug
     branch:
-      - '/fix\/.+/'
-      - '/bug\/.+/'
+      - '/^fix\/.+$/i'
+      - '/^bug\/.+$/i'
     title:
       - '/\bfix(es)?\b/i'
       - '/\bbug\b/i'
