@@ -65,7 +65,7 @@ autolabeler:
       - '/\bbug\b/i'
   - label: enhancement
     branch:
-      - '/^feat(ure)?\/.+$/i'
+      - '/^feat(ures?)?\/.+$/i'
       - '/^enhance(s|ments?)?\/.+$/i'
     title:
       - '/\bfeat(ure)?\b/i'
