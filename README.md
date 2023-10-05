@@ -204,7 +204,7 @@ to development. You can [install the `task` utility](https://taskfile.dev/instal
 and then run `task` in your command-line environment to see a list of the available helpers.
 
 
-### Quick Reference
+#### Quick Reference
 
 The following items can be referred to as a quick "cheat-sheet" for development:
 - Install Go dependencies: `go mod download` or `go get ./...`
