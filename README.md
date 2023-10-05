@@ -114,8 +114,8 @@ To create this bucket, navigate to the terraform folder, then run the following 
 ```bash
 awslocal s3 mb s3://local-terraform
 ```
-If using the provided [docker-compose](https://github.com/usdigitalresponse/grants-ingest/blob/cf8a6220ed4e7332978520ec1d63bb344b738972/docker-compose.yml#L21) then this runs when the localstack 
-container is started. 
+If using the provided [docker-compose](https://github.com/usdigitalresponse/grants-ingest/blob/cf8a6220ed4e7332978520ec1d63bb344b738972/docker-compose.yml#L21)
+then this runs when the localstack container is started.
 
 Next, initialize the Terraform project using the `local.s3.tfbackend` Terraform state backend
 configuration file provided by this repository. Note that you may need to modify the `endpoint`
@@ -126,12 +126,16 @@ default of `localhost:4566`.
 tflocal init -backend-config="local.s3.tfbackend" -reconfigure
 ```
 
-Once this command completes successfully, use `tflocal` to "provision" mock infrastructure in your LocalStack environment.  This will create the Lambda functions, so it requires the functions to be 
-built first.  Use `task build` to build the functions.  Then use the `local.tfvars` file provided by this 
+Once this command completes successfully, use `tflocal` to "provision" mock infrastructure in your LocalStack environment.  This will create the Lambda functions, so it requires the functions to be
+built first.  Use `task build` to build the functions.  Then use the `local.tfvars` file provided by this
 repository to provision the mock infrastructure:
 ```bash
 tflocal apply -var-file=local.tfvars
 ```
+
+**Hint:** It's normal for `task build` and/or `tflocal apply` to run for up to a few minutes.
+If you notice that these commands are taking an excessively long time or seem to hang, try
+cancelling the operation, then run `task prebuild-lambda` and try running your command again.
 
 
 #### Running Lambda Functions
@@ -192,3 +196,31 @@ shows logs emitted in the past 1 hour, and will continue to display new logs as 
 ```bash
 awslocal logs tail /aws/lambda/grants-ingest-DownloadGrantsGovDB --since 1h --follow
 ```
+
+### Running Common Tasks
+
+This repository provides a `Taskfile.yml` file for defining and running common tasks related
+to development. You can [install the `task` utility](https://taskfile.dev/installation/)
+and then run `task` in your command-line environment to see a list of the available helpers.
+
+
+### Quick Reference
+
+The following items can be referred to as a quick "cheat-sheet" for development:
+- Install Go dependencies: `go mod download` or `go get ./...`
+- Run Go unit tests: `task test`
+- Ensure all Go and Terraform code is formatted properly: `task fmt`
+- Warm up your Go cache: `task prebuild-lambda`
+  - We recommend running this command periodically, especially before compiling Go binaries,
+  running `tflocal plan`, and/or `tflocal apply`.
+- Compile binary Lambda function handlers: `task build`
+- Compile the CLI tool: `task build-cli`
+- Run all QA checks normally executed during CI: `task check`
+
+
+## Contributing
+
+This project wouldn’t exist without the hard work of
+[many people](https://github.com/usdigitalresponse/grants-ingest/graphs/contributors)! Please
+see [CONTRIBUTING.md](https://github.com/usdigitalresponse/grants-ingest/blob/main/CONTRIBUTING.md)
+to find out how you can help.
