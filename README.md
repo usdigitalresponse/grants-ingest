@@ -224,3 +224,29 @@ This project wouldn’t exist without the hard work of
 [many people](https://github.com/usdigitalresponse/grants-ingest/graphs/contributors)! Please
 see [CONTRIBUTING.md](https://github.com/usdigitalresponse/grants-ingest/blob/main/CONTRIBUTING.md)
 to find out how you can help.
+
+
+## Releasing to Production
+
+**Note:** Releases are versioned using a `YYYY.inc` scheme that represents the year of the
+release, and the incremental release number for that year. You can view a list of all historical
+releases on the [Releases page](https://github.com/usdigitalresponse/grants-ingest/releases).
+
+Maintainers with the requisite access may release to Production by performing the following
+steps:
+1. Navigate to the [list of Releases](https://github.com/usdigitalresponse/grants-ingest/releases)
+for this repository.
+2. Locate the draft for the next release, and click the pencil icon to edit.
+3. Provide a high-level summary of the release in the **Summary** section of the release notes.
+4. Optionally, make any necessary edits to the other sections of the prepared release notes.
+5. Ensure "Set as a pre-release" is checked at the bottom of the edit page.
+6. Click the "Publish Release" button.
+
+At this point, the release will be published (as a pre-release) and the
+[deployment pipeline](https://github.com/usdigitalresponse/grants-ingest/actions/workflows/deploy-production.yml)
+will automatically begin preparing the changes that will be rolled out to Production.
+
+Once a Terraform plan has been created for the release, repository administrators will be notified
+for review and final approval. After the plan has been approved and applied to Production,
+the release will be automatically updated to remove the pre-release state, and a timestamp
+for the deployment will be appended to the release notes.
