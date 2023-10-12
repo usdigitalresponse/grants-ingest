@@ -28,7 +28,10 @@ resource "datadog_monitor" "events_failed_to_publish" {
     "Notify: ${local.dd_monitor_default_notify}",
   ])
 
-  query = "min(last_1h):avg:aws.sqs.approximate_number_of_messages_visible{env:${var.environment},queuename:${module.PublishGrantEvents.dlq_name}} > 0"
+  query = "min(last_1h):avg:aws.sqs.approximate_number_of_messages_visible{${join(",", [
+    "env:${var.environment}",
+    "queuename:${module.PublishGrantEvents.dlq_name}",
+  ])}} > 0"
 
   notify_no_data   = false
   evaluation_delay = local.dd_monitor_default_evaluation_delay
@@ -48,7 +51,13 @@ resource "datadog_monitor" "DownloadGrantsGovDB-failed" {
     "Notify: ${local.dd_monitor_default_notify}",
   ])
 
-  query = "sum(last_10h):sum:aws.lambda.errors{env:${var.environment},handlername:downloadgrantsgovdb}.as_count() / sum:aws.lambda.invocations{env:${var.environment},handlername:downloadgrantsgovdb}.as_count() >= 1.0"
+  query = "sum(last_10h):sum:aws.lambda.errors{${join(",", [
+    "env:${var.environment}",
+    "functionname:${module.DownloadGrantsGovDB.lambda_function_name}",
+    ])}}.as_count() / sum:aws.lambda.invocations{${join(",", [
+    "env:${var.environment}",
+    "functionname:${module.DownloadGrantsGovDB.lambda_function_name}",
+  ])}}.as_count() >= 1.0"
 
   notify_no_data   = false
   evaluation_delay = local.dd_monitor_default_evaluation_delay
@@ -65,7 +74,10 @@ resource "datadog_monitor" "DownloadFFISSpreadsheet-failed" {
     "Notify: ${local.dd_monitor_default_notify}",
   ])
 
-  query = "sum(last_1h):avg:aws.lambda.errors{env:${var.environment},handlername:downloadffisspreadsheet}.as_count() > 0"
+  query = "sum(last_1h):avg:aws.lambda.errors{${join(",", [
+    "env:${var.environment}",
+    "functionname:${module.DownloadFFISSpreadsheet.lambda_function_name}",
+  ])}}.as_count() > 0"
 
   notify_no_data   = false
   evaluation_delay = local.dd_monitor_default_evaluation_delay
@@ -82,7 +94,10 @@ resource "datadog_monitor" "EnqueueFFISSpreadsheet-failed" {
     "Notify: ${local.dd_monitor_default_notify}",
   ])
 
-  query = "sum(last_1h):avg:aws.lambda.errors{env:${var.environment},handlername:enqueueffisspreadsheet}.as_count() > 0"
+  query = "sum(last_1h):avg:aws.lambda.errors{${join(",", [
+    "env:${var.environment}",
+    "functionname:${module.EnqueueFFISDownload.lambda_function_name}",
+  ])}}.as_count() > 0"
 
   notify_no_data   = false
   evaluation_delay = local.dd_monitor_default_evaluation_delay
@@ -99,7 +114,10 @@ resource "datadog_monitor" "ExtractGrantsGovXMLToDB-failed" {
     "Notify: ${local.dd_monitor_default_notify}",
   ])
 
-  query = "sum(last_1h):avg:aws.lambda.errors{env:${var.environment},handlername:enqueueffisspreadsheet}.as_count() > 0"
+  query = "sum(last_1h):avg:aws.lambda.errors{${join(",", [
+    "env:${var.environment}",
+    "functionname:${module.ExtractGrantsGovDBToXML.lambda_function_name}",
+  ])}}.as_count() > 0"
 
   notify_no_data   = false
   evaluation_delay = local.dd_monitor_default_evaluation_delay
@@ -116,7 +134,10 @@ resource "datadog_monitor" "PersistFFISData-failed" {
     "Notify: ${local.dd_monitor_default_notify}",
   ])
 
-  query = "sum(last_1h):avg:aws.lambda.errors{env:${var.environment},handlername:persistffisdata}.as_count() > 0"
+  query = "sum(last_1h):avg:aws.lambda.errors{${join(",", [
+    "env:${var.environment}",
+    "functionname:${module.PersistFFISData.lambda_function_name}",
+  ])}}.as_count() > 0"
 
   notify_no_data   = false
   evaluation_delay = local.dd_monitor_default_evaluation_delay
@@ -133,7 +154,10 @@ resource "datadog_monitor" "PersistGrantsGovXMLDB-failed" {
     "Notify: ${local.dd_monitor_default_notify}",
   ])
 
-  query = "sum(last_1h):avg:aws.lambda.errors{env:${var.environment},handlername:persistgrantsgovxmldb}.as_count() > 0"
+  query = "sum(last_1h):avg:aws.lambda.errors{${join(",", [
+    "env:${var.environment}",
+    "functionname:${module.PersistGrantsGovXMLDB.lambda_function_name}",
+  ])}}.as_count() > 0"
 
   notify_no_data   = false
   evaluation_delay = local.dd_monitor_default_evaluation_delay
@@ -151,7 +175,10 @@ resource "datadog_monitor" "ReceiveFFISEmail-failed" {
     "Notify: ${local.dd_monitor_default_notify}",
   ])
 
-  query = "sum(last_1h):avg:aws.lambda.errors{env:${var.environment},handlername:receiveffisemail}.as_count() > 0"
+  query = "sum(last_1h):avg:aws.lambda.errors{${join(",", [
+    "env:${var.environment}",
+    "functionname:${module.ReceiveFFISEmail.lambda_function_name}",
+  ])}}.as_count() > 0"
 
   notify_no_data   = false
   evaluation_delay = local.dd_monitor_default_evaluation_delay
@@ -168,7 +195,10 @@ resource "datadog_monitor" "SplitFFISSpreadsheet-failed" {
     "Notify: ${local.dd_monitor_default_notify}",
   ])
 
-  query = "sum(last_1h):avg:aws.lambda.errors{env:${var.environment},handlername:splitffisspreadsheet}.as_count() > 0"
+  query = "sum(last_1h):avg:aws.lambda.errors{${join(",", [
+    "env:${var.environment}",
+    "handlername:${module.SplitFFISSpreadsheet.lambda_function_name}",
+  ])}}.as_count() > 0"
 
   notify_no_data   = false
   evaluation_delay = local.dd_monitor_default_evaluation_delay
@@ -185,7 +215,10 @@ resource "datadog_monitor" "SplitGrantsGovXMLDB-failed" {
     "Notify: ${local.dd_monitor_default_notify}",
   ])
 
-  query = "sum(last_1h):avg:aws.lambda.errors{env:${var.environment},handlername:splitgrantsgovxmldb}.as_count() > 0"
+  query = "sum(last_1h):avg:aws.lambda.errors{${join(",", [
+    "env:${var.environment}",
+    "handlername:${module.ExtractGrantsGovDBToXML.lambda_function_name}",
+  ])}}.as_count() > 0"
 
   notify_no_data   = false
   evaluation_delay = local.dd_monitor_default_evaluation_delay
