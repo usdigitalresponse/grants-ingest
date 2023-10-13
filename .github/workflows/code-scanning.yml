@@ -10,6 +10,9 @@ on:
   schedule:
     - cron: '35 8 * * 1-5'
 
+permissions:
+  contents: read
+
 jobs:
   dependency-review:
     name: Dependency Review
