@@ -85,8 +85,8 @@ This creates a copy of the code under your GitHub user account.
     we recommend that you clone and make branches against this repository directly instead
     of forking!
 2. Clone your fork to your development environment.
-3. Create a new branch to hold your development changes. We recommend that you use the following
-conventions when naming your branch:
+3. Create a new branch to hold your development changes. 
+We recommend that you use the following conventions when naming your branch:
     | **Branch Prefix** | **Type of Contribution**                                               | **Example**                         |
     |-------------------|------------------------------------------------------------------------|-------------------------------------|
     | `feat/`           | New features and enhancements.                                         | `feat/generate-jetpacks`            |
