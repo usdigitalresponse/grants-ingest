@@ -41,7 +41,7 @@ Please fill out and submit [this form](https://github.com/usdigitalresponse/gran
 if you believe you have discovered a security-related problem.
 
 
-### New Features
+### New features
 
 A world-class feature request addresses the following points:
 
