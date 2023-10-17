@@ -73,8 +73,8 @@ If you are unsure, it is always a good idea to open an issue to get some feedbac
 Things you will need:
 - Basic `git` proficiency.
 - Knowledge of one or more of the languages used in this project, such as Go and/or Terraform.
-- A development environment. See the [Development](https://github.com/usdigitalresponse/grants-ingest/blob/main/README.md#development)
-section of our README for more information.
+- A development environment. 
+See the [Development](https://github.com/usdigitalresponse/grants-ingest/blob/main/README.md#development) section of our README for more information.
 - A positive attitude.
 
 Follow these steps to start contributing:
