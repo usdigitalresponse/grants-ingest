@@ -79,8 +79,8 @@ See the [Development](https://github.com/usdigitalresponse/grants-ingest/blob/ma
 
 Follow these steps to start contributing:
 
-1. Fork the repository by clicking on the 'Fork' button on the repository's page. This creates
-a copy of the code under your GitHub user account.
+1. Fork the repository by clicking on the 'Fork' button on the repository's page. 
+This creates a copy of the code under your GitHub user account.
     - **Note:** If you are an active volunteer with contributor access to this repository,
     we recommend that you clone and make branches against this repository directly instead
     of forking!
