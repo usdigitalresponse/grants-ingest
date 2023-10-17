@@ -11,8 +11,7 @@ There are several ways you can contribute to this repository:
 
 - Enhancing and/or fixing outstanding issues with the existing code
 - Contributing useful improvements, clarifications, and updates to existing documentation
-- Submitting [issues](https://github.com/usdigitalresponse/grants-ingest/issues/new/choose)
-related to bugs or desired new features
+- Submitting [issues](https://github.com/usdigitalresponse/grants-ingest/issues/new/choose) related to bugs or desired new features
 - Reporting security vulnerabilities
 
 _All are equally valuable to the community._
