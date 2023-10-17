@@ -98,6 +98,5 @@ We recommend that you use the following conventions when naming your branch:
     - Make sure the title of your PR represents a short summary of the contribution.
     - Fill out the different sections that appear in the pull request template.
     - Please include unit tests for all Go code!
-    - If your work isn't quite ready but you want early feedback, submit your pull request
-    as a draft.
+    - If your work isn't quite ready but you want early feedback, submit your pull request as a draft.
 6. Don't worry if maintainers ask you for changes - it's all part of the collaborative process!
