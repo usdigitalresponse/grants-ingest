@@ -32,8 +32,7 @@ First, please check whether your issue or feature request has already been submi
 
 If you find an [open bug](https://github.com/usdigitalresponse/grants-ingest/issues?q=is%3Aopen+is%3Aissue+label%3Abug) that sounds like your issue, please consider adding a comment to the existing issue with details that will help us better understand the problem.
 
-To submit something new, please fill out and submit
-[this form](https://github.com/usdigitalresponse/grants-ingest/issues/new?template=default_issue.yml&title=%5BBug%5D%3A+).
+To submit something new, please fill out and submit [this form](https://github.com/usdigitalresponse/grants-ingest/issues/new?template=default_issue.yml&title=%5BBug%5D%3A+).
 
 
 ### Security vulnerabilities
