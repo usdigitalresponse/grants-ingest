@@ -32,6 +32,7 @@ exclude-labels:
 exclude-contributors:
   - dependabot
   - 'dependabot[bot]'
+  - step-security-bot
 autolabeler:
   - label: go
     files:
