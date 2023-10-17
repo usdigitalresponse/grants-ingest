@@ -1,8 +1,8 @@
 # How to contribute to U.S. Digital Response projects
 
-Everyone is welcome to contribute, and we value everybody's contribution. Code is not the only
-way to help the community. Answering questions, helping others, reaching out, and improving
-documentation are all immensely valuable to the community.
+Everyone is welcome to contribute, and we value everybody's contribution. 
+Code is not the only way to help the community. 
+Answering questions, helping others, reaching out, and improving documentation are all immensely valuable to the community.
 
 
 ## You can contribute in so many ways!
