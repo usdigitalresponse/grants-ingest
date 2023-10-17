@@ -54,8 +54,9 @@ A world-class feature request addresses the following points:
     - Is it related to something you would need for a project? We'd love to hear about it!
     - Is it something you worked on and think could benefit the community? Awesome! Tell us
     what problem it solved for you.
-    - Do you think you have a neat idea and want to share it? We love those too! Tell us your
-    use-case and what value it might bring to the project.
+    - Do you think you have a neat idea and want to share it? 
+    We love those too! 
+    Tell us your use-case and what value it might bring to the project.
 2. Write a _full paragraph_ describing why you think the feature is important.
 3. Provide a **code snippet** or **design mockup or sketch** if possible, to demonstrate its
 future use.
