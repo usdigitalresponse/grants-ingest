@@ -25,8 +25,7 @@ Please sign up if you’d like to help on other projects.
 Do your best to follow these guidelines when submitting an issue or a feature request. 
 It will make it easier for us to come back to you quickly and with good feedback.
 
-First, please check whether your issue or feature request has already been submitted by searching
-our [open issues](https://github.com/usdigitalresponse/grants-ingest/issues?q=is%3Aopen+is%3Aissue).
+First, please check whether your issue or feature request has already been submitted by searching our [open issues](https://github.com/usdigitalresponse/grants-ingest/issues?q=is%3Aopen+is%3Aissue).
 
 
 ### Bugs
