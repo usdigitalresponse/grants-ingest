@@ -14,8 +14,7 @@ tasks:
       - cmd: printf "\nRun \"task --help\" for more information.\n"
 
   check:
-    desc: >-
-      Simulates all steps of the "QA" job executed during the pull request CI workflow
+    desc: Runs all QA checks executed during CI activities
     cmds:
       - task: prebuild-lambda
       - task: check-tasks
@@ -27,8 +26,9 @@ tasks:
       - test
       - lint
       - vet
-      - build
-      - build-cli
+    cmds:
+      - task: build
+      - task: build-cli
 
   test:
     desc: "Runs unit tests and updates the HTML coverage report"
@@ -67,11 +67,28 @@ tasks:
       - go generate ./...
 
   fmt:
-    desc: Runs `go fmt` for the entire project
+    desc: Runs `go fmt` and `terraform fmt` for the entire project
+    cmds:
+      - task: fmt-go
+      - task: fmt-terraform
+
+  fmt-go:
+    internal: true
+    label: "fmt"
     cmds:
       - go fmt ./...
     sources:
       - ./**/*.go
+
+  fmt-terraform:
+    internal: true
+    label: "fmt"
+    dir: terraform
+    cmds:
+      - terraform fmt -recursive
+    sources:
+      - '**/**.tf'
+      - '**/**.tfvars'
 
   vet:
     desc: Runs `go vet` for the entire project
@@ -81,11 +98,11 @@ tasks:
       - ./**/*.go
 
   clean:
-    desc: "Removes generated content from ./bin and ./build directories"
+    desc: "Removes generated content from ./bin directories"
     silent: true
     cmds:
-      - find ./bin -mindepth 1 -type d -exec rm -rf {} + -print
-      - find ./build -mindepth 1 -type d -exec rm -rf {} + -print
+      - test -d bin && find ./bin -mindepth 1 -type d -exec rm -rf {} + -print
+      - rm -f bin/grants-ingest
 
   build-cli:
     run: when_changed
