@@ -48,8 +48,9 @@ A world-class feature request addresses the following points:
 1. Motivation first:
     - Is it related to a problem/frustration with the current system? If so, ease explain why.
     - Is it related to something you would need for a project? We'd love to hear about it!
-    - Is it something you worked on and think could benefit the community? Awesome! Tell us
-    what problem it solved for you.
+    - Is it something you worked on and think could benefit the community? 
+    Awesome! 
+    Tell us what problem it solved for you.
     - Do you think you have a neat idea and want to share it? 
     We love those too! 
     Tell us your use-case and what value it might bring to the project.
