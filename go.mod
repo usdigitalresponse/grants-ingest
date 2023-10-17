@@ -9,11 +9,11 @@ require (
 	github.com/aws/aws-lambda-go v1.41.0
 	github.com/aws/aws-sdk-go v1.45.26
 	github.com/aws/aws-sdk-go-v2 v1.21.2
-	github.com/aws/aws-sdk-go-v2/config v1.18.45
+	github.com/aws/aws-sdk-go-v2/config v1.19.0
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.43
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.10.42
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.4.69
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.90
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.91
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.22.2
 	github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.15.7
 	github.com/aws/aws-sdk-go-v2/service/eventbridge v1.22.2
