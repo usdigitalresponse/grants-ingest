@@ -32,6 +32,7 @@ exclude-labels:
 exclude-contributors:
   - dependabot
   - 'dependabot[bot]'
+  - step-security-bot
 autolabeler:
   - label: go
     files:
@@ -68,8 +69,8 @@ autolabeler:
       - '/^feat(ures?)?\/.+$/i'
       - '/^enhance(s|ments?)?\/.+$/i'
     title:
-      - '/\bfeat(ure)?\b/i'
-      - '/\benhance(s|ment)?\b/i'
+      - '/\b(?<!^chores?\b.*)feat(ures?)?\b/i'
+      - '/\b(?<!^chores?\b.*)enhance(s|ment)?\b/i'
   - label: github
     files:
       - '.github/**'
