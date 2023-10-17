@@ -67,9 +67,8 @@ We would love to hear your ideas for improving all types of things, including:
 
 ## Start contributing! (pull requests)
 
-Before writing code, we strongly advise you to search through the exising PRs or issues to
-make sure that nobody is already working on the same thing. If you are unsure, it is always
-a good idea to open an issue to get some feedback.
+Before writing code, we strongly advise you to search through the existing PRs or issues to make sure that nobody is already working on the same thing. 
+If you are unsure, it is always a good idea to open an issue to get some feedback.
 
 Things you will need:
 - Basic `git` proficiency.
