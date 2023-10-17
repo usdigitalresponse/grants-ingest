@@ -61,9 +61,8 @@ A world-class feature request addresses the following points:
 3. Provide a **code snippet** or **design mockup or sketch** if possible, to demonstrate its
 future use.
 
-By the way, your suggestions need not be restricted to changes to how this project works in
-a production environment! We would love to hear your ideas for improving all types of things,
-including:
+By the way, your suggestions do not need to be restricted to changes to how this project works in a production environment! 
+We would love to hear your ideas for improving all types of things, including:
 - Ways to enhance the developer experience.
 - Testing and other maintainability strategies.
 - Automated CI/CD workflows.
