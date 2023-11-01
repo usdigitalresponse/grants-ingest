@@ -15,7 +15,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.92
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.24.0
 	github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.16.0
-	github.com/aws/aws-sdk-go-v2/service/eventbridge v1.22.2
+	github.com/aws/aws-sdk-go-v2/service/eventbridge v1.23.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.40.2
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.24.7
 	github.com/aws/smithy-go v1.16.0
@@ -48,7 +48,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.2.0 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.5.0 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.45 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/v4a v1.1.6 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.2.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.10.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.38 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/endpoint-discovery v1.8.0 // indirect
