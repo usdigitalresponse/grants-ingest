@@ -462,7 +462,7 @@ resource "datadog_dashboard" "service_dashboard" {
         }
       }
 
-      // Shows DLQ size
+      // Shows queue size
       widget {
         timeseries_definition {
           title          = "Queue Size"
@@ -485,7 +485,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "queue_size"
-                query = "sum:aws.sqs.approximate_number_of_messages_visible{$env,$service,$version,queuename:ffis_downloads}.as_count()"
+                query = "sum:aws.sqs.approximate_number_of_messages_visible{$env,$service,$version,queuename:${lower(aws_sqs_queue.ffis_downloads.name)}}.as_count()"
               }
             }
           }
@@ -1228,7 +1228,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "queue_size"
-                query = "sum:aws.sqs.approximate_number_of_messages_visible{$env,$service,$version,queuename:publish_grant_events_dlq}.as_count()"
+                query = "sum:aws.sqs.approximate_number_of_messages_visible{$env,$service,$version,queuename:${lower(module.PublishGrantEvents.dlq_name)}}.as_count()"
               }
             }
           }
