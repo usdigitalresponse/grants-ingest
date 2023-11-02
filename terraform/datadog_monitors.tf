@@ -30,7 +30,7 @@ resource "datadog_monitor" "events_failed_to_publish" {
 
   query = "min(last_1h):avg:aws.sqs.approximate_number_of_messages_visible{${join(",", [
     "env:${var.environment}",
-    "queuename:${module.PublishGrantEvents.dlq_name}",
+    "queuename:${lower(module.PublishGrantEvents.dlq_name)}",
   ])}} > 0"
 
   notify_no_data   = false
@@ -53,10 +53,10 @@ resource "datadog_monitor" "DownloadGrantsGovDB-failed" {
 
   query = "sum(last_10h):sum:aws.lambda.errors{${join(",", [
     "env:${var.environment}",
-    "functionname:${module.DownloadGrantsGovDB.lambda_function_name}",
+    "functionname:${lower(module.DownloadGrantsGovDB.lambda_function_name)}",
     ])}}.as_count() / sum:aws.lambda.invocations{${join(",", [
     "env:${var.environment}",
-    "functionname:${module.DownloadGrantsGovDB.lambda_function_name}",
+    "functionname:${lower(module.DownloadGrantsGovDB.lambda_function_name)}",
   ])}}.as_count() >= 1.0"
 
   notify_no_data   = false
@@ -76,7 +76,7 @@ resource "datadog_monitor" "DownloadFFISSpreadsheet-failed" {
 
   query = "sum(last_1h):avg:aws.lambda.errors{${join(",", [
     "env:${var.environment}",
-    "functionname:${module.DownloadFFISSpreadsheet.lambda_function_name}",
+    "functionname:${lower(module.DownloadFFISSpreadsheet.lambda_function_name)}",
   ])}}.as_count() > 0"
 
   notify_no_data   = false
@@ -96,7 +96,7 @@ resource "datadog_monitor" "EnqueueFFISSpreadsheet-failed" {
 
   query = "sum(last_1h):avg:aws.lambda.errors{${join(",", [
     "env:${var.environment}",
-    "functionname:${module.EnqueueFFISDownload.lambda_function_name}",
+    "functionname:${lower(module.EnqueueFFISDownload.lambda_function_name)}",
   ])}}.as_count() > 0"
 
   notify_no_data   = false
@@ -116,7 +116,7 @@ resource "datadog_monitor" "ExtractGrantsGovXMLToDB-failed" {
 
   query = "sum(last_1h):avg:aws.lambda.errors{${join(",", [
     "env:${var.environment}",
-    "functionname:${module.ExtractGrantsGovDBToXML.lambda_function_name}",
+    "functionname:${lower(module.ExtractGrantsGovDBToXML.lambda_function_name)}",
   ])}}.as_count() > 0"
 
   notify_no_data   = false
@@ -136,7 +136,7 @@ resource "datadog_monitor" "PersistFFISData-failed" {
 
   query = "sum(last_1h):avg:aws.lambda.errors{${join(",", [
     "env:${var.environment}",
-    "functionname:${module.PersistFFISData.lambda_function_name}",
+    "functionname:${lower(module.PersistFFISData.lambda_function_name)}",
   ])}}.as_count() > 0"
 
   notify_no_data   = false
@@ -156,7 +156,7 @@ resource "datadog_monitor" "PersistGrantsGovXMLDB-failed" {
 
   query = "sum(last_1h):avg:aws.lambda.errors{${join(",", [
     "env:${var.environment}",
-    "functionname:${module.PersistGrantsGovXMLDB.lambda_function_name}",
+    "functionname:${lower(module.PersistGrantsGovXMLDB.lambda_function_name)}",
   ])}}.as_count() > 0"
 
   notify_no_data   = false
@@ -177,7 +177,7 @@ resource "datadog_monitor" "ReceiveFFISEmail-failed" {
 
   query = "sum(last_1h):avg:aws.lambda.errors{${join(",", [
     "env:${var.environment}",
-    "functionname:${module.ReceiveFFISEmail.lambda_function_name}",
+    "functionname:${lower(module.ReceiveFFISEmail.lambda_function_name)}",
   ])}}.as_count() > 0"
 
   notify_no_data   = false
@@ -197,7 +197,7 @@ resource "datadog_monitor" "SplitFFISSpreadsheet-failed" {
 
   query = "sum(last_1h):avg:aws.lambda.errors{${join(",", [
     "env:${var.environment}",
-    "handlername:${module.SplitFFISSpreadsheet.lambda_function_name}",
+    "handlername:${lower(module.SplitFFISSpreadsheet.lambda_function_name)}",
   ])}}.as_count() > 0"
 
   notify_no_data   = false
@@ -217,7 +217,7 @@ resource "datadog_monitor" "SplitGrantsGovXMLDB-failed" {
 
   query = "sum(last_1h):avg:aws.lambda.errors{${join(",", [
     "env:${var.environment}",
-    "handlername:${module.ExtractGrantsGovDBToXML.lambda_function_name}",
+    "handlername:${lower(module.ExtractGrantsGovDBToXML.lambda_function_name)}",
   ])}}.as_count() > 0"
 
   notify_no_data   = false
