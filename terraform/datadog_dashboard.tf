@@ -126,7 +126,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_failure"
-                query = "sum:aws.lambda.errors{$env,$service,$version,handlername:downloadffisspreadsheet}.as_count()"
+                query = "sum:aws.lambda.errors{$env,$service,$version,functionname:${lower(module.DownloadFFISSpreadsheet.lambda_function_name)}}.as_count()"
               }
             }
           }
@@ -156,7 +156,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_duration"
-                query = "avg:aws.lambda.duration{$env,$service,$version,handlername:downloadffisspreadsheet}"
+                query = "avg:aws.lambda.duration{$env,$service,$version,functionname:${lower(module.DownloadFFISSpreadsheet.lambda_function_name)}}"
               }
             }
 
@@ -171,7 +171,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_timeout"
-                query = "avg:aws.lambda.timeout{$env,$service,$version,handlername:downloadffisspreadsheet}"
+                query = "avg:aws.lambda.timeout{$env,$service,$version,functionname:${lower(module.DownloadFFISSpreadsheet.lambda_function_name)}}"
               }
             }
           }
@@ -265,7 +265,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_failure"
-                query = "sum:aws.lambda.errors{$env,$service,$version,handlername:downloadgrantsgovdb}.as_count()"
+                query = "sum:aws.lambda.errors{$env,$service,$version,functionname:${lower(module.DownloadGrantsGovDB.lambda_function_name)}}.as_count()"
               }
             }
           }
@@ -295,7 +295,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_duration"
-                query = "avg:aws.lambda.duration{$env,$service,$version,handlername:downloadgrantsgovdb}"
+                query = "avg:aws.lambda.duration{$env,$service,$version,functionname:${lower(module.DownloadGrantsGovDB.lambda_function_name)}}"
               }
             }
 
@@ -310,7 +310,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_timeout"
-                query = "avg:aws.lambda.timeout{$env,$service,$version,handlername:downloadgrantsgovdb}"
+                query = "avg:aws.lambda.timeout{$env,$service,$version,functionname:${lower(module.DownloadGrantsGovDB.lambda_function_name)}}"
               }
             }
           }
@@ -404,7 +404,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_failure"
-                query = "sum:aws.lambda.errors{$env,$service,$version,handlername:enqueueffisdownload}.as_count()"
+                query = "sum:aws.lambda.errors{$env,$service,$version,functionname:${lower(module.EnqueueFFISDownload.lambda_function_name)}}.as_count()"
               }
             }
           }
@@ -434,7 +434,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_duration"
-                query = "avg:aws.lambda.duration{$env,$service,$version,handlername:enqueueffisdownload}"
+                query = "avg:aws.lambda.duration{$env,$service,$version,functionname:${lower(module.EnqueueFFISDownload.lambda_function_name)}}"
               }
             }
 
@@ -449,7 +449,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_timeout"
-                query = "avg:aws.lambda.timeout{$env,$service,$version,handlername:enqueueffisdownload}"
+                query = "avg:aws.lambda.timeout{$env,$service,$version,functionname:${lower(module.EnqueueFFISDownload.lambda_function_name)}}"
               }
             }
           }
@@ -545,7 +545,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_failure"
-                query = "sum:aws.lambda.errors{$env,$service,$version,handlername:extractgrantsgovdbtoxml}.as_count()"
+                query = "sum:aws.lambda.errors{$env,$service,$version,functionname:${lower(module.ExtractGrantsGovDBToXML.lambda_function_name)}}.as_count()"
               }
             }
           }
@@ -575,7 +575,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_duration"
-                query = "avg:aws.lambda.duration{$env,$service,$version,handlername:extractgrantsgovdbtoxml}"
+                query = "avg:aws.lambda.duration{$env,$service,$version,functionname:${lower(module.ExtractGrantsGovDBToXML.lambda_function_name)}}"
               }
             }
 
@@ -590,7 +590,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_timeout"
-                query = "avg:aws.lambda.timeout{$env,$service,$version,handlername:extractgrantsgovdbtoxml}"
+                query = "avg:aws.lambda.timeout{$env,$service,$version,functionname:${lower(module.ExtractGrantsGovDBToXML.lambda_function_name)}}"
               }
             }
           }
@@ -714,7 +714,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_failure"
-                query = "sum:aws.lambda.errors{$env,$service,$version,handlername:persistffisdata}.as_count()"
+                query = "sum:aws.lambda.errors{$env,$service,$version,functionname:${lower(module.PersistFFISData.lambda_function_name)}}.as_count()"
               }
             }
           }
@@ -744,7 +744,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_duration"
-                query = "avg:aws.lambda.duration{$env,$service,$version,handlername:persistffisdata}"
+                query = "avg:aws.lambda.duration{$env,$service,$version,functionname:${lower(module.PersistFFISData.lambda_function_name)}}"
               }
             }
 
@@ -759,7 +759,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_timeout"
-                query = "avg:aws.lambda.timeout{$env,$service,$version,handlername:persistffisdata}"
+                query = "avg:aws.lambda.timeout{$env,$service,$version,functionname:${lower(module.PersistFFISData.lambda_function_name)}}"
               }
             }
           }
@@ -822,13 +822,13 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invocation_total"
-                query = "sum:aws.lambda.invocations{$env,$service,$version,handlername:persistffisdata}.as_count()"
+                query = "sum:aws.lambda.invocations{$env,$service,$version,functionname:${lower(module.PersistFFISData.lambda_function_name)}}.as_count()"
               }
             }
             query {
               metric_query {
                 name  = "invocation_failure"
-                query = "sum:aws.lambda.errors{$env,$service,$version,handlername:persistffisdata}.as_count()"
+                query = "sum:aws.lambda.errors{$env,$service,$version,functionname:${lower(module.PersistFFISData.lambda_function_name)}}.as_count()"
               }
             }
           }
@@ -888,7 +888,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_failure"
-                query = "sum:aws.lambda.errors{$env,$service,$version,handlername:persistgrantsgovxmldb}.as_count()"
+                query = "sum:aws.lambda.errors{$env,$service,$version,functionname:${lower(module.PersistGrantsGovXMLDB.lambda_function_name)}}.as_count()"
               }
             }
           }
@@ -918,7 +918,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_duration"
-                query = "avg:aws.lambda.duration{$env,$service,$version,handlername:persistgrantsgovxmldb}"
+                query = "avg:aws.lambda.duration{$env,$service,$version,functionname:${lower(module.PersistGrantsGovXMLDB.lambda_function_name)}}"
               }
             }
 
@@ -933,7 +933,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_timeout"
-                query = "avg:aws.lambda.timeout{$env,$service,$version,handlername:persistgrantsgovxmldb}"
+                query = "avg:aws.lambda.timeout{$env,$service,$version,functionname:${lower(module.PersistGrantsGovXMLDB.lambda_function_name)}}"
               }
             }
           }
@@ -1048,7 +1048,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_failure"
-                query = "sum:aws.lambda.errors{$env,$service,$version,handlername:publishgrantevents}.as_count()"
+                query = "sum:aws.lambda.errors{$env,$service,$version,functionname:${lower(module.PublishGrantEvents.lambda_function_name)}}.as_count()"
               }
             }
           }
@@ -1078,7 +1078,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_duration"
-                query = "avg:aws.lambda.duration{$env,$service,$version,handlername:publishgrantevents}"
+                query = "avg:aws.lambda.duration{$env,$service,$version,functionname:${lower(module.PublishGrantEvents.lambda_function_name)}}"
               }
             }
 
@@ -1093,7 +1093,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_timeout"
-                query = "avg:aws.lambda.timeout{$env,$service,$version,handlername:publishgrantevents}"
+                query = "avg:aws.lambda.timeout{$env,$service,$version,functionname:${lower(module.PublishGrantEvents.lambda_function_name)}}"
               }
             }
           }
@@ -1598,7 +1598,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_failure"
-                query = "sum:aws.lambda.errors{$env,$service,$version,handlername:receiveffisemail}.as_count()"
+                query = "sum:aws.lambda.errors{$env,$service,$version,functionname:${lower(module.ReceiveFFISEmail.lambda_function_name)}}.as_count()"
               }
             }
           }
@@ -1628,7 +1628,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_duration"
-                query = "avg:aws.lambda.duration{$env,$service,$version,handlername:receiveffisemail}"
+                query = "avg:aws.lambda.duration{$env,$service,$version,functionname:${lower(module.ReceiveFFISEmail.lambda_function_name)}}"
               }
             }
 
@@ -1643,7 +1643,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_timeout"
-                query = "avg:aws.lambda.timeout{$env,$service,$version,handlername:receiveffisemail}"
+                query = "avg:aws.lambda.timeout{$env,$service,$version,functionname:${lower(module.ReceiveFFISEmail.lambda_function_name)}}"
               }
             }
           }
@@ -1720,7 +1720,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_total"
-                query = "sum:aws.lambda.invocations{$env,$service,$version,functionname:${module.SplitFFISSpreadsheet.lambda_function_name}}.as_count()"
+                query = "sum:aws.lambda.invocations{$env,$service,$version,functionname:${lower(module.SplitFFISSpreadsheet.lambda_function_name)}}.as_count()"
               }
             }
 
@@ -1735,7 +1735,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_failure"
-                query = "sum:aws.lambda.errors{$env,$service,$version,handlername:splitffisspreadsheet}.as_count()"
+                query = "sum:aws.lambda.errors{$env,$service,$version,functionname:${lower(module.SplitFFISSpreadsheet.lambda_function_name)}}.as_count()"
               }
             }
           }
@@ -1765,7 +1765,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_duration"
-                query = "avg:aws.lambda.duration{$env,$service,$version,handlername:splitffisspreadsheet}"
+                query = "avg:aws.lambda.duration{$env,$service,$version,functionname:${lower(module.SplitFFISSpreadsheet.lambda_function_name)}}"
               }
             }
 
@@ -1780,7 +1780,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_timeout"
-                query = "avg:aws.lambda.timeout{$env,$service,$version,handlername:splitffisspreadsheet}"
+                query = "avg:aws.lambda.timeout{$env,$service,$version,functionname:${lower(module.SplitFFISSpreadsheet.lambda_function_name)}}"
               }
             }
           }
@@ -1959,7 +1959,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_failure"
-                query = "sum:aws.lambda.errors{$env,$service,$version,handlername:splitgrantsgovxmldb}.as_count()"
+                query = "sum:aws.lambda.errors{$env,$service,$version,functionname:${lower(module.SplitGrantsGovXMLDB.lambda_function_name)}}.as_count()"
               }
             }
           }
@@ -1989,7 +1989,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_duration"
-                query = "avg:aws.lambda.duration{$env,$service,$version,handlername:splitgrantsgovxmldb}"
+                query = "avg:aws.lambda.duration{$env,$service,$version,functionname:${lower(module.SplitGrantsGovXMLDB.lambda_function_name)}}"
               }
             }
 
@@ -2004,7 +2004,7 @@ resource "datadog_dashboard" "service_dashboard" {
             query {
               metric_query {
                 name  = "invoke_timeout"
-                query = "avg:aws.lambda.timeout{$env,$service,$version,handlername:splitgrantsgovxmldb}"
+                query = "avg:aws.lambda.timeout{$env,$service,$version,functionname:${lower(module.SplitGrantsGovXMLDB.lambda_function_name)}}"
               }
             }
           }
