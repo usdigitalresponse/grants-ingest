@@ -34,6 +34,7 @@ func setupLambdaEnvForTesting(t *testing.T) {
 		"GRANTS_SOURCE_DATA_BUCKET_NAME": "test-destination-bucket",
 		"S3_USE_PATH_STYLE":              "true",
 		"GRANTS_GOV_BASE_URL":            "https://example.gov",
+		"GRANTS_GOV_PATH_URL":            "/extracts/",
 		"MAX_DOWNLOAD_BACKOFF":           "1us",
 	}, &env)
 	require.NoError(t, err, "Error configuring lambda environment for testing")
@@ -80,11 +81,11 @@ func TestScheduledEventGrantsURL(t *testing.T) {
 	env.GrantsGovBaseURL = "https://example.gov"
 	estTZ := time.FixedZone("America/New_York", -5*3600)
 
-	assert.Equal(t, "https://example.gov/extract/GrantsDBExtract20230102v2.zip",
+	assert.Equal(t, "https://example.gov/extracts/GrantsDBExtract20230102v2.zip",
 		(&ScheduledEvent{time.Date(2023, 1, 2, 3, 4, 5, 6, estTZ)}).grantsURL())
-	assert.Equal(t, "https://example.gov/extract/GrantsDBExtract20230203v2.zip",
+	assert.Equal(t, "https://example.gov/extracts/GrantsDBExtract20230203v2.zip",
 		(&ScheduledEvent{time.Date(2023, 2, 3, 4, 5, 6, 7, time.UTC)}).grantsURL())
-	assert.Equal(t, "https://example.gov/extract/GrantsDBExtract20231112v2.zip",
+	assert.Equal(t, "https://example.gov/extracts/GrantsDBExtract20231112v2.zip",
 		(&ScheduledEvent{time.Date(2023, 11, 12, 0, 0, 0, 0, time.UTC)}).grantsURL())
 }
 

@@ -22,8 +22,8 @@ type ScheduledEvent struct {
 
 // grantsURL returns the download URL for the Grants.gov database export.
 func (e *ScheduledEvent) grantsURL() string {
-	return fmt.Sprintf("%s/extract/GrantsDBExtract%sv2.zip",
-		env.GrantsGovBaseURL,
+	return fmt.Sprintf("%sGrantsDBExtract%sv2.zip",
+		env.GrantsGovBaseURL + env.GrantsGovPathURL,
 		e.Timestamp.Format("20060102"),
 	)
 }

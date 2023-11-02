@@ -27,6 +27,7 @@ type Environment struct {
 	LogLevel           string        `env:"LOG_LEVEL,default=INFO"`
 	DestinationBucket  string        `env:"GRANTS_SOURCE_DATA_BUCKET_NAME,required=true"`
 	GrantsGovBaseURL   string        `env:"GRANTS_GOV_BASE_URL,required=true"`
+	GrantsGovPathURL   string        `env:"GRANTS_GOV_PATH_URL,required=true"`
 	MaxDownloadBackoff time.Duration `env:"MAX_DOWNLOAD_BACKOFF,default=20s"`
 	UsePathStyleS3Opt  bool          `env:"S3_USE_PATH_STYLE,default=false"`
 	Extras             goenv.EnvSet
