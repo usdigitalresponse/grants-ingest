@@ -105,13 +105,13 @@ resource "datadog_dashboard" "service_dashboard" {
             display_type = "bars"
 
             formula {
-              formula_expression = "invoke_success"
+              formula_expression = "invoke_total - invoke_failure"
               alias              = "Succeeded"
             }
             query {
               metric_query {
-                name  = "invoke_success"
-                query = "sum:aws.lambda.invocations{$env,$service,$version,handlername:downloadffisspreadsheet}.as_count()"
+                name  = "invoke_total"
+                query = "sum:aws.lambda.invocations{$env,$service,$version,functionname:${lower(module.DownloadFFISSpreadsheet.lambda_function_name)}}.as_count()"
               }
             }
 
@@ -244,13 +244,13 @@ resource "datadog_dashboard" "service_dashboard" {
             display_type = "bars"
 
             formula {
-              formula_expression = "invoke_success"
+              formula_expression = "invoke_total - invoke_failure"
               alias              = "Succeeded"
             }
             query {
               metric_query {
-                name  = "invoke_success"
-                query = "sum:aws.lambda.invocations{$env,$service,$version,handlername:downloadgrantsgovdb}.as_count()"
+                name  = "invoke_total"
+                query = "sum:aws.lambda.invocations{$env,$service,$version,functionname:${lower(module.DownloadGrantsGovDB.lambda_function_name)}}.as_count()"
               }
             }
 
@@ -383,13 +383,13 @@ resource "datadog_dashboard" "service_dashboard" {
             display_type = "bars"
 
             formula {
-              formula_expression = "invoke_success"
+              formula_expression = "invoke_total - invoke_failure"
               alias              = "Succeeded"
             }
             query {
               metric_query {
-                name  = "invoke_success"
-                query = "sum:aws.lambda.invocations{$env,$service,$version,handlername:enqueueffisdownload}.as_count()"
+                name  = "invoke_total"
+                query = "sum:aws.lambda.invocations{$env,$service,$version,functionname:${lower(module.EnqueueFFISDownload.lambda_function_name)}}.as_count()"
               }
             }
 
@@ -524,13 +524,13 @@ resource "datadog_dashboard" "service_dashboard" {
             display_type = "bars"
 
             formula {
-              formula_expression = "invoke_success"
+              formula_expression = "invoke_total - invoke_failure"
               alias              = "Succeeded"
             }
             query {
               metric_query {
-                name  = "invoke_success"
-                query = "sum:aws.lambda.invocations{$env,$service,$version,handlername:extractgrantsgovdbtoxml}.as_count()"
+                name  = "invoke_total"
+                query = "sum:aws.lambda.invocations{$env,$service,$version,functionname:${lower(module.ExtractGrantsGovDBToXML.lambda_function_name)}}.as_count()"
               }
             }
 
@@ -693,13 +693,13 @@ resource "datadog_dashboard" "service_dashboard" {
             display_type = "bars"
 
             formula {
-              formula_expression = "invoke_success"
+              formula_expression = "invoke_total - invoke_failure"
               alias              = "Succeeded"
             }
             query {
               metric_query {
-                name  = "invoke_success"
-                query = "sum:aws.lambda.invocations{$env,$service,$version,handlername:persistffisdata}.as_count()"
+                name  = "invoke_total"
+                query = "sum:aws.lambda.invocations{$env,$service,$version,functionname:${lower(module.PersistFFISData.lambda_function_name)}}.as_count()"
               }
             }
 
@@ -867,13 +867,13 @@ resource "datadog_dashboard" "service_dashboard" {
             display_type = "bars"
 
             formula {
-              formula_expression = "invoke_success"
+              formula_expression = "invoke_total - invoke_failure"
               alias              = "Succeeded"
             }
             query {
               metric_query {
-                name  = "invoke_success"
-                query = "sum:aws.lambda.invocations{$env,$service,$version,handlername:persistgrantsgovxmldb}.as_count()"
+                name  = "invoke_total"
+                query = "sum:aws.lambda.invocations{$env,$service,$version,functionname:${lower(module.PersistGrantsGovXMLDB.lambda_function_name)}}.as_count()"
               }
             }
 
@@ -1027,13 +1027,13 @@ resource "datadog_dashboard" "service_dashboard" {
             display_type = "bars"
 
             formula {
-              formula_expression = "invoke_success"
+              formula_expression = "invoke_total - invoke_failure"
               alias              = "Succeeded"
             }
             query {
               metric_query {
-                name  = "invoke_success"
-                query = "sum:aws.lambda.invocations{$env,$service,$version,handlername:publishgrantevents}.as_count()"
+                name  = "invoke_total"
+                query = "sum:aws.lambda.invocations{$env,$service,$version,functionname:${lower(module.PublishGrantEvents.lambda_function_name)}}.as_count()"
               }
             }
 
@@ -1577,13 +1577,13 @@ resource "datadog_dashboard" "service_dashboard" {
             display_type = "bars"
 
             formula {
-              formula_expression = "invoke_success"
+              formula_expression = "invoke_total - invoke_failure"
               alias              = "Succeeded"
             }
             query {
               metric_query {
-                name  = "invoke_success"
-                query = "sum:aws.lambda.invocations{$env,$service,$version,handlername:receiveffisemail}.as_count()"
+                name  = "invoke_total"
+                query = "sum:aws.lambda.invocations{$env,$service,$version,functionname:${lower(module.ReceiveFFISEmail.lambda_function_name)}}.as_count()"
               }
             }
 
@@ -1714,13 +1714,13 @@ resource "datadog_dashboard" "service_dashboard" {
             display_type = "bars"
 
             formula {
-              formula_expression = "invoke_success"
+              formula_expression = "invoke_total - invoke_failure"
               alias              = "Succeeded"
             }
             query {
               metric_query {
-                name  = "invoke_success"
-                query = "sum:aws.lambda.invocations{$env,$service,$version,handlername:splitffisspreadsheet}.as_count()"
+                name  = "invoke_total"
+                query = "sum:aws.lambda.invocations{$env,$service,$version,functionname:${module.SplitFFISSpreadsheet.lambda_function_name}}.as_count()"
               }
             }
 
@@ -1938,13 +1938,13 @@ resource "datadog_dashboard" "service_dashboard" {
             display_type = "bars"
 
             formula {
-              formula_expression = "invoke_success"
+              formula_expression = "invoke_total - invoke_failure"
               alias              = "Succeeded"
             }
             query {
               metric_query {
-                name  = "invoke_success"
-                query = "sum:aws.lambda.invocations{$env,$service,$version,handlername:splitgrantsgovxmldb}.as_count()"
+                name  = "invoke_total"
+                query = "sum:aws.lambda.invocations{$env,$service,$version,functionname:${lower(module.SplitGrantsGovXMLDB.lambda_function_name)}}.as_count()"
               }
             }
 
