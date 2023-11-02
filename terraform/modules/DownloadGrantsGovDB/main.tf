@@ -88,7 +88,8 @@ module "lambda_function" {
   timeout = 120 # 2 minutes, in seconds
   environment_variables = merge(var.additional_environment_variables, {
     DD_TAGS                        = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
-    GRANTS_GOV_BASE_URL            = "https://www.grants.gov"
+    GRANTS_GOV_BASE_URL            = "https://prod-grants-gov-chatbot.s3.amazonaws.com"
+    GRANTS_GOV_PATH_URL            = "/extracts/"
     GRANTS_SOURCE_DATA_BUCKET_NAME = data.aws_s3_bucket.grants_source_data.id
     LOG_LEVEL                      = var.log_level
   })
