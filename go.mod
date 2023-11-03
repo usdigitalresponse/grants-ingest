@@ -12,7 +12,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.15.1
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.12.0
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.5.0
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.92
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.13.1
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.25.0
 	github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.17.0
 	github.com/aws/aws-sdk-go-v2/service/eventbridge v1.24.0
