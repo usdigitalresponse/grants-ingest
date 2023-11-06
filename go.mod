@@ -3,7 +3,7 @@ module github.com/usdigitalresponse/grants-ingest
 go 1.20
 
 require (
-	github.com/DataDog/datadog-lambda-go v1.11.0
+	github.com/DataDog/datadog-lambda-go v1.12.0
 	github.com/Netflix/go-env v0.0.0-20220526054621-78278af1949d
 	github.com/alecthomas/kong v0.8.1
 	github.com/aws/aws-lambda-go v1.41.0
