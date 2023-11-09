@@ -90,8 +90,8 @@ github.com/aws/aws-sdk-go-v2/service/sfn v1.19.4 h1:yIyFY2kbCOoHvuivf9minqnP2RLY
 github.com/aws/aws-sdk-go-v2/service/sfn v1.19.4/go.mod h1:uWCH4ATwNrkRO40j8Dmy7u/Y1/BVWgCM+YjBNYZeOro=
 github.com/aws/aws-sdk-go-v2/service/sns v1.21.4 h1:Asj098jPfIZYzAbk4xVFwVBGij5hgMcli0d+5Pe4aZA=
 github.com/aws/aws-sdk-go-v2/service/sns v1.21.4/go.mod h1:bbB779DXXOnPXvB7F3dP7AjuV1Eyr7fNyrA058ExuzY=
-github.com/aws/aws-sdk-go-v2/service/sqs v1.26.0 h1:21QmEZkOnaJ4SPRFhhN+8MV5ewb0j1lxTg+RPp0mUeE=
-github.com/aws/aws-sdk-go-v2/service/sqs v1.26.0/go.mod h1:E02a07/HTyJEHFpp+WMRh33xuNVdsd8WCbLlODeT4lU=
+github.com/aws/aws-sdk-go-v2/service/sqs v1.28.0 h1:+JVIntWBGQJ8M3rNEFNHiIzF4CMpfrRe+Xt39mS+6VA=
+github.com/aws/aws-sdk-go-v2/service/sqs v1.28.0/go.mod h1:lf0CvAYZ5VaBd0mTUcuVRqQYm3Mk+L7xKvRPudRzhik=
 github.com/aws/aws-sdk-go-v2/service/sso v1.17.1 h1:km+ZNjtLtpXYf42RdaDZnNHm9s7SYAuDGTafy6nd89A=
 github.com/aws/aws-sdk-go-v2/service/sso v1.17.1/go.mod h1:aHBr3pvBSD5MbzOvQtYutyPLLRPbl/y9x86XyJJnUXQ=
 github.com/aws/aws-sdk-go-v2/service/ssooidc v1.19.1 h1:iRFNqZH4a67IqPvK8xxtyQYnyrlsvwmpHOe9r55ggBA=
