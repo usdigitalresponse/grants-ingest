@@ -68,8 +68,8 @@ github.com/aws/aws-sdk-go-v2/service/dynamodb v1.25.1/go.mod h1:Fe7bvO6LxNp6WA6y
 github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.17.1 h1:gpE4wbWGxfLsjY3zKL0PBpPw1j1hHaVOkpmAM7pndeI=
 github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.17.1/go.mod h1:/S4RgrpSKs9sOw4q8aoNGxvM1iUdOczrt8Ss+/nxsMg=
 github.com/aws/aws-sdk-go-v2/service/ec2 v1.93.2 h1:c6a19AjfhEXKlEX63cnlWtSQ4nzENihHZOG0I3wH6BE=
-github.com/aws/aws-sdk-go-v2/service/eventbridge v1.24.0 h1:602uhl5EMsyPGOvufUOSuRbLYT5RI1mFwWOI/OKUMXc=
-github.com/aws/aws-sdk-go-v2/service/eventbridge v1.24.0/go.mod h1:KiYs9sDklqLLv/tq+fae/8mLiJj4b7mV8Uqn1Sn3aZA=
+github.com/aws/aws-sdk-go-v2/service/eventbridge v1.24.1 h1:0PcasNDyklQUvanmvkqR269NUtKxSza5JkkHjjduUNM=
+github.com/aws/aws-sdk-go-v2/service/eventbridge v1.24.1/go.mod h1:/MQWb/5JxxK/pKr2lJelg2kkyjaC0oEp52HmxeCh3Hc=
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.10.0 h1:CJxo7ZBbaIzmXfV3hjcx36n9V87gJsIUPJflwqEHl3Q=
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.10.0/go.mod h1:yjVfjuY4nD1EW9i387Kau+I6V5cBA5YnC/mWNopjZrI=
 github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.2.2 h1:f2LhPofnjcdOQKRtumKjMvIHkfSQ8aH/rwKUDEQ/SB4=
