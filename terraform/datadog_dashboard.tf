@@ -1545,7 +1545,7 @@ resource "datadog_dashboard" "service_dashboard" {
             }
 
             formula {
-              formula_expression = "published"
+              formula_expression = "published_by_event_type"
               alias              = "Published"
               style {
                 palette       = "green"
@@ -1554,13 +1554,13 @@ resource "datadog_dashboard" "service_dashboard" {
             }
             query {
               metric_query {
-                name  = "published"
-                query = "sum:grants_ingest.PublishGrantEvents.event.published{$env,$service,$version}.as_count()"
+                name  = "published_by_event_type"
+                query = "sum:grants_ingest.PublishGrantEvents.event.published{$env,$service,$version} by {type}.as_count()"
               }
             }
 
             formula {
-              formula_expression = "total_in_invocation - published - failed"
+              formula_expression = "total_in_invocation - published_total - failed"
               alias              = "Unprocessed"
               style {
                 palette       = "gray"
@@ -1571,6 +1571,12 @@ resource "datadog_dashboard" "service_dashboard" {
               metric_query {
                 name  = "total_in_invocation"
                 query = "sum:grants_ingest.PublishGrantEvents.invocation_batch_size{$env,$service,$version}.as_count()"
+              }
+            }
+            query {
+              metric_query {
+                name  = "published_total"
+                query = "sum:grants_ingest.PublishGrantEvents.event.published{$env,$service,$version}.as_count()"
               }
             }
           }
