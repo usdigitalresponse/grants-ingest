@@ -56,7 +56,7 @@ resource "datadog_dashboard" "service_dashboard" {
           x      = 0
           y      = 0
           width  = 8
-          height = 6
+          height = 9
         }
       }
 
@@ -78,12 +78,44 @@ resource "datadog_dashboard" "service_dashboard" {
           height = 6
         }
       }
+
+      widget {
+        sunburst_definition {
+          title      = "Grant Events Published in Period"
+          hide_total = false
+
+          request {
+            formula {
+              formula_expression = "published_by_type"
+            }
+            query {
+              metric_query {
+                name        = "published_by_type"
+                data_source = "metrics"
+                query       = "sum:grants_ingest.PublishGrantEvents.event.published{$env,$service} by {type}.as_count()"
+                aggregator  = "sum"
+              }
+            }
+          }
+          legend_inline {
+            hide_percent = false
+            hide_value   = false
+            type         = "inline"
+          }
+        }
+        widget_layout {
+          x      = 8
+          y      = 6
+          width  = 4
+          height = 3
+        }
+      }
     }
     widget_layout {
       x      = 0
       y      = 0
       width  = 12
-      height = 6
+      height = 9
     }
   }
 
@@ -220,7 +252,7 @@ resource "datadog_dashboard" "service_dashboard" {
     }
     widget_layout {
       x      = 0
-      y      = 6
+      y      = 9
       width  = 12
       height = 3
     }
@@ -359,7 +391,7 @@ resource "datadog_dashboard" "service_dashboard" {
     }
     widget_layout {
       x      = 0
-      y      = 9
+      y      = 12
       width  = 12
       height = 3
     }
@@ -500,7 +532,7 @@ resource "datadog_dashboard" "service_dashboard" {
     }
     widget_layout {
       x      = 0
-      y      = 12
+      y      = 15
       width  = 12
       height = 3
     }
@@ -669,7 +701,7 @@ resource "datadog_dashboard" "service_dashboard" {
     }
     widget_layout {
       x      = 0
-      y      = 15
+      y      = 18
       width  = 12
       height = 3
     }
@@ -843,7 +875,7 @@ resource "datadog_dashboard" "service_dashboard" {
     }
     widget_layout {
       x      = 0
-      y      = 18
+      y      = 21
       width  = 12
       height = 3
     }
@@ -1003,7 +1035,7 @@ resource "datadog_dashboard" "service_dashboard" {
     }
     widget_layout {
       x      = 0
-      y      = 21
+      y      = 24
       width  = 12
       height = 3
     }
@@ -1243,7 +1275,7 @@ resource "datadog_dashboard" "service_dashboard" {
     }
     widget_layout {
       x      = 0
-      y      = 24
+      y      = 27
       width  = 12
       height = 6
     }
@@ -1513,7 +1545,7 @@ resource "datadog_dashboard" "service_dashboard" {
             }
 
             formula {
-              formula_expression = "published"
+              formula_expression = "published_by_event_type"
               alias              = "Published"
               style {
                 palette       = "green"
@@ -1522,13 +1554,13 @@ resource "datadog_dashboard" "service_dashboard" {
             }
             query {
               metric_query {
-                name  = "published"
-                query = "sum:grants_ingest.PublishGrantEvents.event.published{$env,$service,$version}.as_count()"
+                name  = "published_by_event_type"
+                query = "sum:grants_ingest.PublishGrantEvents.event.published{$env,$service,$version} by {type}.as_count()"
               }
             }
 
             formula {
-              formula_expression = "total_in_invocation - published - failed"
+              formula_expression = "total_in_invocation - published_total - failed"
               alias              = "Unprocessed"
               style {
                 palette       = "gray"
@@ -1539,6 +1571,12 @@ resource "datadog_dashboard" "service_dashboard" {
               metric_query {
                 name  = "total_in_invocation"
                 query = "sum:grants_ingest.PublishGrantEvents.invocation_batch_size{$env,$service,$version}.as_count()"
+              }
+            }
+            query {
+              metric_query {
+                name  = "published_total"
+                query = "sum:grants_ingest.PublishGrantEvents.event.published{$env,$service,$version}.as_count()"
               }
             }
           }
@@ -1553,7 +1591,7 @@ resource "datadog_dashboard" "service_dashboard" {
     }
     widget_layout {
       x      = 0
-      y      = 30
+      y      = 33
       width  = 12
       height = 13
     }
@@ -1690,7 +1728,7 @@ resource "datadog_dashboard" "service_dashboard" {
     }
     widget_layout {
       x      = 0
-      y      = 43
+      y      = 46
       width  = 12
       height = 3
     }
@@ -1914,7 +1952,7 @@ resource "datadog_dashboard" "service_dashboard" {
     }
     widget_layout {
       x      = 0
-      y      = 46
+      y      = 49
       width  = 12
       height = 6
     }
@@ -2103,7 +2141,7 @@ resource "datadog_dashboard" "service_dashboard" {
     }
     widget_layout {
       x      = 0
-      y      = 52
+      y      = 55
       width  = 12
       height = 3
     }

@@ -45,10 +45,11 @@ func handleRecord(ctx context.Context, pub EventBridgePutEventsAPI, rec events.D
 	logger := log.With(logger, "ddb_event_name", rec.EventName,
 		"ddb_keys", rec.Change.Keys, "ddb_sequence_number", rec.Change.SequenceNumber)
 
-	eventJSON, err := buildGrantModificationEventJSON(rec)
+	eventJSON, eventType, err := buildGrantModificationEventJSON(rec)
 	if err != nil {
 		return err
 	}
+	logger = log.With(logger, "event_type", eventType)
 
 	eventInput := types.PutEventsRequestEntry{
 		Source:       aws.String("org.usdigitalresponse.grants-ingest"),
@@ -67,12 +68,12 @@ func handleRecord(ctx context.Context, pub EventBridgePutEventsAPI, rec events.D
 		return log.Errorf(logger, "error publishing to EventBridge", err)
 	}
 
-	sendMetric("event.published", 1)
+	sendMetric("event.published", 1, fmt.Sprintf("type:%s", eventType))
 	log.Info(logger, "Published GrantModificationEvent")
 	return nil
 }
 
-func buildGrantModificationEventJSON(record events.DynamoDBEventRecord) ([]byte, error) {
+func buildGrantModificationEventJSON(record events.DynamoDBEventRecord) ([]byte, string, error) {
 	logger := log.With(logger, "ddb_change_size_bytes", record.Change.SizeBytes,
 		"ddb_change_approximate_creation_time", record.Change.ApproximateCreationDateTime,
 		"ddb_keys", record.Change.Keys, "ddb_sequence_number", record.Change.SequenceNumber,
@@ -89,10 +90,10 @@ func buildGrantModificationEventJSON(record events.DynamoDBEventRecord) ([]byte,
 		sendMetric("item_image.build", 1, metricTag)
 		if grant, err := GuardPanic(NewItemMapper(image).Grant); err != nil {
 			sendMetric("item_image.unbuildable", 1, metricTag)
-			return nil, log.Errorf(logger, "error building grant from change image", err)
+			return nil, "", log.Errorf(logger, "error building grant from change image", err)
 		} else if err := grant.Validate(); err != nil {
 			sendMetric("grant_data.invalid", 1, metricTag)
-			return nil, log.Errorf(logger, "grant data from ItemMapper is invalid", err)
+			return nil, "", log.Errorf(logger, "grant data from ItemMapper is invalid", err)
 		} else {
 			newVersion = &grant
 		}
@@ -105,7 +106,7 @@ func buildGrantModificationEventJSON(record events.DynamoDBEventRecord) ([]byte,
 		sendMetric("item_image.build", 1, metricTag)
 		if grant, err := GuardPanic(NewItemMapper(image).Grant); err != nil {
 			sendMetric("item_image.unbuildable", 1, metricTag)
-			return nil, log.Errorf(logger, "error building grant from change image", err)
+			return nil, "", log.Errorf(logger, "error building grant from change image", err)
 		} else {
 			prevVersion = &grant
 		}
@@ -117,15 +118,16 @@ func buildGrantModificationEventJSON(record events.DynamoDBEventRecord) ([]byte,
 
 	modificationEvent, err := usdr.NewGrantModificationEvent(newVersion, prevVersion)
 	if err != nil {
-		return nil, log.Errorf(logger, "Error building event", err)
+		return nil, "", log.Errorf(logger, "Error building event", err)
 	}
+	logger = log.With(logger, "modification_event_type", modificationEvent.Type.String())
 	if err := modificationEvent.Validate(); err != nil {
 		log.Warn(logger, "grant modification event contains invalid data", "error", err)
 	}
 
 	data, err := json.Marshal(modificationEvent)
 	if err != nil {
-		return nil, log.Errorf(logger, "Error marshaling event to JSON", err)
+		err = log.Errorf(logger, "Error marshaling event to JSON", err)
 	}
-	return data, nil
+	return data, modificationEvent.Type.String(), err
 }
