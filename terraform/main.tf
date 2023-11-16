@@ -90,7 +90,7 @@ module "s3_label" {
 
 module "lambda_artifacts_bucket" {
   source  = "cloudposse/s3-bucket/aws"
-  version = "4.0.0"
+  version = "4.0.1"
   context = module.s3_label.context
   name    = "lambda_artifacts"
 
@@ -124,7 +124,7 @@ module "lambda_artifacts_bucket" {
 
 module "grants_source_data_bucket" {
   source  = "cloudposse/s3-bucket/aws"
-  version = "4.0.0"
+  version = "4.0.1"
   context = module.s3_label.context
   name    = "grants_source_data"
 
@@ -179,7 +179,7 @@ module "grants_source_data_bucket" {
 
 module "grants_prepared_data_bucket" {
   source  = "cloudposse/s3-bucket/aws"
-  version = "4.0.0"
+  version = "4.0.1"
   context = module.s3_label.context
   name    = "grants_prepared_data"
 
@@ -213,7 +213,7 @@ module "grants_prepared_data_bucket" {
 
 module "email_delivery_bucket" {
   source  = "cloudposse/s3-bucket/aws"
-  version = "4.0.0"
+  version = "4.0.1"
   context = module.s3_label.context
   name    = "email_delivery"
 
