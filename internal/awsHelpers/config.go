@@ -17,6 +17,7 @@ import (
 // If no $LOCALSTACK_HOSTNAME variable exists in the current environment, the resolver falls
 // back to the SDK's default endpoint resolution behavior.
 func GetConfig(ctx context.Context) (aws.Config, error) {
+	return config.LoadDefaultConfig(ctx)
 	optionsFunc := func(service, region string, options ...interface{}) (aws.Endpoint, error) {
 		if lsHostname, isSet := os.LookupEnv("LOCALSTACK_HOSTNAME"); isSet {
 			lsPort := "4566"
