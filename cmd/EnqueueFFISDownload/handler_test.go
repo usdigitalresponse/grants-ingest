@@ -27,7 +27,7 @@ func (mocks3 *MockS3) GetObject(ctx context.Context,
 	contentBytes := []byte(mocks3.content)
 	return &s3.GetObjectOutput{
 		Body:          io.NopCloser(bytes.NewReader(contentBytes)),
-		ContentLength: int64(len(contentBytes)),
+		ContentLength: aws.Int64(int64(len(contentBytes))),
 	}, nil
 }
 
