@@ -169,7 +169,7 @@ func (cmd *Cmd) listObjects(logger *log.Logger, ch chan<- []string) error {
 	params := &s3.ListObjectsV2Input{
 		Bucket:  aws.String(cmd.S3Bucket),
 		Prefix:  aws.String(cmd.FilterPrefix),
-		MaxKeys: 1000,
+		MaxKeys: aws.Int32(1000),
 	}
 	for {
 		resp, err := cmd.s3svc.ListObjectsV2(cmd.ctx, params)
@@ -178,7 +178,7 @@ func (cmd *Cmd) listObjects(logger *log.Logger, ch chan<- []string) error {
 			return err
 		}
 
-		keys := make([]string, resp.KeyCount)
+		keys := make([]string, *resp.KeyCount)
 		matchCount := 0
 		for _, obj := range resp.Contents {
 			k := *obj.Key
