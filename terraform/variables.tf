@@ -169,7 +169,7 @@ variable "datadog_lambda_custom_tags" {
 variable "datadog_lambda_extension_version" {
   description = "Version to use for the Datadog Lambda Extension layer (when var.datadog_enabled is true)."
   type        = string
-  default     = "41"
+  default     = "51"
 }
 
 variable "datadog_metrics_metadata" {
