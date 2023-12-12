@@ -17,22 +17,23 @@ import (
 // If no $LOCALSTACK_HOSTNAME variable exists in the current environment, the resolver falls
 // back to the SDK's default endpoint resolution behavior.
 func GetConfig(ctx context.Context) (aws.Config, error) {
-	return config.LoadDefaultConfig(ctx)
-	optionsFunc := func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-		if lsHostname, isSet := os.LookupEnv("LOCALSTACK_HOSTNAME"); isSet {
-			lsPort := "4566"
-			if edgePort, isSet := os.LookupEnv("EDGE_PORT"); isSet {
-				lsPort = edgePort
-			}
-			awsEndpoint := fmt.Sprintf("http://%s:%s", lsHostname, lsPort)
-			return aws.Endpoint{URL: awsEndpoint}, nil
-		}
-
-		// Allow fallback to default resolution
-		return aws.Endpoint{}, &aws.EndpointNotFoundError{}
+	useLocalStack, lsHostname, lsPort := getLocalStackEndpoint()
+	if !useLocalStack {
+		return config.LoadDefaultConfig(ctx)
 	}
-	resolver := aws.EndpointResolverWithOptionsFunc(optionsFunc)
-	return config.LoadDefaultConfig(ctx, config.WithEndpointResolverWithOptions(resolver))
+
+	optionsFunc := func(service, region string, options ...interface{}) (aws.Endpoint, error) {
+		awsEndpoint := aws.Endpoint{
+			PartitionID: "aws",
+			URL:         fmt.Sprintf("http://%s:%s", lsHostname, lsPort),
+		}
+		if awsRegion, isSet := os.LookupEnv("AWS_REGION"); isSet {
+			awsEndpoint.SigningRegion = awsRegion
+		}
+		return awsEndpoint, nil
+	}
+	customResolver := aws.EndpointResolverWithOptionsFunc(optionsFunc)
+	return config.LoadDefaultConfig(ctx, config.WithEndpointResolverWithOptions(customResolver))
 }
 
 func GetSQSClient(ctx context.Context) (*sqs.Client, error) {
@@ -41,18 +42,24 @@ func GetSQSClient(ctx context.Context) (*sqs.Client, error) {
 		return nil, fmt.Errorf("could not create AWS SDK config: %w", err)
 	}
 
-	var sqsResolver sqs.EndpointResolverFunc = func(region string, options sqs.EndpointResolverOptions) (aws.Endpoint, error) {
-		//lint:ignore SA1019 we need to update this eventually, but should not block release
-		return cfg.EndpointResolverWithOptions.ResolveEndpoint("sqs", cfg.Region)
+	useLocalStack, lsHostname, lsPort := getLocalStackEndpoint()
+	if !useLocalStack {
+		return sqs.NewFromConfig(cfg), nil
 	}
-	client := sqs.NewFromConfig(cfg, func(o *sqs.Options) {
-		// the logic for providing the config above doesn't affect the endpoint for SQS, and this is
-		// needed so that localstack will work
-		if _, isSet := os.LookupEnv("LOCALSTACK_HOSTNAME"); isSet {
-			//lint:ignore SA1019 we need to update this eventually, but should not block release
-			o.EndpointResolver = sqsResolver
-		}
-	})
 
-	return client, nil
+	return sqs.NewFromConfig(cfg, func(o *sqs.Options) {
+		o.BaseEndpoint = aws.String(fmt.Sprintf("http://%s:%s", lsHostname, lsPort))
+	}), nil
+}
+
+func getLocalStackEndpoint() (isConfigured bool, hostname, port string) {
+	hostname, isConfigured = os.LookupEnv("LOCALSTACK_HOSTNAME")
+	if isConfigured {
+		port = "4566"
+		if lsPort, isSet := os.LookupEnv("EDGE_PORT"); isSet {
+			port = lsPort
+		}
+	}
+
+	return isConfigured, hostname, port
 }
