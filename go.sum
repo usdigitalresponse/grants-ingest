@@ -7,8 +7,8 @@ github.com/DataDog/datadog-agent/pkg/remoteconfig/state v0.49.0 h1:P8W1PDAs/VDrs
 github.com/DataDog/datadog-agent/pkg/remoteconfig/state v0.49.0/go.mod h1:Vc+snp0Bey4MrrJyiV2tVxxJb6BmLomPvN1RgAvjGaQ=
 github.com/DataDog/datadog-go/v5 v5.4.0 h1:Ea3eXUVwrVV28F/fo3Dr3aa+TL/Z7Xi6SUPKW8L99aI=
 github.com/DataDog/datadog-go/v5 v5.4.0/go.mod h1:K9kcYBlxkcPP8tvvjZZKs/m1edNAUFzBbdpTUKfCsuw=
-github.com/DataDog/datadog-lambda-go v1.13.0 h1:q/rGN5X9/ZbEeAJL3xR3ZMLCML3q8y8v4Vf+VLfX60o=
-github.com/DataDog/datadog-lambda-go v1.13.0/go.mod h1:Oi3s9wqL6ar5gk4XpBNAS9Hp8+2pSy9EjBwkH77e4vA=
+github.com/DataDog/datadog-lambda-go v1.14.0 h1:ZEV15AC4BXpNMWAwzLrJ8KK1tBrqW9jz0vpKnZdrwME=
+github.com/DataDog/datadog-lambda-go v1.14.0/go.mod h1:Oi3s9wqL6ar5gk4XpBNAS9Hp8+2pSy9EjBwkH77e4vA=
 github.com/DataDog/go-libddwaf/v2 v2.2.2 h1:WS0l3qcPju2U4Ot+vr02f525YfW9RcoQfvpoV1410ac=
 github.com/DataDog/go-libddwaf/v2 v2.2.2/go.mod h1:UH7CLwSL++Ij9U7LmdZRH+71hzD+AfH28lF7pTTpWhs=
 github.com/DataDog/go-tuf v1.0.2-0.5.2 h1:EeZr937eKAWPxJ26IykAdWA4A0jQXJgkhUjqEI/w7+I=
