@@ -7,8 +7,8 @@ github.com/DataDog/datadog-agent/pkg/remoteconfig/state v0.49.0 h1:P8W1PDAs/VDrs
 github.com/DataDog/datadog-agent/pkg/remoteconfig/state v0.49.0/go.mod h1:Vc+snp0Bey4MrrJyiV2tVxxJb6BmLomPvN1RgAvjGaQ=
 github.com/DataDog/datadog-go/v5 v5.4.0 h1:Ea3eXUVwrVV28F/fo3Dr3aa+TL/Z7Xi6SUPKW8L99aI=
 github.com/DataDog/datadog-go/v5 v5.4.0/go.mod h1:K9kcYBlxkcPP8tvvjZZKs/m1edNAUFzBbdpTUKfCsuw=
-github.com/DataDog/datadog-lambda-go v1.13.0 h1:q/rGN5X9/ZbEeAJL3xR3ZMLCML3q8y8v4Vf+VLfX60o=
-github.com/DataDog/datadog-lambda-go v1.13.0/go.mod h1:Oi3s9wqL6ar5gk4XpBNAS9Hp8+2pSy9EjBwkH77e4vA=
+github.com/DataDog/datadog-lambda-go v1.14.0 h1:ZEV15AC4BXpNMWAwzLrJ8KK1tBrqW9jz0vpKnZdrwME=
+github.com/DataDog/datadog-lambda-go v1.14.0/go.mod h1:Oi3s9wqL6ar5gk4XpBNAS9Hp8+2pSy9EjBwkH77e4vA=
 github.com/DataDog/go-libddwaf/v2 v2.2.2 h1:WS0l3qcPju2U4Ot+vr02f525YfW9RcoQfvpoV1410ac=
 github.com/DataDog/go-libddwaf/v2 v2.2.2/go.mod h1:UH7CLwSL++Ij9U7LmdZRH+71hzD+AfH28lF7pTTpWhs=
 github.com/DataDog/go-tuf v1.0.2-0.5.2 h1:EeZr937eKAWPxJ26IykAdWA4A0jQXJgkhUjqEI/w7+I=
@@ -27,8 +27,8 @@ github.com/alecthomas/kong v0.8.1/go.mod h1:n1iCIO2xS46oE8ZfYCNDqdR0b0wZNrXAIAqr
 github.com/alecthomas/repr v0.1.0 h1:ENn2e1+J3k09gyj2shc0dHr/yjaWSHRlrJ4DPMevDqE=
 github.com/andybalholm/brotli v1.0.6 h1:Yf9fFpf49Zrxb9NlQaluyE92/+X7UVHlhMNJN2sxfOI=
 github.com/andybalholm/brotli v1.0.6/go.mod h1:fO7iG3H7G2nSZ7m0zPUDn85XEX2GTukHGRSepvi9Eig=
-github.com/aws/aws-lambda-go v1.42.0 h1:U4QKkxLp/il15RJGAANxiT9VumQzimsUER7gokqA0+c=
-github.com/aws/aws-lambda-go v1.42.0/go.mod h1:dpMpZgvWx5vuQJfBt0zqBha60q7Dd7RfgJv23DymV8A=
+github.com/aws/aws-lambda-go v1.43.0 h1:Tdu7SnMB5bD+CbdnSq1Dg4sM68vEuGIDcQFZ+IjUfx0=
+github.com/aws/aws-lambda-go v1.43.0/go.mod h1:dpMpZgvWx5vuQJfBt0zqBha60q7Dd7RfgJv23DymV8A=
 github.com/aws/aws-sdk-go v1.44.256/go.mod h1:aVsgQcEevwlmQ7qHE9I3h+dtQgpqhFB+i8Phjh7fkwI=
 github.com/aws/aws-sdk-go v1.49.0 h1:g9BkW1fo9GqKfwg2+zCD+TW/D36Ux+vtfJ8guF4AYmY=
 github.com/aws/aws-sdk-go v1.49.0/go.mod h1:LF8svs817+Nz+DmiMQKTO3ubZ/6IaTpq3TjupRn3Eqk=
