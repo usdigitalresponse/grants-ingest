@@ -3,20 +3,20 @@ module github.com/usdigitalresponse/grants-ingest
 go 1.20
 
 require (
-	github.com/DataDog/datadog-lambda-go v1.13.0
+	github.com/DataDog/datadog-lambda-go v1.14.0
 	github.com/Netflix/go-env v0.0.0-20220526054621-78278af1949d
 	github.com/alecthomas/kong v0.8.1
-	github.com/aws/aws-lambda-go v1.42.0
+	github.com/aws/aws-lambda-go v1.43.0
 	github.com/aws/aws-sdk-go-v2 v1.24.0
 	github.com/aws/aws-sdk-go-v2/config v1.26.1
 	github.com/aws/aws-sdk-go-v2/credentials v1.16.12
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.12.12
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.6.12
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.15.7
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.15.8
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.26.6
 	github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.18.5
 	github.com/aws/aws-sdk-go-v2/service/eventbridge v1.26.5
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.47.5
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.47.6
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.29.5
 	github.com/aws/smithy-go v1.19.0
 	github.com/cenkalti/backoff/v4 v4.2.1
@@ -92,7 +92,7 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go4.org/intern v0.0.0-20230525184215-6c62f75575cb // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20231121144256-b99613f794b6 // indirect
-	golang.org/x/crypto v0.16.0 // indirect
+	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/net v0.19.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
