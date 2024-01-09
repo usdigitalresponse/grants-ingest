@@ -13,11 +13,9 @@
 #   - $PATCH will always be 0 (and is not used in this template)
 
 version-template: '$MAJOR.$MINOR'
-
 name-template: 'v$RESOLVED_VERSION'
 tag-template: 'release/$RESOLVED_VERSION'
 tag-prefix: 'release/'
-version-template: '2023.$MINOR'
 version-resolver:
   default: minor
 prerelease: true
