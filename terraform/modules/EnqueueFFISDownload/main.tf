@@ -62,7 +62,7 @@ module "lambda_artifact" {
 
 module "lambda_function" {
   source  = "terraform-aws-modules/lambda/aws"
-  version = "6.5.0"
+  version = "6.7.0"
 
   function_name = "${var.namespace}-${var.function_name}"
   description   = "Enqueues FFIS XLSX files for download"
