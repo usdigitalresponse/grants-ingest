@@ -53,7 +53,7 @@ module "lambda_artifact" {
 
 module "lambda_function" {
   source  = "terraform-aws-modules/lambda/aws"
-  version = "6.7.1"
+  version = "6.8.0"
 
   function_name = "${var.namespace}-${var.function_name}"
   description   = "Publishes grant opportunity create/update events from DynamoDB to EventBridge."
