@@ -29,7 +29,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/willabides/kongplete v0.4.0
 	github.com/xuri/excelize/v2 v2.7.1
-	gopkg.in/DataDog/dd-trace-go.v1 v1.59.0
+	gopkg.in/DataDog/dd-trace-go.v1 v1.59.1
 )
 
 require (
@@ -65,7 +65,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
-	github.com/ebitengine/purego v0.5.1 // indirect
+	github.com/ebitengine/purego v0.5.2 // indirect
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/uuid v1.4.0 // indirect
