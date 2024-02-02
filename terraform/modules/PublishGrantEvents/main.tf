@@ -3,7 +3,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.31.0"
+      version = "~> 5.34.0"
     }
   }
 }
@@ -53,7 +53,7 @@ module "lambda_artifact" {
 
 module "lambda_function" {
   source  = "terraform-aws-modules/lambda/aws"
-  version = "6.5.0"
+  version = "6.7.1"
 
   function_name = "${var.namespace}-${var.function_name}"
   description   = "Publishes grant opportunity create/update events from DynamoDB to EventBridge."
