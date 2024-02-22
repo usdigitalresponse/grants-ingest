@@ -34,8 +34,8 @@ github.com/aws/aws-lambda-go v1.46.0/go.mod h1:dpMpZgvWx5vuQJfBt0zqBha60q7Dd7Rfg
 github.com/aws/aws-sdk-go v1.44.256/go.mod h1:aVsgQcEevwlmQ7qHE9I3h+dtQgpqhFB+i8Phjh7fkwI=
 github.com/aws/aws-sdk-go v1.50.9 h1:yX66aKnEtRc/uNV/1EH8CudRT5aLwVwcSwTBphuVPt8=
 github.com/aws/aws-sdk-go v1.50.9/go.mod h1:LF8svs817+Nz+DmiMQKTO3ubZ/6IaTpq3TjupRn3Eqk=
-github.com/aws/aws-sdk-go-v2 v1.25.0 h1:sv7+1JVJxOu/dD/sz/csHX7jFqmP001TIY7aytBWDSQ=
-github.com/aws/aws-sdk-go-v2 v1.25.0/go.mod h1:G104G1Aho5WqF+SR3mDIobTABQzpYV0WxMsKxlMggOA=
+github.com/aws/aws-sdk-go-v2 v1.25.1 h1:P7hU6A5qEdmajGwvae/zDkOq+ULLC9tQBTwqqiwFGpI=
+github.com/aws/aws-sdk-go-v2 v1.25.1/go.mod h1:Evoc5AsmtveRt1komDwIsjHFyrP5tDuF1D1U+6z6pNo=
 github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.0 h1:2UO6/nT1lCZq1LqM67Oa4tdgP1CvL1sLSxvuD+VrOeE=
 github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.0/go.mod h1:5zGj2eA85ClyedTDK+Whsu+w9yimnVIZvhvBKrDquM8=
 github.com/aws/aws-sdk-go-v2/config v1.27.1 h1:oxvGd/cielb+oumJkQmXI0i5tQCRqfdCHV58AfE0pGY=
@@ -95,8 +95,8 @@ github.com/aws/aws-sdk-go-v2/service/sts v1.27.1 h1:QFT2KUWaVwwGi5/2sQNBOViFpLSk
 github.com/aws/aws-sdk-go-v2/service/sts v1.27.1/go.mod h1:nXfOBMWPokIbOY+Gi7a1psWMSvskUCemZzI+SMB7Akc=
 github.com/aws/aws-xray-sdk-go v1.8.3 h1:S8GdgVncBRhzbNnNUgTPwhEqhwt2alES/9rLASyhxjU=
 github.com/aws/aws-xray-sdk-go v1.8.3/go.mod h1:tv8uLMOSCABolrIF8YCcp3ghyswArsan8dfLCA1ZATk=
-github.com/aws/smithy-go v1.20.0 h1:6+kZsCXZwKxZS9RfISnPc4EXlHoyAkm2hPuM8X2BrrQ=
-github.com/aws/smithy-go v1.20.0/go.mod h1:uo5RKksAl4PzhqaAbjd4rLgFoq5koTsQKYuGe7dklGc=
+github.com/aws/smithy-go v1.20.1 h1:4SZlSlMr36UEqC7XOyRVb27XMeZubNcBNN+9IgEPIQw=
+github.com/aws/smithy-go v1.20.1/go.mod h1:krry+ya/rV9RDcV/Q16kpu6ypI4K2czasz0NC3qS14E=
 github.com/cenkalti/backoff/v4 v4.2.1 h1:y4OZtCnogmCPw98Zjyt5a6+QwPLGkiQsYW5oUqylYbM=
 github.com/cenkalti/backoff/v4 v4.2.1/go.mod h1:Y3VNntkOUPxTVeUxJ/G5vcM//AlwfmyYozVcomhLiZE=
 github.com/cespare/xxhash/v2 v2.1.1/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
