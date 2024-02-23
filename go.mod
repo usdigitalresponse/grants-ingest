@@ -16,7 +16,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.29.2
 	github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.19.3
 	github.com/aws/aws-sdk-go-v2/service/eventbridge v1.30.0
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.50.2
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.51.0
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.31.0
 	github.com/aws/smithy-go v1.20.1
 	github.com/cenkalti/backoff/v4 v4.2.1
@@ -44,17 +44,17 @@ require (
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/aws/aws-sdk-go v1.50.9 // indirect
-	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.0 // indirect
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.1 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.15.1 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.1 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.1 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.0 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.3.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.11.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.3.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.3.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/endpoint-discovery v1.9.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.11.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.17.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.17.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/kinesis v1.24.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/kms v1.27.9 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sfn v1.24.5 // indirect
