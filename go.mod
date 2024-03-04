@@ -26,7 +26,7 @@ require (
 	github.com/krolaw/zipstream v0.0.0-20180621105154-0a2661891f94
 	github.com/oklog/ulid/v2 v2.1.0
 	github.com/posener/complete v1.2.3
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	github.com/willabides/kongplete v0.4.0
 	github.com/xuri/excelize/v2 v2.7.1
 	gopkg.in/DataDog/dd-trace-go.v1 v1.60.3
