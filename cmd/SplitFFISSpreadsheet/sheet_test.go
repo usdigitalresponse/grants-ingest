@@ -133,3 +133,46 @@ func TestParseXLSXFile_cfda_format_trailing_plus_sign(t *testing.T) {
 		assert.Equal(t, expectedRow.expectedCFDA, opportunities[idx].CFDA)
 	}
 }
+
+func TestParseXLSXFile_hyperlink_parsing_backwards_compatibility(t *testing.T) {
+	/*
+		This test is for a spreadsheet that includes a mix of old (pre-2024,
+		which provide the opportunity ID as a `oppId` querystring value) and new formats
+		for hyperlink URLs.
+		It also contains a mix of www and non-www Grants.gov domain names,
+		and an invalid domain.
+
+		In this test, we check that both URL formats are supported, as well as that URL
+		hostnames are properly validated.
+
+		Hyperlinks in this spreadsheet occur in the following order:
+		1. F10 https://www.grants.gov/web/grants/view-opportunity.html?oppId=123456 (old)
+		2. F13 https://www.grants.gov/search-results-detail/512512 (new)
+		3. F14 https://not.grants.gov/search-results-detail/215125 (invalid domain; should reject)
+		4. F17 https://grants.gov/search-results-detail/2152151 (new, no www subdomain)
+
+	*/
+	excelFixture, err := os.Open("fixtures/example_spreadsheet_mixed_hyperlinks.xlsx")
+	assert.NoError(t, err, "Error opening spreadsheet fixture")
+
+	// Ignore logging in this test
+	logger = log.NewNopLogger()
+
+	opportunities, err := parseXLSXFile(excelFixture, logger)
+	assert.NoError(t, err)
+	assert.NotNil(t, opportunities)
+
+	// Fixture has 4 opportunities (one is rejected)
+	assert.Len(t, opportunities, 3)
+
+	for idx, expectedRow := range []struct {
+		expectedGrantID int64
+	}{
+		{123456}, // F10
+		{512512}, // F13
+		// {},  // F14, should be rejected
+		{2152151}, // F17
+	} {
+		assert.Equal(t, expectedRow.expectedGrantID, opportunities[idx].GrantID)
+	}
+}
