@@ -3,7 +3,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.34.0"
+      version = "~> 5.37.0"
     }
     datadog = {
       source  = "DataDog/datadog"
@@ -90,7 +90,7 @@ module "s3_label" {
 
 module "lambda_artifacts_bucket" {
   source  = "cloudposse/s3-bucket/aws"
-  version = "4.0.1"
+  version = "4.2.0"
   context = module.s3_label.context
   name    = "lambda_artifacts"
 
@@ -124,7 +124,7 @@ module "lambda_artifacts_bucket" {
 
 module "grants_source_data_bucket" {
   source  = "cloudposse/s3-bucket/aws"
-  version = "4.0.1"
+  version = "4.2.0"
   context = module.s3_label.context
   name    = "grants_source_data"
 
@@ -179,7 +179,7 @@ module "grants_source_data_bucket" {
 
 module "grants_prepared_data_bucket" {
   source  = "cloudposse/s3-bucket/aws"
-  version = "4.0.1"
+  version = "4.2.0"
   context = module.s3_label.context
   name    = "grants_prepared_data"
 
@@ -213,7 +213,7 @@ module "grants_prepared_data_bucket" {
 
 module "email_delivery_bucket" {
   source  = "cloudposse/s3-bucket/aws"
-  version = "4.0.1"
+  version = "4.2.0"
   context = module.s3_label.context
   name    = "email_delivery"
 
@@ -263,7 +263,7 @@ data "aws_iam_policy_document" "read_datadog_api_key_secret" {
 
 module "grants_prepared_dynamodb_table" {
   source  = "cloudposse/dynamodb/aws"
-  version = "0.34.0"
+  version = "0.35.1"
   context = module.this.context
 
   name                          = "prepareddata"
