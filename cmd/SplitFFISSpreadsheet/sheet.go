@@ -14,6 +14,10 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
+// New-style (2024) Grants.gov URL path pattern for grant opportunities,
+// e.g. `/search-results-detail/1234`, where `1234` is the grant opportunity ID.
+var GrantsGovURLPathPattern = regexp.MustCompile(`^/search-results-detail/\d+$`)
+
 // Currently, the FFIS spreadsheet uses an "X" to indicate eligibility
 func parseEligibility(value string) bool {
 	return value == "X"
@@ -171,15 +175,48 @@ rowLoop:
 				// If we have a link, parse the URL for the opportunity ID which
 				// is the only way to get it from the spreadsheet
 				if hasLink {
-					url, err := url.Parse(target)
+					logger := log.With(logger, "target", target)
+					linkURL, err := url.Parse(target)
 					if err != nil {
-						log.Warn(logger, "Error parsing link for grant ID", "error", err)
+						log.Warn(logger, "Error parsing link URL for grant ID", "error", err)
 						sendMetric("spreadsheet.cell_parsing_errors", 1, "target:GrantID")
 						continue
 					}
 
+					if h := linkURL.Hostname(); h != "grants.gov" && h != "www.grants.gov" {
+						log.Warn(logger, "Link URL for grant ID has invalid domain")
+						sendMetric("spreadsheet.cell_parsing_errors", 1, "target:GrantID")
+						continue
+					}
+
+					// See if it can be parsed as a newer, path-based Grants.gov URL
+					// Expected format: https://www.grants.gov/search-results-detail/<value>
+					if GrantsGovURLPathPattern.MatchString(linkURL.Path) {
+						lastPathSegment := target[strings.LastIndex(target, "/")+1:]
+						if val, err := strconv.ParseInt(lastPathSegment, 10, 64); err != nil {
+							// This will only happen due to programming error getting lastPathSegment
+							log.Warn(logger, "Error parsing Opportunity ID from link URL path",
+								"error", err, "match_pattern", GrantsGovURLPathPattern.String(),
+								"extracted_path_segment", lastPathSegment)
+						} else {
+							opportunity.GrantID = val
+							continue
+						}
+					} else {
+						log.Warn(logger, "Link URL path does not match expected pattern",
+							"match_pattern", GrantsGovURLPathPattern.String(), "url_path", linkURL.Path,
+						)
+					}
+
+					// We no longer (as of 2024) expect to see URLs that provide IDs via querystring,
+					// but attempt for backwards-compatibility.
+					log.Warn(logger,
+						"Link does does not match the expected path-based pattern; "+
+							"attempting fallback extraction from old-style query parameter",
+						"match_pattern", GrantsGovURLPathPattern.String())
+
 					// The opportunity ID should be a < 20 digit numeric value
-					oppID, err := strconv.ParseInt(url.Query().Get("oppId"), 10, 64)
+					oppID, err := strconv.ParseInt(linkURL.Query().Get("oppId"), 10, 64)
 					if err != nil {
 						log.Warn(logger, "Error parsing opportunity ID", "error", err)
 						sendMetric("spreadsheet.cell_parsing_errors", 1, "target:GrantID")
