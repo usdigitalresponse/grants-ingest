@@ -7,7 +7,7 @@ require (
 	github.com/Netflix/go-env v0.0.0-20220526054621-78278af1949d
 	github.com/alecthomas/kong v0.9.0
 	github.com/aws/aws-lambda-go v1.46.0
-	github.com/aws/aws-sdk-go-v2 v1.26.0
+	github.com/aws/aws-sdk-go-v2 v1.26.1
 	github.com/aws/aws-sdk-go-v2/config v1.27.9
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.9
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.13.12
@@ -18,7 +18,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/eventbridge v1.30.3
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.53.0
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.31.3
-	github.com/aws/smithy-go v1.20.1
+	github.com/aws/smithy-go v1.20.2
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/go-kit/log v0.2.1
 	github.com/hashicorp/go-multierror v1.1.1
