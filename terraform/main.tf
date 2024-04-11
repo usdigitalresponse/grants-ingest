@@ -263,7 +263,7 @@ data "aws_iam_policy_document" "read_datadog_api_key_secret" {
 
 module "grants_prepared_dynamodb_table" {
   source  = "cloudposse/dynamodb/aws"
-  version = "0.35.1"
+  version = "0.36.0"
   context = module.this.context
 
   name                          = "prepareddata"
