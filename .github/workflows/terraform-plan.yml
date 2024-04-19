@@ -199,7 +199,7 @@ jobs:
           rm tfplan
       - name: Store terraform artifacts
         if: success() && inputs.upload-artifacts
-        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
+        uses: actions/upload-artifact@1746f4ab65b179e0ea60a494b83293b640dd5bba # v4.3.2
         with:
           name: ${{ env.ARTIFACTS_KEY }}
           path: |
