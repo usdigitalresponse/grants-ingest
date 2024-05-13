@@ -8,8 +8,8 @@ require (
 	github.com/alecthomas/kong v0.9.0
 	github.com/aws/aws-lambda-go v1.47.0
 	github.com/aws/aws-sdk-go-v2 v1.26.1
-	github.com/aws/aws-sdk-go-v2/config v1.27.12
-	github.com/aws/aws-sdk-go-v2/credentials v1.17.12
+	github.com/aws/aws-sdk-go-v2/config v1.27.13
+	github.com/aws/aws-sdk-go-v2/credentials v1.17.13
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.13.15
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.7.15
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.16.16
@@ -60,7 +60,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sfn v1.24.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sns v1.26.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.20.6 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.23.5 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.24.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.28.7 // indirect
 	github.com/aws/aws-xray-sdk-go v1.8.3 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
