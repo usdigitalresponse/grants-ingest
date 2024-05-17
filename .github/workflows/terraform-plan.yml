@@ -111,7 +111,7 @@ jobs:
             objects.githubusercontent.com:443
             registry.terraform.io:443
             releases.hashicorp.com:443
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
         with:
           ref: ${{ inputs.ref }}
           show-progress: 'false'
