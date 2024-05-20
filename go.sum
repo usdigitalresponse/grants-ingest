@@ -60,8 +60,8 @@ github.com/aws/aws-sdk-go-v2/internal/v4a v1.3.7 h1:/FUtT3xsoHO3cfh+I/kCbcMCN98Q
 github.com/aws/aws-sdk-go-v2/internal/v4a v1.3.7/go.mod h1:MaCAgWpGooQoCWZnMur97rGn5dp350w2+CeiV5406wE=
 github.com/aws/aws-sdk-go-v2/service/dynamodb v1.32.2 h1:q9aa221VI1y4EMUSdhUbxQTwBKEsq4AW8kMm3R2iaWU=
 github.com/aws/aws-sdk-go-v2/service/dynamodb v1.32.2/go.mod h1:RTZdXUoe9cPDOQX4DFI88ow+sXE2Tfor4ZLkIiC0E1E=
-github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.20.6 h1:FxT9FA/srmI8IvaTXJFhyLE1nJqhwyivcva6aF3oCvM=
-github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.20.6/go.mod h1:+YVAvUo3XAtPjRgYYdOEjJQ8UAPzxmNFCJ0dewAvAkg=
+github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.20.7 h1:TIt7UjRs7Eya0RNILTKoTiQzCFYR+kLOIBovLc0T/7k=
+github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.20.7/go.mod h1:IL6qnQxrc/qIjwzeg7USP3P7ySEehOPpXJslRbXNYJ4=
 github.com/aws/aws-sdk-go-v2/service/ec2 v1.93.2 h1:c6a19AjfhEXKlEX63cnlWtSQ4nzENihHZOG0I3wH6BE=
 github.com/aws/aws-sdk-go-v2/service/eventbridge v1.31.2 h1:I46yfKnL3uc8RKU1Rin4kRfb+pOq1syGCNrVKhMyKx4=
 github.com/aws/aws-sdk-go-v2/service/eventbridge v1.31.2/go.mod h1:H69fMdoeNRj4xalIaWYSpniE3ghC69qaifDnqYiUbP0=
