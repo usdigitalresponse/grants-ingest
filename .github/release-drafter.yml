@@ -60,8 +60,11 @@ autolabeler:
       - go.mod
       - go.sum
       - '**/.terraform.lock.hcl'
+      - '**/.terraform-version'
+      - '**/.tflint.hcl'
     branch:
       - '/^dependabot\/.+$/i'
+      - '/^renovate\/.+$/i'
   - label: documentation
     files:
       - README
