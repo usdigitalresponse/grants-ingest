@@ -45,6 +45,7 @@ exclude-labels:
 exclude-contributors:
   - dependabot
   - 'dependabot[bot]'
+  - 'renovate[bot]'
   - step-security-bot
 autolabeler:
   - label: go
