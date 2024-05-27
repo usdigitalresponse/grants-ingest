@@ -8,7 +8,7 @@ require (
 	github.com/alecthomas/kong v0.9.0
 	github.com/aws/aws-lambda-go v1.47.0
 	github.com/aws/aws-sdk-go-v2 v1.27.0
-	github.com/aws/aws-sdk-go-v2/config v1.27.15
+	github.com/aws/aws-sdk-go-v2/config v1.27.16
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.16
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.13.18
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.7.18
