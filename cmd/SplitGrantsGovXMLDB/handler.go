@@ -157,7 +157,7 @@ func readRecords(ctx context.Context, r io.Reader, ch chan<- grantRecord) error 
 				if err = d.DecodeElement(&o, &se); err == nil {
 					ch <- &o
 				}
-			} else if se.Name.Local == GRANT_FORECAST_XML_NAME {
+			} else if se.Name.Local == GRANT_FORECAST_XML_NAME && env.IsForecastedGrantsEnabled {
 				var f forecast
 				if err = d.DecodeElement(&f, &se); err == nil {
 					ch <- &f

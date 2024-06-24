@@ -106,6 +106,7 @@ module "lambda_function" {
     GRANTS_PREPARED_DATA_BUCKET_NAME = data.aws_s3_bucket.prepared_data.id
     LOG_LEVEL                        = var.log_level
     MAX_CONCURRENT_UPLOADS           = "10"
+    IS_FORECASTED_GRANTS_ENABLED     = var.is_forecasted_grants_enabled
   })
 
   allowed_triggers = {
