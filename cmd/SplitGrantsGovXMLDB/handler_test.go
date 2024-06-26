@@ -175,11 +175,13 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 	assert.NoError(t, err, "Error configuring test environment")
 
 	for _, tt := range []struct {
-		name        string
-		grantValues []grantValues
+		name                      string
+		isForecastedGrantsEnabled bool
+		grantValues               []grantValues
 	}{
 		{
 			"Well-formed source XML for single new grant",
+			true,
 			[]grantValues{
 				{
 					SOURCE_OPPORTUNITY_TEMPLATE,
@@ -193,6 +195,7 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 		},
 		{
 			"Well-formed source XML for single new forecast",
+			true,
 			[]grantValues{
 				{
 					SOURCE_FORECAST_TEMPLATE,
@@ -205,7 +208,22 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 			},
 		},
 		{
+			"When flag is disabled, ignores well-formed source XML for single new forecast",
+			false,
+			[]grantValues{
+				{
+					SOURCE_FORECAST_TEMPLATE,
+					"2345",
+					now.AddDate(-1, 0, 0).Format("01022006"),
+					false,
+					false,
+					true,
+				},
+			},
+		},
+		{
 			"Mixed well-formed grant and forecast",
+			true,
 			[]grantValues{
 				{
 					SOURCE_OPPORTUNITY_TEMPLATE,
@@ -227,6 +245,7 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 		},
 		{
 			"One grant to update and one to ignore",
+			true,
 			[]grantValues{
 				{
 					SOURCE_OPPORTUNITY_TEMPLATE,
@@ -248,6 +267,7 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 		},
 		{
 			"One grant to update and one with malformed source data",
+			true,
 			[]grantValues{
 				{
 					SOURCE_OPPORTUNITY_TEMPLATE,
@@ -272,6 +292,7 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 		},
 		{
 			"One grant with invalid date format",
+			true,
 			[]grantValues{
 				{
 					SOURCE_OPPORTUNITY_TEMPLATE,
@@ -285,6 +306,7 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 		},
 		{
 			"Source contains invalid token",
+			true,
 			[]grantValues{
 				{
 					"<invalidtoken",
@@ -297,6 +319,17 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 			},
 		},
 	} {
+		// Configure forecasted flag in environment variables
+		if tt.isForecastedGrantsEnabled {
+			goenv.Unmarshal(goenv.EnvSet{
+				"IS_FORECASTED_GRANTS_ENABLED": "true",
+			}, &env)
+		} else {
+			goenv.Unmarshal(goenv.EnvSet{
+				"IS_FORECASTED_GRANTS_ENABLED": "false",
+			}, &env)
+		}
+
 		var sourceGrantsData bytes.Buffer
 		sourceOpportunitiesData := make(map[string][]byte)
 		_, err := sourceGrantsData.WriteString("<Grants>")
