@@ -216,7 +216,7 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 					"2345",
 					now.AddDate(-1, 0, 0).Format("01022006"),
 					false,
-					false,
+					true,
 					true,
 				},
 			},
@@ -319,17 +319,7 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 			},
 		},
 	} {
-		// Configure forecasted flag in environment variables
-		if tt.isForecastedGrantsEnabled {
-			goenv.Unmarshal(goenv.EnvSet{
-				"IS_FORECASTED_GRANTS_ENABLED": "true",
-			}, &env)
-		} else {
-			goenv.Unmarshal(goenv.EnvSet{
-				"IS_FORECASTED_GRANTS_ENABLED": "false",
-			}, &env)
-		}
-
+		env.IsForecastedGrantsEnabled = tt.isForecastedGrantsEnabled
 		var sourceGrantsData bytes.Buffer
 		sourceOpportunitiesData := make(map[string][]byte)
 		_, err := sourceGrantsData.WriteString("<Grants>")
