@@ -156,6 +156,7 @@ type grantValues struct {
 	LastUpdatedDate string
 	isExtant        bool
 	isValid         bool
+	isSkipped       bool
 	isForecast      bool
 }
 
@@ -185,10 +186,11 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 			[]grantValues{
 				{
 					SOURCE_OPPORTUNITY_TEMPLATE,
-					"1234",
+					"1001",
 					now.AddDate(-1, 0, 0).Format("01022006"),
 					false,
 					true,
+					false,
 					false,
 				},
 			},
@@ -199,10 +201,11 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 			[]grantValues{
 				{
 					SOURCE_FORECAST_TEMPLATE,
-					"2345",
+					"1002",
 					now.AddDate(-1, 0, 0).Format("01022006"),
 					false,
 					true,
+					false,
 					true,
 				},
 			},
@@ -213,9 +216,10 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 			[]grantValues{
 				{
 					SOURCE_FORECAST_TEMPLATE,
-					"2345",
+					"1003",
 					now.AddDate(-1, 0, 0).Format("01022006"),
 					false,
+					true,
 					true,
 					true,
 				},
@@ -227,18 +231,20 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 			[]grantValues{
 				{
 					SOURCE_OPPORTUNITY_TEMPLATE,
-					"1234",
+					"1004",
 					now.AddDate(-1, 0, 0).Format("01022006"),
 					false,
 					true,
+					false,
 					false,
 				},
 				{
 					SOURCE_FORECAST_TEMPLATE,
-					"2345",
+					"1005",
 					now.AddDate(-1, 0, 0).Format("01022006"),
 					false,
 					true,
+					false,
 					true,
 				},
 			},
@@ -249,18 +255,20 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 			[]grantValues{
 				{
 					SOURCE_OPPORTUNITY_TEMPLATE,
-					"2345",
+					"1006",
 					now.AddDate(-1, 0, 0).Format("01022006"),
 					true,
 					true,
 					false,
+					false,
 				},
 				{
 					SOURCE_OPPORTUNITY_TEMPLATE,
-					"3456",
+					"1007",
 					now.AddDate(1, 0, 0).Format("01022006"),
 					true,
 					true,
+					false,
 					false,
 				},
 			},
@@ -271,10 +279,11 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 			[]grantValues{
 				{
 					SOURCE_OPPORTUNITY_TEMPLATE,
-					"4567",
+					"1008",
 					now.AddDate(-1, 0, 0).Format("01022006"),
 					true,
 					true,
+					false,
 					false,
 				},
 				{
@@ -282,8 +291,9 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 					<OpportunityID>{{.OpportunityID}}</OpportunityID>
 					<LastUpdatedDate>{{.LastUpdatedDate}}</LastUpdatedDate>
 					<OpportunityTitle>Fun Grant`,
-					"5678",
+					"1009",
 					now.AddDate(-1, 0, 0).Format("01022006"),
+					false,
 					false,
 					false,
 					false,
@@ -296,8 +306,9 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 			[]grantValues{
 				{
 					SOURCE_OPPORTUNITY_TEMPLATE,
-					"6789",
+					"1010",
 					now.AddDate(-1, 0, 0).Format("01/02/06"),
+					false,
 					false,
 					false,
 					false,
@@ -310,8 +321,9 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 			[]grantValues{
 				{
 					"<invalidtoken",
-					"7890",
+					"1011",
 					now.AddDate(-1, 0, 0).Format("01/02/06"),
+					false,
 					false,
 					false,
 					false,
@@ -320,6 +332,9 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 		},
 	} {
 		env.IsForecastedGrantsEnabled = tt.isForecastedGrantsEnabled
+
+		// Build the source XML to test, based on the test case parameters
+		// (will also place extant records in S3 if specified in the test case)
 		var sourceGrantsData bytes.Buffer
 		sourceOpportunitiesData := make(map[string][]byte)
 		_, err := sourceGrantsData.WriteString("<Grants>")
@@ -350,7 +365,9 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 		_, err = sourceGrantsData.WriteString("</Grants>")
 		require.NoError(t, err)
 
+		// Execute the test case
 		t.Run(tt.name, func(t *testing.T) {
+			// Place the XML file constructed above into the correct S3 location
 			objectKey := fmt.Sprintf("sources/%s/grants.gov/extract.xml", now.Format("2006/01/02"))
 			_, err := s3client.PutObject(context.TODO(), &s3.PutObjectInput{
 				Bucket: aws.String(sourceBucketName),
@@ -359,6 +376,7 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 			})
 			require.NoErrorf(t, err, "Error creating test source object %s", objectKey)
 
+			// Invoke the handler under test with a constructed S3 event
 			invocationErr := handleS3EventWithConfig(cfg, context.TODO(), events.S3Event{
 				Records: []events.S3EventRecord{{
 					S3: events.S3Entity{
@@ -367,6 +385,8 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 					},
 				}},
 			})
+
+			// Determine the list of expected grant objects to have been saved by the handler
 			sourceContainsInvalidOpportunities := false
 			for _, v := range tt.grantValues {
 				if !v.isValid {
@@ -378,13 +398,13 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 			} else {
 				require.NoError(t, invocationErr)
 			}
-
 			var expectedGrants grantsgov.Grants
 			err = xml.Unmarshal(sourceGrantsData.Bytes(), &expectedGrants)
 			if !sourceContainsInvalidOpportunities {
 				require.NoError(t, err)
 			}
 
+			// For each grant value in the test case, we'll verify it was handled correctly
 			for _, v := range tt.grantValues {
 				key := fmt.Sprintf("%s/%s/grants.gov/%s",
 					v.OpportunityID[0:3], v.OpportunityID, v.getFilename())
@@ -393,9 +413,12 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 					Key:    aws.String(key),
 				})
 
-				if !v.isValid && !v.isExtant {
+				if v.isSkipped || (!v.isValid && !v.isExtant) {
+					// If there was no extant file and the new grant is invalid, or if we were meant to skip
+					// this grant, there should be no S3 file
 					assert.Error(t, err)
 				} else {
+					// Otherwise, we verify the S3 file matches the source from the test case
 					require.NoError(t, err)
 					b, err := io.ReadAll(resp.Body)
 					require.NoError(t, err)
