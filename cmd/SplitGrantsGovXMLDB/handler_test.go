@@ -30,11 +30,6 @@ import (
 	grantsgov "github.com/usdigitalresponse/grants-ingest/pkg/grantsSchemas/grants.gov"
 )
 
-func TestOpportunityS3ObjectKey(t *testing.T) {
-	opp := &opportunity{OpportunityID: "123456789"}
-	assert.Equal(t, opp.S3ObjectKey(), "123/123456789/grants.gov/v2.xml")
-}
-
 func setupLambdaEnvForTesting(t *testing.T) {
 	t.Helper()
 
@@ -119,6 +114,60 @@ const SOURCE_OPPORTUNITY_TEMPLATE = `
 </OpportunitySynopsisDetail_1_0>
 `
 
+const SOURCE_FORECAST_TEMPLATE = `
+<OpportunityForecastDetail_1_0>
+	<OpportunityID>{{.OpportunityID}}</OpportunityID>
+	<OpportunityTitle>Fun Grant</OpportunityTitle>
+	<OpportunityNumber>ABCD-1234</OpportunityNumber>
+	<OpportunityCategory>Some Category</OpportunityCategory>
+	<FundingInstrumentType>Clarinet</FundingInstrumentType>
+	<CategoryOfFundingActivity>My Funding Category</CategoryOfFundingActivity>
+	<CategoryExplanation>Meow meow meow</CategoryExplanation>
+	<CFDANumbers>1234.567</CFDANumbers>
+	<EligibleApplicants>25</EligibleApplicants>
+	<AdditionalInformationOnEligibility>This is some additional information on eligibility.</AdditionalInformationOnEligibility>
+	<AgencyCode>TEST-AC</AgencyCode>
+	<AgencyName>Bureau of Testing</AgencyName>
+	<PostDate>09082022</PostDate>
+	<EstimatedSynopsisPostDate>02102016</EstimatedSynopsisPostDate>
+	<FiscalYear>2016</FiscalYear>
+	<EstimatedSynopsisCloseDate>04112016</EstimatedSynopsisCloseDate>
+	<EstimatedAwardDate>09082016</EstimatedAwardDate>
+	<EstimatedProjectStartDate>09302016</EstimatedProjectStartDate>
+	<LastUpdatedDate>{{.LastUpdatedDate}}</LastUpdatedDate>
+	<AwardCeiling>600000</AwardCeiling>
+	<AwardFloor>400000</AwardFloor>
+	<EstimatedTotalProgramFunding>600000</EstimatedTotalProgramFunding>
+	<ExpectedNumberOfAwards>10</ExpectedNumberOfAwards>
+	<Description>Here is a description of the opportunity.</Description>
+	<Version>Synopsis 2</Version>
+	<CostSharingOrMatchingRequirement>No</CostSharingOrMatchingRequirement>
+	<ArchiveDate>02012023</ArchiveDate>
+	<GrantorContactEmail>test@example.gov</GrantorContactEmail>
+	<GrantorContactEmailDescription>Inquiries</GrantorContactEmailDescription>
+	<GrantorContactName>Tester Person</GrantorContactName>
+	<GrantorContactPhoneNumber>800-123-4567</GrantorContactPhoneNumber>
+</OpportunityForecastDetail_1_0>
+`
+
+type grantValues struct {
+	template        string
+	OpportunityID   string
+	LastUpdatedDate string
+	isExtant        bool
+	isValid         bool
+	isSkipped       bool
+	isForecast      bool
+}
+
+func (values grantValues) getFilename() string {
+	if values.isForecast {
+		return "v2.OpportunityForecastDetail_1_0.xml"
+	} else {
+		return "v2.OpportunitySynopsisDetail_1_0.xml"
+	}
+}
+
 func TestLambdaInvocationScenarios(t *testing.T) {
 	setupLambdaEnvForTesting(t)
 	sourceBucketName := "test-source-bucket"
@@ -126,25 +175,77 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 	s3client, cfg, err := setupS3ForTesting(t, sourceBucketName)
 	assert.NoError(t, err, "Error configuring test environment")
 
-	type grantValues struct {
-		template        string
-		OpportunityID   string
-		LastUpdatedDate string
-		isExtant        bool
-		isValid         bool
-	}
+	seenOpportunityIDs := make(map[string]struct{})
 
 	for _, tt := range []struct {
-		name        string
-		grantValues []grantValues
+		name                      string
+		isForecastedGrantsEnabled bool
+		grantValues               []grantValues
 	}{
 		{
 			"Well-formed source XML for single new grant",
+			true,
 			[]grantValues{
 				{
 					SOURCE_OPPORTUNITY_TEMPLATE,
-					"1234",
+					"1001",
 					now.AddDate(-1, 0, 0).Format("01022006"),
+					false,
+					true,
+					false,
+					false,
+				},
+			},
+		},
+		{
+			"Well-formed source XML for single new forecast",
+			true,
+			[]grantValues{
+				{
+					SOURCE_FORECAST_TEMPLATE,
+					"1002",
+					now.AddDate(-1, 0, 0).Format("01022006"),
+					false,
+					true,
+					false,
+					true,
+				},
+			},
+		},
+		{
+			"When flag is disabled, ignores well-formed source XML for single new forecast",
+			false,
+			[]grantValues{
+				{
+					SOURCE_FORECAST_TEMPLATE,
+					"1003",
+					now.AddDate(-1, 0, 0).Format("01022006"),
+					false,
+					true,
+					true,
+					true,
+				},
+			},
+		},
+		{
+			"Mixed well-formed grant and forecast",
+			true,
+			[]grantValues{
+				{
+					SOURCE_OPPORTUNITY_TEMPLATE,
+					"1004",
+					now.AddDate(-1, 0, 0).Format("01022006"),
+					false,
+					true,
+					false,
+					false,
+				},
+				{
+					SOURCE_FORECAST_TEMPLATE,
+					"1005",
+					now.AddDate(-1, 0, 0).Format("01022006"),
+					false,
+					true,
 					false,
 					true,
 				},
@@ -152,40 +253,50 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 		},
 		{
 			"One grant to update and one to ignore",
+			true,
 			[]grantValues{
 				{
 					SOURCE_OPPORTUNITY_TEMPLATE,
-					"2345",
+					"1006",
 					now.AddDate(-1, 0, 0).Format("01022006"),
 					true,
 					true,
+					false,
+					false,
 				},
 				{
 					SOURCE_OPPORTUNITY_TEMPLATE,
-					"3456",
+					"1007",
 					now.AddDate(1, 0, 0).Format("01022006"),
 					true,
 					true,
+					false,
+					false,
 				},
 			},
 		},
 		{
 			"One grant to update and one with malformed source data",
+			true,
 			[]grantValues{
 				{
 					SOURCE_OPPORTUNITY_TEMPLATE,
-					"4567",
+					"1008",
 					now.AddDate(-1, 0, 0).Format("01022006"),
 					true,
 					true,
+					false,
+					false,
 				},
 				{
 					`<OpportunitySynopsisDetail_1_0>
 					<OpportunityID>{{.OpportunityID}}</OpportunityID>
 					<LastUpdatedDate>{{.LastUpdatedDate}}</LastUpdatedDate>
 					<OpportunityTitle>Fun Grant`,
-					"5678",
+					"1009",
 					now.AddDate(-1, 0, 0).Format("01022006"),
+					false,
+					false,
 					false,
 					false,
 				},
@@ -193,11 +304,14 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 		},
 		{
 			"One grant with invalid date format",
+			true,
 			[]grantValues{
 				{
 					SOURCE_OPPORTUNITY_TEMPLATE,
-					"6789",
+					"1010",
 					now.AddDate(-1, 0, 0).Format("01/02/06"),
+					false,
+					false,
 					false,
 					false,
 				},
@@ -205,17 +319,33 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 		},
 		{
 			"Source contains invalid token",
+			true,
 			[]grantValues{
 				{
 					"<invalidtoken",
-					"7890",
+					"1011",
 					now.AddDate(-1, 0, 0).Format("01/02/06"),
+					false,
+					false,
 					false,
 					false,
 				},
 			},
 		},
 	} {
+		env.IsForecastedGrantsEnabled = tt.isForecastedGrantsEnabled
+
+		// Verify there are no previously seen grant IDs, as they can cause unexpected interactions in
+		// our testing AWS setup
+		for _, gv := range tt.grantValues {
+			if _, exists := seenOpportunityIDs[gv.OpportunityID]; exists {
+				t.Fatalf("Duplicate opportunity ID found: %s in test case '%s'", gv.OpportunityID, tt.name)
+			}
+			seenOpportunityIDs[gv.OpportunityID] = struct{}{}
+		}
+
+		// Build the source XML to test, based on the test case parameters
+		// (will also place extant records in S3 if specified in the test case)
 		var sourceGrantsData bytes.Buffer
 		sourceOpportunitiesData := make(map[string][]byte)
 		_, err := sourceGrantsData.WriteString("<Grants>")
@@ -230,8 +360,8 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 				"LastUpdatedDate": values.LastUpdatedDate,
 			}))
 			if values.isExtant {
-				extantKey := fmt.Sprintf("%s/%s/grants.gov/v2.xml",
-					values.OpportunityID[0:3], values.OpportunityID)
+				extantKey := fmt.Sprintf("%s/%s/grants.gov/%s",
+					values.OpportunityID[0:3], values.OpportunityID, values.getFilename())
 				_, err := s3client.PutObject(context.TODO(), &s3.PutObjectInput{
 					Bucket: aws.String(env.DestinationBucket),
 					Key:    aws.String(extantKey),
@@ -246,7 +376,9 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 		_, err = sourceGrantsData.WriteString("</Grants>")
 		require.NoError(t, err)
 
+		// Execute the test case
 		t.Run(tt.name, func(t *testing.T) {
+			// Place the XML file constructed above into the correct S3 location
 			objectKey := fmt.Sprintf("sources/%s/grants.gov/extract.xml", now.Format("2006/01/02"))
 			_, err := s3client.PutObject(context.TODO(), &s3.PutObjectInput{
 				Bucket: aws.String(sourceBucketName),
@@ -255,6 +387,7 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 			})
 			require.NoErrorf(t, err, "Error creating test source object %s", objectKey)
 
+			// Invoke the handler under test with a constructed S3 event
 			invocationErr := handleS3EventWithConfig(cfg, context.TODO(), events.S3Event{
 				Records: []events.S3EventRecord{{
 					S3: events.S3Entity{
@@ -263,6 +396,8 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 					},
 				}},
 			})
+
+			// Determine the list of expected grant objects to have been saved by the handler
 			sourceContainsInvalidOpportunities := false
 			for _, v := range tt.grantValues {
 				if !v.isValid {
@@ -274,24 +409,27 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 			} else {
 				require.NoError(t, invocationErr)
 			}
-
 			var expectedGrants grantsgov.Grants
 			err = xml.Unmarshal(sourceGrantsData.Bytes(), &expectedGrants)
 			if !sourceContainsInvalidOpportunities {
 				require.NoError(t, err)
 			}
 
+			// For each grant value in the test case, we'll verify it was handled correctly
 			for _, v := range tt.grantValues {
-				key := fmt.Sprintf("%s/%s/grants.gov/v2.xml",
-					v.OpportunityID[0:3], v.OpportunityID)
+				key := fmt.Sprintf("%s/%s/grants.gov/%s",
+					v.OpportunityID[0:3], v.OpportunityID, v.getFilename())
 				resp, err := s3client.GetObject(context.TODO(), &s3.GetObjectInput{
 					Bucket: aws.String(env.DestinationBucket),
 					Key:    aws.String(key),
 				})
 
-				if !v.isValid && !v.isExtant {
+				if v.isSkipped || (!v.isValid && !v.isExtant) {
+					// If there was no extant file and the new grant is invalid, or if we were meant to skip
+					// this grant, there should be no S3 file
 					assert.Error(t, err)
 				} else {
+					// Otherwise, we verify the S3 file matches the source from the test case
 					require.NoError(t, err)
 					b, err := io.ReadAll(resp.Body)
 					require.NoError(t, err)
@@ -352,7 +490,7 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 
 		_, err = s3client.GetObject(context.Background(), &s3.GetObjectInput{
 			Bucket: aws.String(env.DestinationBucket),
-			Key:    aws.String("123/12345/grants.gov/v2.xml"),
+			Key:    aws.String("123/12345/grants.gov/v2.OpportunitySynopsisDetail_1_0.xml"),
 		})
 		assert.NoError(t, err, "Expected destination object was not created")
 	})
@@ -392,18 +530,18 @@ func (r *MockReader) Read(p []byte) (int, error) {
 	return r.read(p)
 }
 
-func TestReadOpportunities(t *testing.T) {
+func TestReadRecords(t *testing.T) {
 	t.Run("Context cancelled between reads", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.TODO())
-		err := readOpportunities(ctx, &MockReader{func(p []byte) (int, error) {
+		err := readRecords(ctx, &MockReader{func(p []byte) (int, error) {
 			cancel()
 			return int(copy(p, []byte("<Grants>"))), nil
-		}}, make(chan<- opportunity, 10))
+		}}, make(chan<- grantRecord, 10))
 		assert.ErrorIs(t, err, context.Canceled)
 	})
 }
 
-func TestProcessOpportunity(t *testing.T) {
+func TestProcessRecord(t *testing.T) {
 	now := time.Now()
 	testOpportunity := opportunity{
 		OpportunityID:   "1234",
@@ -422,8 +560,8 @@ func TestProcessOpportunity(t *testing.T) {
 			mockGetObjectAPI(nil),
 			mockPutObjectAPI(nil),
 		}
-		err := processOpportunity(context.TODO(), c, testOpportunity)
-		assert.ErrorContains(t, err, "Error determining last modified time for remote opportunity")
+		err := processRecord(context.TODO(), c, testOpportunity)
+		assert.ErrorContains(t, err, "Error determining last modified time for remote record")
 	})
 
 	t.Run("Error uploading to S3", func(t *testing.T) {
@@ -450,7 +588,7 @@ func TestProcessOpportunity(t *testing.T) {
 			}),
 		}
 		fmt.Printf("%T", s3Client)
-		err := processOpportunity(context.TODO(), s3Client, testOpportunity)
-		assert.ErrorContains(t, err, "Error uploading prepared grant opportunity to S3")
+		err := processRecord(context.TODO(), s3Client, testOpportunity)
+		assert.ErrorContains(t, err, "Error uploading prepared grant record to S3")
 	})
 }

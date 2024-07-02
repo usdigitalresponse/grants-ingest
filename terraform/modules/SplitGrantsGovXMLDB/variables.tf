@@ -86,3 +86,9 @@ variable "grants_prepared_data_bucket_name" {
   description = "Name of the S3 bucket used to store grants prepared data."
   type        = string
 }
+
+variable "is_forecasted_grants_enabled" {
+  description = "Flag to control whether forecasted grants should be processed and stored in S3."
+  type        = bool
+  default     = false
+}
