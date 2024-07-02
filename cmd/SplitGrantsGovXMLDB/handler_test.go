@@ -175,6 +175,8 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 	s3client, cfg, err := setupS3ForTesting(t, sourceBucketName)
 	assert.NoError(t, err, "Error configuring test environment")
 
+	seenOpportunityIDs := make(map[string]struct{})
+
 	for _, tt := range []struct {
 		name                      string
 		isForecastedGrantsEnabled bool
@@ -332,6 +334,15 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 		},
 	} {
 		env.IsForecastedGrantsEnabled = tt.isForecastedGrantsEnabled
+
+		// Verify there are no previously seen grant IDs, as they can cause unexpected interactions in
+		// our testing AWS setup
+		for _, gv := range tt.grantValues {
+			if _, exists := seenOpportunityIDs[gv.OpportunityID]; exists {
+				t.Fatalf("Duplicate opportunity ID found: %s in test case '%s'", gv.OpportunityID, tt.name)
+			}
+			seenOpportunityIDs[gv.OpportunityID] = struct{}{}
+		}
 
 		// Build the source XML to test, based on the test case parameters
 		// (will also place extant records in S3 if specified in the test case)
