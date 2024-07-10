@@ -77,6 +77,10 @@ is unavailable.
 #### Prerequisites
 
 To begin, make sure the following tools are available in your development workspace:
+- [Go](https://go.dev/)
+  - Ensure you're using the version found in [go.mod](https://github.com/usdigitalresponse/grants-ingest/blob/main/go.mod)
+  - If you need to manage multiple Go versions on your machine, you can follow [official guidance](https://go.dev/doc/manage-install)
+    or use a tool like [asdf](https://github.com/asdf-vm/asdf), [gvm](https://github.com/moovweb/gvm), or [goenv](https://github.com/go-nv/goenv)
 - [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 - [Terraform](https://developer.hashicorp.com/terraform/downloads)
   - Download the version found in [.terraform-version](https://github.com/usdigitalresponse/grants-ingest/blob/main/terraform/.terraform-version)
