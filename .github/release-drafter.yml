@@ -45,6 +45,7 @@ exclude-labels:
 exclude-contributors:
   - dependabot
   - 'dependabot[bot]'
+  - 'renovate[bot]'
   - step-security-bot
 autolabeler:
   - label: go
@@ -60,8 +61,11 @@ autolabeler:
       - go.mod
       - go.sum
       - '**/.terraform.lock.hcl'
+      - '**/.terraform-version'
+      - '**/.tflint.hcl'
     branch:
       - '/^dependabot\/.+$/i'
+      - '/^renovate\/.+$/i'
   - label: documentation
     files:
       - README
