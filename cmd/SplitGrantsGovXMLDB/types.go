@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	ddbtypes "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
 	grantsgov "github.com/usdigitalresponse/grants-ingest/pkg/grantsSchemas/grants.gov"
 )
@@ -13,6 +14,7 @@ type grantRecord interface {
 	logWith(log.Logger) log.Logger
 	// s3ObjectKey returns a string to use as the object key when saving the opportunity to an S3 bucket
 	s3ObjectKey() string
+	dynamoDBItemKey() map[string]ddbtypes.AttributeValue
 	lastModified() (time.Time, error)
 	toXML() ([]byte, error)
 }
@@ -31,6 +33,12 @@ func (o opportunity) s3ObjectKey() string {
 	return fmt.Sprintf("%s/%s/grants.gov/v2.OpportunitySynopsisDetail_1_0.xml",
 		o.OpportunityID[0:3], o.OpportunityID,
 	)
+}
+
+func (o opportunity) dynamoDBItemKey() map[string]ddbtypes.AttributeValue {
+	return map[string]ddbtypes.AttributeValue{
+		"grant_id": &ddbtypes.AttributeValueMemberS{Value: string(o.OpportunityID)},
+	}
 }
 
 func (o opportunity) lastModified() (time.Time, error) {
@@ -63,4 +71,10 @@ func (f forecast) lastModified() (time.Time, error) {
 
 func (f forecast) toXML() ([]byte, error) {
 	return xml.Marshal(grantsgov.OpportunityForecastDetail_1_0(f))
+}
+
+func (o forecast) dynamoDBItemKey() map[string]ddbtypes.AttributeValue {
+	return map[string]ddbtypes.AttributeValue{
+		"grant_id": &ddbtypes.AttributeValueMemberS{Value: string(o.OpportunityID)},
+	}
 }
