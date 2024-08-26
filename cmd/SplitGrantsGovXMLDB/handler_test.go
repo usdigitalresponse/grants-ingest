@@ -22,7 +22,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	ddbtypes "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
@@ -59,7 +58,7 @@ func (m mockDDBClientGetItemCollection) NewGetItemClient(t *testing.T) mockDynam
 		if exists {
 			for _, rv := range m {
 				if rv.GrantId == targetGrantId {
-					output.Item = map[string]types.AttributeValue{
+					output.Item = map[string]ddbtypes.AttributeValue{
 						"LastUpdatedDate": &ddbtypes.AttributeValueMemberS{Value: rv.ItemLastModified},
 					}
 					rvErr = rv.GetItemErr
