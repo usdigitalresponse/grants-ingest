@@ -27,6 +27,10 @@ data "aws_s3_bucket" "prepared_data" {
   bucket = var.grants_prepared_data_bucket_name
 }
 
+data "aws_dynamodb_table" "prepared_data" {
+  name = var.grants_prepared_data_table_name
+}
+
 module "lambda_execution_policy" {
   source  = "cloudposse/iam-policy/aws"
   version = "1.0.1"
@@ -41,16 +45,10 @@ module "lambda_execution_policy" {
         "${data.aws_s3_bucket.source_data.arn}/sources/*/*/*/grants.gov/extract.xml"
       ]
     }
-    AllowInspectS3PreparedData = {
-      effect = "Allow"
-      actions = [
-        "s3:GetObject",
-        "s3:ListBucket"
-      ]
-      resources = [
-        data.aws_s3_bucket.prepared_data.arn,
-        "${data.aws_s3_bucket.prepared_data.arn}/*/*/grants.gov/v2.xml"
-      ]
+    AllowReadDynamoDBPreparedData = {
+      effect    = "Allow"
+      actions   = ["dynamodb:GetItem"]
+      resources = [data.aws_dynamodb_table.prepared_data.arn]
     }
     AllowS3UploadPreparedData = {
       effect  = "Allow"
@@ -104,6 +102,7 @@ module "lambda_function" {
     DD_TAGS                          = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
     DOWNLOAD_CHUNK_LIMIT             = "20"
     GRANTS_PREPARED_DATA_BUCKET_NAME = data.aws_s3_bucket.prepared_data.id
+    GRANTS_PREPARED_DATA_TABLE_NAME  = data.aws_dynamodb_table.prepared_data.id
     LOG_LEVEL                        = var.log_level
     MAX_CONCURRENT_UPLOADS           = "10"
     IS_FORECASTED_GRANTS_ENABLED     = var.is_forecasted_grants_enabled

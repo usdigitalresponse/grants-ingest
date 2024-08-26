@@ -87,6 +87,11 @@ variable "grants_prepared_data_bucket_name" {
   type        = string
 }
 
+variable "grants_prepared_data_table_name" {
+  description = "Name of the DynamoDB table used to provide grants prepared data modification timestamps."
+  type        = string
+}
+
 variable "is_forecasted_grants_enabled" {
   description = "Flag to control whether forecasted grants should be processed and stored in S3."
   type        = bool

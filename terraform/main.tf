@@ -516,8 +516,9 @@ module "SplitGrantsGovXMLDB" {
   additional_lambda_execution_policy_documents = local.lambda_execution_policies
   lambda_layer_arns                            = local.lambda_layer_arns
 
-  grants_source_data_bucket_name   = module.grants_source_data_bucket.bucket_id
-  grants_prepared_data_bucket_name = module.grants_prepared_data_bucket.bucket_id
+  grants_source_data_bucket_name      = module.grants_source_data_bucket.bucket_id
+  grants_prepared_data_bucket_name    = module.grants_prepared_data_bucket.bucket_id
+  grants_prepared_dynamodb_table_name = module.grants_prepared_dynamodb_table.table_name
 }
 
 module "ReceiveFFISEmail" {
