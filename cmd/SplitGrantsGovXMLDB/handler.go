@@ -33,12 +33,7 @@ const (
 // a partial or complete invocation failure.
 // Returns nil when all grant records are successfully processed from all source records,
 // indicating complete success.
-func handleS3EventWithConfig(cfg aws.Config, ctx context.Context, s3Event events.S3Event) error {
-	// Configure service clients
-	s3svc := s3.NewFromConfig(cfg, func(o *s3.Options) {
-		o.UsePathStyle = env.UsePathStyleS3Opt
-	})
-
+func handleS3Event(ctx context.Context, s3svc *s3.Client, ddbsvc DynamoDBGetItemAPI, s3Event events.S3Event) error {
 	// Create a records channel to direct opportunity/forecast values parsed from the source
 	// record to individual S3 object uploads
 	records := make(chan grantRecord)
@@ -48,7 +43,7 @@ func handleS3EventWithConfig(cfg aws.Config, ctx context.Context, s3Event events
 	wg := multierror.Group{}
 	for i := 0; i < env.MaxConcurrentUploads; i++ {
 		wg.Go(func() error {
-			return processRecords(processingCtx, s3svc, records)
+			return processRecords(processingCtx, s3svc, ddbsvc, records)
 		})
 	}
 
@@ -181,7 +176,7 @@ func readRecords(ctx context.Context, r io.Reader, ch chan<- grantRecord) error 
 // It returns a multi-error containing any errors encountered while processing a received
 // grantRecord as well as the reason for the context cancelation, if any.
 // Returns nil if all records were processed successfully until the channel was closed.
-func processRecords(ctx context.Context, svc *s3.Client, ch <-chan grantRecord) (errs error) {
+func processRecords(ctx context.Context, s3svc *s3.Client, ddbsvc DynamoDBGetItemAPI, ch <-chan grantRecord) (errs error) {
 	span, ctx := tracer.StartSpanFromContext(ctx, "processing.worker")
 
 	whenCanceled := func() error {
@@ -209,7 +204,7 @@ func processRecords(ctx context.Context, svc *s3.Client, ch <-chan grantRecord) 
 				}
 
 				workSpan, ctx := tracer.StartSpanFromContext(ctx, "processing.worker.work")
-				err := processRecord(ctx, svc, record)
+				err := processRecord(ctx, s3svc, ddbsvc, record)
 				if err != nil {
 					sendMetric("record.failed", 1)
 					errs = multierror.Append(errs, err)
@@ -228,7 +223,7 @@ func processRecords(ctx context.Context, svc *s3.Client, ch <-chan grantRecord) 
 // any extant S3 object with a matching key in the bucket named by env.DestinationBucket
 // is compared with the record. An upload is initiated when the record was updated
 // more recently than the extant object was last modified, or when no extant object exists.
-func processRecord(ctx context.Context, svc S3ReadWriteObjectAPI, record grantRecord) error {
+func processRecord(ctx context.Context, s3svc S3ReadWriteObjectAPI, ddbsvc DynamoDBGetItemAPI, record grantRecord) error {
 	logger := record.logWith(logger)
 
 	lastModified, err := record.lastModified()
@@ -240,7 +235,8 @@ func processRecord(ctx context.Context, svc S3ReadWriteObjectAPI, record grantRe
 
 	key := record.s3ObjectKey()
 	logger = log.With(logger, "bucket", env.DestinationBucket, "key", key)
-	remoteLastModified, err := GetS3LastModified(ctx, svc, env.DestinationBucket, key)
+	// remoteLastModified, err := GetS3LastModified(ctx, svc, env.DestinationBucket, key)
+	remoteLastModified, err := GetDynamoDBLastModified(ctx, ddbsvc, env.DynamoDBTableName, record.dynamoDBItemKey())
 	if err != nil {
 		return log.Errorf(logger, "Error determining last modified time for remote record", err)
 	}
@@ -264,7 +260,7 @@ func processRecord(ctx context.Context, svc S3ReadWriteObjectAPI, record grantRe
 		return log.Errorf(logger, "Error marshaling XML for record", err)
 	}
 
-	if err := UploadS3Object(ctx, svc, env.DestinationBucket, key, bytes.NewReader(b)); err != nil {
+	if err := UploadS3Object(ctx, s3svc, env.DestinationBucket, key, bytes.NewReader(b)); err != nil {
 		return log.Errorf(logger, "Error uploading prepared grant record to S3", err)
 	}
 
