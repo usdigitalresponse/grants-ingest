@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -34,31 +35,39 @@ import (
 	grantsgov "github.com/usdigitalresponse/grants-ingest/pkg/grantsSchemas/grants.gov"
 )
 
-type mockDDBGetItemRVLookup map[string]mockDDBGetItemRV
-
-func (m mockDDBGetItemRVLookup) AddEntry(id, lastModified string, err error) {
-	m[id] = mockDDBGetItemRV{lastModified, err}
+type mockDDBClientGetItemReturnValue struct {
+	GrantId          string
+	ItemLastModified string
+	GetItemErr       error
 }
 
-type mockDDBGetItemRV struct {
-	lastModified string
-	err          error
-}
+// mockDDBClientGetItemCollection is a slice of values that are used to look up return values
+// when a mock GetItem call is made.
+type mockDDBClientGetItemCollection []mockDDBClientGetItemReturnValue
 
-func newMockDDBClient(t *testing.T, idToRV mockDDBGetItemRVLookup) mockDynamoDBGetItemClient {
+// NewGetItemClient returns an implementation of the DynamoDBGetItemAPI that looks up return values from itself at call-time
+func (m mockDDBClientGetItemCollection) NewGetItemClient(t *testing.T) mockDynamoDBGetItemClient {
 	t.Helper()
-	return mockDynamoDBGetItemClient(func(ctx context.Context, params *dynamodb.GetItemInput, f ...func(*dynamodb.Options)) (*dynamodb.GetItemOutput, error) {
-		key := map[string]string{}
-		err := attributevalue.UnmarshalMap(params.Key, &key)
+
+	return mockDynamoDBGetItemClient(func(ctx context.Context, params *dynamodb.GetItemInput, _ ...func(*dynamodb.Options)) (*dynamodb.GetItemOutput, error) {
+		getItemKey := map[string]string{}
+		err := attributevalue.UnmarshalMap(params.Key, &getItemKey)
 		require.NoError(t, err, "Failed to extract grant_id value from DynamoDB GetItem key")
 		output := dynamodb.GetItemOutput{Item: nil}
-		if rv, exists := idToRV[key["grant_id"]]; exists {
-			output.Item = map[string]types.AttributeValue{
-				"LastUpdatedDate": &ddbtypes.AttributeValueMemberS{Value: rv.lastModified},
+		targetGrantId, exists := getItemKey["grant_id"]
+		var rvErr error
+		if exists {
+			for _, rv := range m {
+				if rv.GrantId == targetGrantId {
+					output.Item = map[string]types.AttributeValue{
+						"LastUpdatedDate": &ddbtypes.AttributeValueMemberS{Value: rv.ItemLastModified},
+					}
+					rvErr = rv.GetItemErr
+					break
+				}
 			}
-			return &output, rv.err
 		}
-		return &output, nil
+		return &output, rvErr
 	})
 }
 
@@ -381,7 +390,7 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 		// (will also place extant records in S3 if specified in the test case)
 		var sourceGrantsData bytes.Buffer
 		sourceOpportunitiesData := make(map[string][]byte)
-		dynamodbLookups := make(mockDDBGetItemRVLookup)
+		ddbGetItemReturnValues := make(mockDDBClientGetItemCollection, 0)
 		_, err := sourceGrantsData.WriteString("<Grants>")
 		require.NoError(t, err)
 		for _, values := range tt.grantValues {
@@ -403,7 +412,9 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 				})
 				require.NoError(t, err)
 				extantLastModified := time.Now().Format("01022006")
-				dynamodbLookups.AddEntry(values.OpportunityID, extantLastModified, nil)
+				ddbGetItemReturnValues = append(ddbGetItemReturnValues, mockDDBClientGetItemReturnValue{
+					values.OpportunityID, extantLastModified, nil,
+				})
 			}
 			_, err = sourceGrantsData.Write(sourceOpportunityData.Bytes())
 			require.NoError(t, err)
@@ -426,7 +437,7 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 			// Invoke the handler under test with a constructed S3 event
 			invocationErr := handleS3Event(context.TODO(),
 				s3client,
-				newMockDDBClient(t, dynamodbLookups),
+				ddbGetItemReturnValues.NewGetItemClient(t),
 				events.S3Event{
 					Records: []events.S3EventRecord{{
 						S3: events.S3Entity{
@@ -509,7 +520,8 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 			Body:   bytes.NewReader(sourceData.Bytes()),
 		})
 		require.NoError(t, err)
-		err = handleS3Event(context.TODO(), s3client, newMockDDBClient(t, mockDDBGetItemRVLookup{}), events.S3Event{
+		// err = handleS3Event(context.TODO(), s3client, newMockDDBClient(t, mockDDBGetItemRVLookup{}), events.S3Event{
+		err = handleS3Event(context.TODO(), s3client, make(mockDDBClientGetItemCollection, 0).NewGetItemClient(t), events.S3Event{
 			Records: []events.S3EventRecord{
 				{S3: events.S3Entity{
 					Bucket: events.S3Bucket{Name: sourceBucketName},
@@ -543,7 +555,7 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
-		err = handleS3Event(ctx, s3client, newMockDDBClient(t, mockDDBGetItemRVLookup{}), events.S3Event{
+		err = handleS3Event(ctx, s3client, make(mockDDBClientGetItemCollection, 0).NewGetItemClient(t), events.S3Event{
 			Records: []events.S3EventRecord{
 				{S3: events.S3Entity{
 					Bucket: events.S3Bucket{Name: "source-bucket"},
@@ -589,6 +601,28 @@ func TestProcessRecord(t *testing.T) {
 		LastUpdatedDate: grantsgov.MMDDYYYYType(now.Format(grantsgov.TimeLayoutMMDDYYYYType)),
 	}
 
+	t.Run("Error getting item from DynamoDB", func(t *testing.T) {
+		setupLambdaEnvForTesting(t)
+		c := mockS3ReadwriteObjectAPI{
+			mockHeadObjectAPI(
+				func(ctx context.Context, params *s3.HeadObjectInput, optFns ...func(*s3.Options)) (*s3.HeadObjectOutput, error) {
+					t.Helper()
+					return &s3.HeadObjectOutput{}, fmt.Errorf("server error")
+				},
+			),
+			mockGetObjectAPI(nil),
+			mockPutObjectAPI(nil),
+		}
+		ddbLookups := make(mockDDBClientGetItemCollection, 0)
+		ddbLookups = append(ddbLookups, mockDDBClientGetItemReturnValue{
+			GrantId:          string(testOpportunity.OpportunityID),
+			ItemLastModified: string(testOpportunity.LastUpdatedDate),
+			GetItemErr:       errors.New("Some issue with DynamoDB"),
+		})
+		err := processRecord(context.TODO(), c, ddbLookups.NewGetItemClient(t), testOpportunity)
+		assert.ErrorContains(t, err, "Error determining last modified time for remote record")
+	})
+
 	t.Run("Error uploading to S3", func(t *testing.T) {
 		setupLambdaEnvForTesting(t)
 		s3Client := mockS3ReadwriteObjectAPI{
@@ -613,9 +647,10 @@ func TestProcessRecord(t *testing.T) {
 			}),
 		}
 		fmt.Printf("%T", s3Client)
-		err := processRecord(context.TODO(), s3Client, newMockDDBClient(t, map[string]mockDDBGetItemRV{
-			string(testOpportunity.OpportunityID): {lastModified: string(testOpportunity.LastUpdatedDate), err: nil},
-		}), testOpportunity)
+		ddb := mockDDBClientGetItemCollection([]mockDDBClientGetItemReturnValue{
+			{GrantId: string(testOpportunity.OpportunityID), ItemLastModified: string(testOpportunity.LastUpdatedDate)},
+		})
+		err := processRecord(context.TODO(), s3Client, ddb.NewGetItemClient(t), testOpportunity)
 		assert.ErrorContains(t, err, "Error uploading prepared grant record to S3")
 	})
 }
