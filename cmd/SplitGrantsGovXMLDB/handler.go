@@ -218,11 +218,12 @@ func processRecords(ctx context.Context, s3svc *s3.Client, ddbsvc DynamoDBGetIte
 	}
 }
 
-// processRecord takes a single record and conditionally uploads an XML
-// representation of the grant forecast/opportunity to its configured S3 destination. Before uploading,
-// any extant S3 object with a matching key in the bucket named by env.DestinationBucket
-// is compared with the record. An upload is initiated when the record was updated
-// more recently than the extant object was last modified, or when no extant object exists.
+// processRecord takes a single record and conditionally uploads an XML representation
+// of the grant forecast/opportunity to its configured S3 destination.
+// Before uploading, the last-modified date of a matching extant DynamoDB item (if any)
+// is compared with the last-modified date the record on-hand.
+// An upload is initiated when the record on-hand has a last-modified date that is more recent
+// than that of the extant item, or when no extant item exists.
 func processRecord(ctx context.Context, s3svc S3ReadWriteObjectAPI, ddbsvc DynamoDBGetItemAPI, record grantRecord) error {
 	logger := record.logWith(logger)
 
@@ -234,8 +235,7 @@ func processRecord(ctx context.Context, s3svc S3ReadWriteObjectAPI, ddbsvc Dynam
 	log.Debug(logger, "Parsed last modified time from record last update date")
 
 	key := record.s3ObjectKey()
-	logger = log.With(logger, "bucket", env.DestinationBucket, "key", key)
-	// remoteLastModified, err := GetS3LastModified(ctx, svc, env.DestinationBucket, key)
+	logger = log.With(logger, "table", env.DynamoDBTableName, "bucket", env.DestinationBucket, "key", key)
 	remoteLastModified, err := GetDynamoDBLastModified(ctx, ddbsvc, env.DynamoDBTableName, record.dynamoDBItemKey())
 	if err != nil {
 		return log.Errorf(logger, "Error determining last modified time for remote record", err)
