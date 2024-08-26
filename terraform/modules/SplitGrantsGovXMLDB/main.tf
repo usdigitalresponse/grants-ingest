@@ -28,7 +28,7 @@ data "aws_s3_bucket" "prepared_data" {
 }
 
 data "aws_dynamodb_table" "prepared_data" {
-  name = var.grants_prepared_data_table_name
+  name = var.grants_prepared_dynamodb_table_name
 }
 
 module "lambda_execution_policy" {

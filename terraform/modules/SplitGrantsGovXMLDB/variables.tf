@@ -87,7 +87,7 @@ variable "grants_prepared_data_bucket_name" {
   type        = string
 }
 
-variable "grants_prepared_data_table_name" {
+variable "grants_prepared_dynamodb_table_name" {
   description = "Name of the DynamoDB table used to provide grants prepared data modification timestamps."
   type        = string
 }
