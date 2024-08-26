@@ -48,11 +48,11 @@ type mockDDBGetItemRV struct {
 func newMockDDBClient(t *testing.T, idToRV mockDDBGetItemRVLookup) mockDynamoDBGetItemClient {
 	t.Helper()
 	return mockDynamoDBGetItemClient(func(ctx context.Context, params *dynamodb.GetItemInput, f ...func(*dynamodb.Options)) (*dynamodb.GetItemOutput, error) {
-		key := struct{ grant_id string }{}
+		key := map[string]string{}
 		err := attributevalue.UnmarshalMap(params.Key, &key)
 		require.NoError(t, err, "Failed to extract grant_id value from DynamoDB GetItem key")
 		output := dynamodb.GetItemOutput{Item: nil}
-		if rv, exists := idToRV[key.grant_id]; exists {
+		if rv, exists := idToRV[key["grant_id"]]; exists {
 			output.Item = map[string]types.AttributeValue{
 				"LastUpdatedDate": &ddbtypes.AttributeValueMemberS{Value: rv.lastModified},
 			}
@@ -402,7 +402,8 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 					Body:   bytes.NewReader(sourceOpportunityData.Bytes()),
 				})
 				require.NoError(t, err)
-				dynamodbLookups[values.OpportunityID] = mockDDBGetItemRV{lastModified: values.LastUpdatedDate}
+				extantLastModified := time.Now().Format("01022006")
+				dynamodbLookups.AddEntry(values.OpportunityID, extantLastModified, nil)
 			}
 			_, err = sourceGrantsData.Write(sourceOpportunityData.Bytes())
 			require.NoError(t, err)
@@ -423,14 +424,18 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 			require.NoErrorf(t, err, "Error creating test source object %s", objectKey)
 
 			// Invoke the handler under test with a constructed S3 event
-			invocationErr := handleS3Event(context.TODO(), s3client, newMockDDBClient(t, dynamodbLookups), events.S3Event{
-				Records: []events.S3EventRecord{{
-					S3: events.S3Entity{
-						Bucket: events.S3Bucket{Name: sourceBucketName},
-						Object: events.S3Object{Key: objectKey},
-					},
-				}},
-			})
+			invocationErr := handleS3Event(context.TODO(),
+				s3client,
+				newMockDDBClient(t, dynamodbLookups),
+				events.S3Event{
+					Records: []events.S3EventRecord{{
+						S3: events.S3Entity{
+							Bucket: events.S3Bucket{Name: sourceBucketName},
+							Object: events.S3Object{Key: objectKey},
+						},
+					}},
+				},
+			)
 
 			// Determine the list of expected grant objects to have been saved by the handler
 			sourceContainsInvalidOpportunities := false
