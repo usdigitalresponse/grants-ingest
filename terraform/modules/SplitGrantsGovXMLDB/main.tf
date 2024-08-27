@@ -108,6 +108,7 @@ module "lambda_function" {
     GRANTS_PREPARED_DATA_TABLE_NAME  = var.grants_prepared_dynamodb_table_name
     LOG_LEVEL                        = var.log_level
     MAX_CONCURRENT_UPLOADS           = "10"
+    MAX_SPLIT_RECORDS                = tostring(var.max_split_records)
     IS_FORECASTED_GRANTS_ENABLED     = var.is_forecasted_grants_enabled
   })
 

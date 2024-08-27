@@ -520,6 +520,7 @@ module "SplitGrantsGovXMLDB" {
   grants_prepared_data_bucket_name    = module.grants_prepared_data_bucket.bucket_id
   grants_prepared_dynamodb_table_name = module.grants_prepared_dynamodb_table.table_name
   grants_prepared_dynamodb_table_arn  = module.grants_prepared_dynamodb_table.table_arn
+  max_split_records                   = var.max_split_grantsgov_records
 }
 
 module "ReceiveFFISEmail" {

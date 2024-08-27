@@ -124,6 +124,9 @@ func handleS3Event(ctx context.Context, s3svc *s3.Client, ddbsvc DynamoDBGetItem
 func readRecords(ctx context.Context, r io.Reader, ch chan<- grantRecord) error {
 	span, ctx := tracer.StartSpanFromContext(ctx, "read.xml")
 
+	// Count records sent to ch
+	countSentRecords := 0
+
 	d := xml.NewDecoder(r)
 	for {
 		// Check for context cancelation before/between reads
@@ -131,6 +134,11 @@ func readRecords(ctx context.Context, r io.Reader, ch chan<- grantRecord) error 
 			log.Warn(logger, "Context canceled before reading was complete", "reason", err)
 			span.Finish(tracer.WithError(err))
 			return err
+		}
+
+		// End early if we have reached any configured limit on the number of records sent to ch
+		if env.MaxSplitRecords > -1 && countSentRecords >= env.MaxSplitRecords {
+			break
 		}
 
 		token, err := d.Token()
@@ -150,11 +158,13 @@ func readRecords(ctx context.Context, r io.Reader, ch chan<- grantRecord) error 
 			if se.Name.Local == GRANT_OPPORTUNITY_XML_NAME {
 				var o opportunity
 				if err = d.DecodeElement(&o, &se); err == nil {
+					countSentRecords++
 					ch <- &o
 				}
 			} else if se.Name.Local == GRANT_FORECAST_XML_NAME && env.IsForecastedGrantsEnabled {
 				var f forecast
 				if err = d.DecodeElement(&f, &se); err == nil {
+					countSentRecords++
 					ch <- &f
 				}
 			}

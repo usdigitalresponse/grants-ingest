@@ -225,3 +225,9 @@ variable "ses_active_receipt_rule_set_enabled" {
   type        = bool
   default     = true
 }
+
+variable "max_split_grantsgov_records" {
+  description = "Optional limit (i.e. for testing) on the number of records that SplitGrantsGovXMLDB handler will process during a single invocation."
+  type        = number
+  default     = -1
+}

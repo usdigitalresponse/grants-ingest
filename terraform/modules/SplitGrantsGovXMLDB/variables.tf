@@ -102,3 +102,9 @@ variable "is_forecasted_grants_enabled" {
   type        = bool
   default     = false
 }
+
+variable "max_split_records" {
+  description = "Optional limit (i.e. for testing) on the number of records that the handler will process during a single invocation."
+  type        = number
+  default     = -1
+}
