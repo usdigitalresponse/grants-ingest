@@ -42,8 +42,11 @@ module "lambda_execution_policy" {
       ]
     }
     AllowReadDynamoDBPreparedData = {
-      effect    = "Allow"
-      actions   = ["dynamodb:GetItem"]
+      effect = "Allow"
+      actions = [
+        "dynamodb:GetItem",
+        "dynamodb:ListTables",
+      ]
       resources = [var.grants_prepared_dynamodb_table_arn]
     }
     AllowS3UploadPreparedData = {
