@@ -93,6 +93,10 @@ To begin, make sure the following tools are available in your development worksp
 However, you can choose whatever LocalStack installation option best suits your environment.
 
 
+> [!TIP]
+> Check that you have the necessary dependencies for LocalStack development by running `task local:check-dependencies`
+
+
 #### Environment Variables
 
 We recommend setting the following environment variables in your development workspace when working
@@ -110,6 +114,20 @@ with LocalStack:
 
 
 #### Provisioning Infrastructure
+
+#### Quickstart
+
+Certain steps described in the "Manual Provisioning" section below may be achieved using the following
+shortcut commands provided by this repository's Taskfile:
+- **Prerequisite:** Ensure LocalStack is started by running `docker compose up -d`
+- **Deploy to LocalStack for the first time:** `task local:from-scratch`
+- **Subsequent deployments to LocalStack:** `task local:deploy`
+- **Invoke the `DownloadGrantsGovDB` Lambda function:** `task local:invoke-DownloadGrantsGovDB`
+
+See `.taskfile/local.yml` for more information and other shortcuts.
+
+
+#### Manual Provisioning
 
 After starting LocalStack, create a terraform state deployment bucket in the localstack environment.  This guide, as well as the provided Terraform backend file for local development, assumes that
 this bucket is named `local-terraform` and has a region of `us-west-2`.
@@ -220,6 +238,7 @@ The following items can be referred to as a quick "cheat-sheet" for development:
 - Compile binary Lambda function handlers: `task build`
 - Compile the CLI tool: `task build-cli`
 - Run all QA checks normally executed during CI: `task check`
+- Initialize and deploy a test environment after starting LocalStack: `task local:from-scratch`
 
 
 ## Contributing
