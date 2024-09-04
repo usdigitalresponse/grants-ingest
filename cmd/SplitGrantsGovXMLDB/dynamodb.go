@@ -11,13 +11,17 @@ import (
 	grantsgov "github.com/usdigitalresponse/grants-ingest/pkg/grantsSchemas/grants.gov"
 )
 
-type DynamoDBItemKey map[string]ddbtypes.AttributeValue
-
+// DynamoDBGetItemAPI is the interface for retrieving a single item from a DynamoDB table via primary key lookup
 type DynamoDBGetItemAPI interface {
 	GetItem(context.Context, *dynamodb.GetItemInput, ...func(*dynamodb.Options)) (*dynamodb.GetItemOutput, error)
 }
 
-func GetDynamoDBLastModified(ctx context.Context, c DynamoDBGetItemAPI, table string, key DynamoDBItemKey) (*time.Time, error) {
+// GetDynamoDBLastModified gets the "Last Modified" timestamp for a grantRecord stored in a DynamoDB table.
+// If the item exists, a pointer to the last modification time is returned along with a nil error.
+// If the specified item does not exist, the returned *time.Time and error are both nil.
+// If an error is encountered when calling the HeadObject S3 API method, this will return a nil
+// *time.Time value along with the encountered error.
+func GetDynamoDBLastModified(ctx context.Context, c DynamoDBGetItemAPI, table string, key map[string]ddbtypes.AttributeValue) (*time.Time, error) {
 	resp, err := c.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName:            &table,
 		Key:                  key,
