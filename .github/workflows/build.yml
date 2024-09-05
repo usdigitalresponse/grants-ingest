@@ -85,6 +85,7 @@ jobs:
           name: ${{ env.SOURCES_KEY }}
           path: ${{ env.SOURCES_PATH }}
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: ${{ inputs.artifacts-retention-days }}
 
   build-lambdas:
@@ -203,6 +204,7 @@ jobs:
           name: ${{ env.ARTIFACTS_KEY }}
           path: ${{ env.ARTIFACTS_PATH }}
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: ${{ inputs.artifacts-retention-days }}
 
   build-cli:
@@ -321,4 +323,5 @@ jobs:
           name: ${{ env.ARTIFACTS_KEY }}
           path: ${{ env.ARTIFACTS_PATH }}
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: ${{ inputs.artifacts-retention-days }}
