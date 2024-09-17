@@ -207,3 +207,4 @@ jobs:
             !${{ github.workspace }}/terraform/.terraform
           if-no-files-found: error
           retention-days: ${{ inputs.artifacts-retention-days }}
+          include-hidden-files: true
