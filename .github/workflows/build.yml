@@ -64,7 +64,7 @@ jobs:
             proxy.golang.org:443
             sum.golang.org:443
             storage.googleapis.com:443
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           show-progress: 'false'
           persist-credentials: 'false'
@@ -80,11 +80,12 @@ jobs:
         run: task prebuild-lambda
       - name: Store build sources
         id: store
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
         with:
           name: ${{ env.SOURCES_KEY }}
           path: ${{ env.SOURCES_PATH }}
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: ${{ inputs.artifacts-retention-days }}
 
   build-lambdas:
@@ -115,7 +116,7 @@ jobs:
             raw.githubusercontent.com:443
             storage.googleapis.com:443
       - name: Restore Go build sources
-        uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: ${{ needs.prepare.outputs.sources-key }}
           path: .
@@ -198,11 +199,12 @@ jobs:
           UPX_RESULT: ${{ steps.pack.outputs.result }}
       - name: Store build artifacts
         id: store
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
         with:
           name: ${{ env.ARTIFACTS_KEY }}
           path: ${{ env.ARTIFACTS_PATH }}
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: ${{ inputs.artifacts-retention-days }}
 
   build-cli:
@@ -233,7 +235,7 @@ jobs:
             raw.githubusercontent.com:443
             storage.googleapis.com:443
       - name: Restore Go build sources
-        uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: ${{ needs.prepare.outputs.sources-key }}
           path: .
@@ -316,9 +318,10 @@ jobs:
           UPX_RESULT: ${{ steps.pack.outputs.result }}
       - name: Store build artifacts
         id: store
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
         with:
           name: ${{ env.ARTIFACTS_KEY }}
           path: ${{ env.ARTIFACTS_PATH }}
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: ${{ inputs.artifacts-retention-days }}
