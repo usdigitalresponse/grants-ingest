@@ -111,7 +111,7 @@ jobs:
             objects.githubusercontent.com:443
             registry.terraform.io:443
             releases.hashicorp.com:443
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           ref: ${{ inputs.ref }}
           show-progress: 'false'
@@ -124,14 +124,14 @@ jobs:
         env:
           GPG_PASSPHRASE: ${{ secrets.gpg-passphrase }}
       - name: Download Lambda handler artifacts
-        uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: ${{ inputs.bin-artifacts-key }}
           path: ${{ inputs.bin-artifacts-path }}
       - name: Get project TF version
         id: get_tf_version
         run: echo "TF_VERSION=$(cat .terraform-version | tr -d '[:space:]')" | tee -a $GITHUB_OUTPUT
-      - uses: hashicorp/setup-terraform@651471c36a6092792c552e8b1bef71e592b462d8 # v3.1.1
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
           terraform_version: ${{ steps.get_tf_version.outputs.TF_VERSION }}
       - name: Terraform fmt
