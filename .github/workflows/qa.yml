@@ -15,7 +15,7 @@ jobs:
     name: Prepare for Go QA
     runs-on: ubuntu-latest
     steps:
-      - uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+      - uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
         with:
           disable-sudo: true
           egress-policy: block
@@ -40,7 +40,7 @@ jobs:
             ./bin
             ./cover.out
             ./cover.html
-      - uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+      - uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           go-version-file: go.mod
@@ -59,7 +59,7 @@ jobs:
     needs:
       - prepare-go-qa
     steps:
-      - uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+      - uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
         with:
           disable-sudo: true
           egress-policy: block
@@ -84,7 +84,7 @@ jobs:
             ./bin
             ./cover.out
             ./cover.html
-      - uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+      - uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           go-version-file: go.mod
@@ -101,7 +101,7 @@ jobs:
     needs:
       - prepare-go-qa
     steps:
-      - uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+      - uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
         with:
           disable-sudo: true
           egress-policy: block
@@ -114,7 +114,7 @@ jobs:
           ref: ${{ inputs.ref }}
           show-progress: 'false'
           persist-credentials: 'false'
-      - uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+      - uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           go-version-file: go.mod
@@ -127,7 +127,7 @@ jobs:
     needs:
       - prepare-go-qa
     steps:
-      - uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+      - uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
         with:
           disable-sudo: true
           egress-policy: block
@@ -141,7 +141,7 @@ jobs:
           ref: ${{ inputs.ref }}
           show-progress: 'false'
           persist-credentials: 'false'
-      - uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+      - uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           go-version-file: go.mod
@@ -149,6 +149,7 @@ jobs:
         uses: dominikh/staticcheck-action@fe1dd0c3658873b46f8c9bb3291096a617310ca6 # v1.3.1
         with:
           install-go: false
+          version: 2023.1.6
 
   go-build:
     name: Ensure Go Builds
@@ -156,7 +157,7 @@ jobs:
     needs:
       - prepare-go-qa
     steps:
-      - uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+      - uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
         with:
           disable-sudo: true
           egress-policy: block
@@ -181,7 +182,7 @@ jobs:
             ./bin
             ./cover.out
             ./cover.html
-      - uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+      - uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           go-version-file: go.mod
@@ -196,7 +197,7 @@ jobs:
     name: Lint terraform
     runs-on: ubuntu-latest
     steps:
-      - uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+      - uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
         with:
           disable-sudo: true
           egress-policy: block

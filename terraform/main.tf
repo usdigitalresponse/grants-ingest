@@ -445,6 +445,12 @@ resource "aws_s3_bucket_notification" "grant_prepared_data" {
   }
 
   lambda_function {
+    lambda_function_arn = module.PersistGrantsGovXMLDB.lambda_function_arn
+    events              = ["s3:ObjectCreated:*"]
+    filter_suffix       = "/grants.gov/v2.OpportunitySynopsisDetail_1_0.xml"
+  }
+
+  lambda_function {
     lambda_function_arn = module.PersistFFISData.lambda_function_arn
     events              = ["s3:ObjectCreated:*"]
     filter_suffix       = "/ffis.org/v1.json"

@@ -52,7 +52,7 @@ jobs:
       sources-key: ${{ env.SOURCES_KEY }}
       sources-path: ${{ env.SOURCES_PATH }}
     steps:
-      - uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+      - uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
         with:
           disable-sudo: true
           egress-policy: block
@@ -68,7 +68,7 @@ jobs:
         with:
           show-progress: 'false'
           persist-credentials: 'false'
-      - uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+      - uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           go-version-file: go.mod
@@ -80,11 +80,12 @@ jobs:
         run: task prebuild-lambda
       - name: Store build sources
         id: store
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
         with:
           name: ${{ env.SOURCES_KEY }}
           path: ${{ env.SOURCES_PATH }}
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: ${{ inputs.artifacts-retention-days }}
 
   build-lambdas:
@@ -101,7 +102,7 @@ jobs:
       artifacts-path: ${{ env.ARTIFACTS_PATH }}
       checksums-sha256: ${{ steps.final-checksums.outputs.sha256 }}
     steps:
-      - uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+      - uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
         with:
           disable-sudo: true
           egress-policy: block
@@ -119,7 +120,7 @@ jobs:
         with:
           name: ${{ needs.prepare.outputs.sources-key }}
           path: .
-      - uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+      - uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           go-version-file: go.mod
@@ -198,11 +199,12 @@ jobs:
           UPX_RESULT: ${{ steps.pack.outputs.result }}
       - name: Store build artifacts
         id: store
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
         with:
           name: ${{ env.ARTIFACTS_KEY }}
           path: ${{ env.ARTIFACTS_PATH }}
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: ${{ inputs.artifacts-retention-days }}
 
   build-cli:
@@ -219,7 +221,7 @@ jobs:
       artifacts-path: ${{ env.ARTIFACTS_PATH }}
       checksums-sha256: ${{ steps.final-checksums.outputs.sha256 }}
     steps:
-      - uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+      - uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
         with:
           disable-sudo: true
           egress-policy: block
@@ -237,7 +239,7 @@ jobs:
         with:
           name: ${{ needs.prepare.outputs.sources-key }}
           path: .
-      - uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+      - uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           go-version-file: go.mod
@@ -316,9 +318,10 @@ jobs:
           UPX_RESULT: ${{ steps.pack.outputs.result }}
       - name: Store build artifacts
         id: store
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
         with:
           name: ${{ env.ARTIFACTS_KEY }}
           path: ${{ env.ARTIFACTS_PATH }}
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: ${{ inputs.artifacts-retention-days }}
