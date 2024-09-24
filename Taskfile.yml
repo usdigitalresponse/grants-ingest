@@ -1,9 +1,13 @@
+---
 # yaml-language-server: $schema=https://taskfile.dev/schema.json
 # https://taskfile.dev
 
 version: '3'
 
 output: prefixed
+
+includes:
+  local: .taskfiles/local.yml
 
 tasks:
   default:

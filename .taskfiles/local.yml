@@ -1,0 +1,154 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+# https://taskfile.dev
+
+version: '3'
+
+env:
+  AWS_REGION: us-west-2
+  AWS_DEFAULT_REGION: us-west-2
+  AWS_SDK_LOAD_CONFIG: "true"
+  AWS_ACCESS_KEY_ID: test
+  AWS_SECRETE_ACCESS_KEY: test
+  TERRAFORM_STATE_BUCKET_NAME: local-terraform
+
+tasks:
+  check-dependencies:
+    desc: Checks dependencies for LocalStack development
+    silent: true
+    cmds:
+      - cmd: |
+          if ! command -v {{ .ITEM }} &> /dev/null; then
+            echo "❌ missing dependency: {{ .ITEM }}"
+            exit 1
+          else
+            echo "✅ {{ .ITEM }}"
+          fi
+        vars:
+          COMMAND: '{{ .ITEM }}'
+        for:
+          - terraform
+          - tflocal
+          - aws
+          - awslocal
+          - docker
+      - task: check-tf-version
+        vars:
+          PREFIX: '{{ .TASK }}'
+      - task: check-aws-version
+        vars:
+          PREFIX: '{{ .TASK }}'
+
+  check-command-exists:
+    prefix: '{{ .PREFIX }}'
+    internal: true
+    silent: true
+    cmd: |
+      if ! command -v {{ .COMMAND }} &> /dev/null; then
+        echo "❌ missing dependency: {{ .COMMAND }}"
+        exit 1
+      else
+        echo "✅ {{ .COMMAND }}"
+      fi
+
+  check-tf-version:
+    silent: true
+    internal: true
+    dir: terraform
+    prefix: '{{ .PREFIX }}'
+    vars:
+      VERSION_FILE_CONTENTS:
+        sh: cat .terraform-version
+      TARGET_VERSION: '{{ catLines .VERSION_FILE_CONTENTS | trim }}'
+      FOUND_VERSION_RAW:
+        sh: terraform version | head -n1
+      FOUND_VERSION: '{{ .FOUND_VERSION_RAW | replace "Terraform v" ""  }}'
+    cmd: |
+      if [ "{{ .TARGET_VERSION }}" != "{{ .FOUND_VERSION }}" ]; then
+        echo "❌ Incorrect terraform version (want v{{ .TARGET_VERSION }})"
+        exit 1
+      else
+        echo "✅ Terraform v{{ .FOUND_VERSION }} is installed"
+      fi
+
+  check-aws-version:
+    silent: true
+    internal: true
+    prefix: '{{ .PREFIX }}'
+    vars:
+      FOUND_VERSION_RAW:
+        sh: aws --version
+      FOUND_VERSION: '{{ mustRegexFind "[0-9]" .FOUND_VERSION_RAW }}'
+      TARGET_VERSION: '2'
+    cmd: |
+      if [ "{{ .TARGET_VERSION }}" != "{{ .FOUND_VERSION }}" ]; then
+        echo "❌ Incorrect AWS CLI version (want v{{ .TARGET_VERSION }}.x.x)"
+        exit 1
+      else
+        echo "✅ AWS CLI v{{ .FOUND_VERSION }} is installed"
+      fi
+
+  ensure-tfstate-bucket-exists:
+    desc: Creates an S3 state bucket for Terraform if one does not already exist
+    status:
+      - awslocal s3api head-bucket --bucket "$TERRAFORM_STATE_BUCKET_NAME"
+    cmds:
+      - awslocal s3 mb "s3://$TERRAFORM_STATE_BUCKET_NAME"
+
+  tf-init:
+    desc: Initializes the Terraform project in the running LocalStack instance
+    run: always
+    dir: terraform
+    cmds:
+      - task: ensure-tfstate-bucket-exists
+      - cmd: tflocal init -backend-config="local.s3.tfbackend" -reconfigure
+
+  tf-apply:
+    desc: Applies the Terraform project to the running LocalStack instance
+    run: always
+    dir: terraform
+    cmds:
+      - tflocal apply -var-file="local.tfvars" -auto-approve
+
+  from-scratch:
+    desc: Initializes and deploys the service to the running LocalStack instance
+    cmds:
+      - task: tf-init
+      - task: :prebuild-lambda
+      - task: deploy
+
+  deploy:
+    desc: Builds Lambda handlers and applies the Terraform project to the running LocalStack instance
+    run: always
+    cmds:
+      - task: :build
+      - task: tf-apply
+
+  invoke-DownloadGrantsGovDB:
+    desc: Invokes DownloadGrantsGovDB Lambda on LocalStack
+    summary: |
+      Triggers the DownloadGrantsGovDB Lambda pipeline step.
+
+      By default, the invocation payload will specify a timestamp that will cause the Lambda function
+      to target a download for yesterday's date, which may be overriden by setting an INVOCATION_DATE
+      environment variable (in YYYY-MM-DD format) when running this task.
+
+      Set an INVOCATION_EVENT environment variable to provide an arbitrary (JSON) invocation event.
+
+      This task assumes AWS CLI v2 is installed, which invokes Lambda functions with a payload
+      that is the base64-encoded result of the invocation event. To provide your own payload
+      (which overrides all invocation defaults), set a PAYLOAD environment variable.
+
+      The invocation response is printed to stdout by default. Set an OUTFILE environment variable
+      to log to a different file.
+    cmds:
+      - '# Invocation event: {{ .INVOCATION_EVENT }}'
+      - cmd: awslocal lambda invoke --function-name '{{ .FUNCTION_NAME }}' --payload '{{ .PAYLOAD }}' '{{ .OUTFILE }}'
+    vars:
+      FUNCTION_NAME: grants-ingest-DownloadGrantsGovDB
+      YESTERDAY_DATE: '{{ now | mustDateModify "-24h" | date "2006-01-02" }}'
+      INVOCATION_DATE: '{{ default .YESTERDAY_DATE ( env "INVOCATION_DATE" ) }}'
+      INVOCATION_TIME: '{{ default "05:00:00" ( env "INVOCATION_TIME" ) }}'
+      INVOCATION_TIMESTAMP: '{{ .INVOCATION_DATE }}T{{ .INVOCATION_TIME }}-04:00'
+      INVOCATION_EVENT: '{"timestamp": {{ quote .INVOCATION_TIMESTAMP }}}'
+      PAYLOAD: '{{ default ( b64enc .INVOCATION_EVENT ) ( env "PAYLOAD" ) }}'
+      OUTFILE: '{{ default "/dev/null" ( env "OUTFILE" ) }}'
