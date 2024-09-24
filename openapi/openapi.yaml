@@ -30,43 +30,43 @@ components:
         name:
           type: string
           enum:
-            - 'State governments'
-            - 'County governments'
-            - 'City or township governments'
-            - 'Special district governments'
-            - 'Independent school districts'
-            - 'Public and State controlled institutions of higher education'
-            - 'Native American tribal governments (Federally recognized)'
-            - 'Public housing authorities/Indian housing authorities'
-            - 'Native American tribal organizations (other than Federally recognized tribal governments)'
-            - 'Nonprofits having a 501(c)(3) status with the IRS, other than institutions of higher education'
-            - 'Nonprofits that do not have a 501(c)(3) status with the IRS, other than institutions of higher education'
-            - 'Private institutions of higher education'
-            - 'Individuals'
-            - 'For profit organizations other than small businesses'
-            - 'Small businesses'
+            - "State governments"
+            - "County governments"
+            - "City or township governments"
+            - "Special district governments"
+            - "Independent school districts"
+            - "Public and State controlled institutions of higher education"
+            - "Native American tribal governments (Federally recognized)"
+            - "Public housing authorities/Indian housing authorities"
+            - "Native American tribal organizations (other than Federally recognized tribal governments)"
+            - "Nonprofits having a 501(c)(3) status with the IRS, other than institutions of higher education"
+            - "Nonprofits that do not have a 501(c)(3) status with the IRS, other than institutions of higher education"
+            - "Private institutions of higher education"
+            - "Individuals"
+            - "For profit organizations other than small businesses"
+            - "Small businesses"
             - 'Others (see text field entitled "Additional Information on Eligibility" for clarification)'
             - 'Unrestricted (i.e., open to any type of entity above), subject to any clarification in text field entitled "Additional Information on Eligibility'
         code:
           type: string
           enum:
-            - '00'
-            - '01'
-            - '02'
-            - '04'
-            - '05'
-            - '06'
-            - '07'
-            - '08'
-            - '11'
-            - '12'
-            - '13'
-            - '20'
-            - '21'
-            - '22'
-            - '23'
-            - '25'
-            - '99'
+            - "00"
+            - "01"
+            - "02"
+            - "04"
+            - "05"
+            - "06"
+            - "07"
+            - "08"
+            - "11"
+            - "12"
+            - "13"
+            - "20"
+            - "21"
+            - "22"
+            - "23"
+            - "25"
+            - "99"
     Award:
       type: object
       properties:
@@ -103,68 +103,68 @@ components:
         name:
           type: string
           enum:
-            - 'Recovery Act'
-            - 'Agriculture'
-            - 'Arts'
-            - 'Business and Commerce'
-            - 'Community Development'
-            - 'Consumer Protection'
-            - 'Disaster Prevention and Relief'
-            - 'Education'
-            - 'Employment, Labor and Training'
-            - 'Energy'
-            - 'Environment'
-            - 'Food and Nutrition'
-            - 'Health'
-            - 'Housing'
-            - 'Humanities'
-            - 'Infrastructure Investment and Jobs Act'
-            - 'Information and Statistics'
-            - 'Income Security and Social Services'
-            - 'Law, Justice and Legal Services'
-            - 'Natural Resources'
-            - 'Other'
-            - 'Opportunity Zone Benefits'
-            - 'Regional Development'
-            - 'Science and Technology and Other Research and Development'
-            - 'Transportation'
-            - 'Affordable Care Act'
+            - "Recovery Act"
+            - "Agriculture"
+            - "Arts"
+            - "Business and Commerce"
+            - "Community Development"
+            - "Consumer Protection"
+            - "Disaster Prevention and Relief"
+            - "Education"
+            - "Employment, Labor and Training"
+            - "Energy"
+            - "Environment"
+            - "Food and Nutrition"
+            - "Health"
+            - "Housing"
+            - "Humanities"
+            - "Infrastructure Investment and Jobs Act"
+            - "Information and Statistics"
+            - "Income Security and Social Services"
+            - "Law, Justice and Legal Services"
+            - "Natural Resources"
+            - "Other"
+            - "Opportunity Zone Benefits"
+            - "Regional Development"
+            - "Science and Technology and Other Research and Development"
+            - "Transportation"
+            - "Affordable Care Act"
         code:
           type: string
           enum:
-            - 'RA'
-            - 'AG'
-            - 'AR'
-            - 'BC'
-            - 'CD'
-            - 'CP'
-            - 'DPR'
-            - 'ED'
-            - 'ELT'
-            - 'EN'
-            - 'ENV'
-            - 'FN'
-            - 'HL'
-            - 'HO'
-            - 'HU'
-            - 'IIJ'
-            - 'IS'
-            - 'ISS'
-            - 'LJL'
-            - 'NR'
-            - 'O'
-            - 'OZ'
-            - 'RD'
-            - 'ST'
-            - 'T'
-            - 'ACA'
+            - "RA"
+            - "AG"
+            - "AR"
+            - "BC"
+            - "CD"
+            - "CP"
+            - "DPR"
+            - "ED"
+            - "ELT"
+            - "EN"
+            - "ENV"
+            - "FN"
+            - "HL"
+            - "HO"
+            - "HU"
+            - "IIJ"
+            - "IS"
+            - "ISS"
+            - "LJL"
+            - "NR"
+            - "O"
+            - "OZ"
+            - "RD"
+            - "ST"
+            - "T"
+            - "ACA"
     FundingActivity:
       type: object
       properties:
         categories:
           type: array
           items:
-            $ref: '#/components/schemas/FundingActivityCategory'
+            $ref: "#/components/schemas/FundingActivityCategory"
           minItems: 1
         explanation:
           type: string
@@ -175,22 +175,26 @@ components:
         name:
           type: string
           enum:
-            - 'Cooperative Agreement'
-            - 'Grant'
-            - 'Procurement Contract'
-            - 'Other'
+            - "Cooperative Agreement"
+            - "Grant"
+            - "Procurement Contract"
+            - "Other"
         code:
           type: string
           enum:
-            - 'CA'
-            - 'G'
-            - 'PC'
-            - 'O'
+            - "CA"
+            - "G"
+            - "PC"
+            - "O"
     GrantorContact:
       type: object
       properties:
+        name:
+          type: string
+        phone:
+          type: string
         email:
-          $ref: '#/components/schemas/Email'
+          $ref: "#/components/schemas/Email"
         text:
           type: string
     Metadata:
@@ -204,19 +208,19 @@ components:
         name:
           type: string
           enum:
-            - 'Discretionary'
-            - 'Mandatory'
-            - 'Continuation'
-            - 'Earmark'
-            - 'Other'
+            - "Discretionary"
+            - "Mandatory"
+            - "Continuation"
+            - "Earmark"
+            - "Other"
         code:
           type: string
           enum:
-            - 'D'
-            - 'M'
-            - 'C'
-            - 'E'
-            - 'O'
+            - "D"
+            - "M"
+            - "C"
+            - "E"
+            - "O"
         explanation:
           type: string
     Opportunity:
@@ -231,12 +235,12 @@ components:
         description:
           type: string
         category:
-          $ref: '#/components/schemas/OpportunityCategory'
+          $ref: "#/components/schemas/OpportunityCategory"
         last_updated:
           type: string
           format: date
         milestones:
-          $ref: '#/components/schemas/OpportunityMilestones'
+          $ref: "#/components/schemas/OpportunityMilestones"
       required:
         - id
         - number
@@ -246,6 +250,9 @@ components:
     OpportunityMilestones:
       type: object
       properties:
+        forecast_creation_date:
+          type: string
+          format: date
         post_date:
           type: string
           format: date
@@ -253,7 +260,13 @@ components:
           type: string
           format: date
         close:
-          $ref: '#/components/schemas/CloseDate'
+          $ref: "#/components/schemas/CloseDate"
+        project_start_date:
+          type: string
+          format: date
+        award_date:
+          type: string
+          format: date
       required:
         - post_date
     ULIDType:
@@ -263,7 +276,7 @@ components:
       type: object
       properties:
         id:
-          $ref: '#/components/schemas/ULIDType'
+          $ref: "#/components/schemas/ULIDType"
         timestamp:
           type: string
           format: date-time
@@ -275,7 +288,7 @@ components:
         funding_instrument_types:
           type: array
           items:
-            $ref: '#/components/schemas/FundingInstrument'
+            $ref: "#/components/schemas/FundingInstrument"
           minItems: 1
         cost_sharing_or_matching_requirement:
           type: boolean
@@ -289,24 +302,30 @@ components:
         eligible_applicants:
           type: array
           items:
-            $ref: '#/components/schemas/Applicant'
+            $ref: "#/components/schemas/Applicant"
           minItems: 1
+        fiscal_year:
+          type: string
+          format: year
+          minLength: 4
+          maxLength: 4
+          pattern: ^\d{4}$
         additional_information:
-          $ref: '#/components/schemas/AdditionalInformation'
+          $ref: "#/components/schemas/AdditionalInformation"
         agency:
-          $ref: '#/components/schemas/Agency'
+          $ref: "#/components/schemas/Agency"
         award:
-          $ref: '#/components/schemas/Award'
+          $ref: "#/components/schemas/Award"
         funding_activity:
-          $ref: '#/components/schemas/FundingActivity'
+          $ref: "#/components/schemas/FundingActivity"
         grantor:
-          $ref: '#/components/schemas/GrantorContact'
+          $ref: "#/components/schemas/GrantorContact"
         metadata:
-          $ref: '#/components/schemas/Metadata'
+          $ref: "#/components/schemas/Metadata"
         opportunity:
-          $ref: '#/components/schemas/Opportunity'
+          $ref: "#/components/schemas/Opportunity"
         revision:
-          $ref: '#/components/schemas/ULIDType'
+          $ref: "#/components/schemas/ULIDType"
       required:
         - funding_instrument_types
         - funding_activity
@@ -331,9 +350,9 @@ components:
           properties:
             new:
               anyOf:
-                - type: 'null'
-                - $ref: '#/components/schemas/Grant'
+                - type: "null"
+                - $ref: "#/components/schemas/Grant"
             previous:
               anyOf:
-                - type: 'null'
-                - $ref: '#/components/schemas/Grant'
+                - type: "null"
+                - $ref: "#/components/schemas/Grant"
