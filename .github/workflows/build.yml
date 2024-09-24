@@ -68,6 +68,7 @@ jobs:
         with:
           show-progress: 'false'
           persist-credentials: 'false'
+          ref: ${{ inputs.ref }}
       - uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}

@@ -7,7 +7,9 @@ version: '3'
 output: prefixed
 
 includes:
-  local: .taskfiles/local.yml
+  local:
+    taskfile: .taskfiles/local.yml
+    optional: true
 
 tasks:
   default:
