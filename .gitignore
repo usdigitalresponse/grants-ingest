@@ -10,7 +10,6 @@
 
 # IDE settings
 .idea/
-.vscode/
 
 # Python stuff
 __pycache__/

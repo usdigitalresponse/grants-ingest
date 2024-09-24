@@ -52,7 +52,7 @@ jobs:
       sources-key: ${{ env.SOURCES_KEY }}
       sources-path: ${{ env.SOURCES_PATH }}
     steps:
-      - uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
+      - uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
         with:
           disable-sudo: true
           egress-policy: block
@@ -68,6 +68,7 @@ jobs:
         with:
           show-progress: 'false'
           persist-credentials: 'false'
+          ref: ${{ inputs.ref }}
       - uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -102,7 +103,7 @@ jobs:
       artifacts-path: ${{ env.ARTIFACTS_PATH }}
       checksums-sha256: ${{ steps.final-checksums.outputs.sha256 }}
     steps:
-      - uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
+      - uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
         with:
           disable-sudo: true
           egress-policy: block
@@ -221,7 +222,7 @@ jobs:
       artifacts-path: ${{ env.ARTIFACTS_PATH }}
       checksums-sha256: ${{ steps.final-checksums.outputs.sha256 }}
     steps:
-      - uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
+      - uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
         with:
           disable-sudo: true
           egress-policy: block

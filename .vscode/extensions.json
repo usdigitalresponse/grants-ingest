@@ -1,0 +1,13 @@
+{
+    "recommendations": [
+        "mikestead.dotenv",
+        "leighlondon.eml",
+        "ms-azuretools.vscode-docker",
+        "golang.go",
+        "hashicorp.terraform",
+        "redhat.vscode-xml",
+        "redhat.vscode-yaml",
+        "task.vscode-task",
+        "github.vscode-github-actions"
+    ]
+}
