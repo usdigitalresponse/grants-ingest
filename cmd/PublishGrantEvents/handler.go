@@ -112,7 +112,7 @@ func buildGrantModificationEventJSON(record events.DynamoDBEventRecord) ([]byte,
 		}
 		if err := prevVersion.Validate(); err != nil {
 			sendMetric("grant_data.invalid", 1, metricTag)
-			log.Warn(logger, "grant data from ItemMapper is invalid", err)
+			log.Warn(logger, "grant data from ItemMapper is invalid", "error", err)
 		}
 	}
 
