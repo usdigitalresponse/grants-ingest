@@ -53,8 +53,6 @@ module "lambda_execution_policy" {
       effect  = "Allow"
       actions = ["s3:PutObject"]
       resources = [
-        # Path: <first 3 digits of grant ID>/<grant id>/grants.gov/v2.xml (deprecated)
-        "${data.aws_s3_bucket.prepared_data.arn}/*/*/grants.gov/v2.xml",
         # Path: <first 3 digits of grant ID><grant id>/grants.gov/v2.OpportunitySynopsisDetail_1_0.xml
         "${data.aws_s3_bucket.prepared_data.arn}/*/*/grants.gov/v2.OpportunitySynopsisDetail_1_0.xml",
         # Path: <first 3 digits of grant ID><grant id>/grants.gov/v2.OpportunityForecastDetail_1_0.xml
