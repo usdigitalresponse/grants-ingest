@@ -87,8 +87,24 @@ variable "grants_prepared_data_bucket_name" {
   type        = string
 }
 
+variable "grants_prepared_dynamodb_table_name" {
+  description = "Name of the DynamoDB table used to provide grants prepared data modification timestamps."
+  type        = string
+}
+
+variable "grants_prepared_dynamodb_table_arn" {
+  description = "ARN of the DynamoDB table used to provide grants prepared data modification timestamps."
+  type        = string
+}
+
 variable "is_forecasted_grants_enabled" {
   description = "Flag to control whether forecasted grants should be processed and stored in S3."
   type        = bool
   default     = false
+}
+
+variable "max_split_records" {
+  description = "Optional limit (i.e. for testing) on the number of records that the handler will process during a single invocation."
+  type        = number
+  default     = -1
 }

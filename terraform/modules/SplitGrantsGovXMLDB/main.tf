@@ -41,23 +41,22 @@ module "lambda_execution_policy" {
         "${data.aws_s3_bucket.source_data.arn}/sources/*/*/*/grants.gov/extract.xml"
       ]
     }
-    AllowInspectS3PreparedData = {
+    AllowReadDynamoDBPreparedData = {
       effect = "Allow"
       actions = [
-        "s3:GetObject",
-        "s3:ListBucket"
+        "dynamodb:GetItem",
+        "dynamodb:ListTables",
       ]
-      resources = [
-        data.aws_s3_bucket.prepared_data.arn,
-        "${data.aws_s3_bucket.prepared_data.arn}/*/*/grants.gov/v2.xml"
-      ]
+      resources = [var.grants_prepared_dynamodb_table_arn]
     }
     AllowS3UploadPreparedData = {
       effect  = "Allow"
       actions = ["s3:PutObject"]
       resources = [
-        # Path: <first 3 digits of grant ID>/<grant id>/grants.gov/v2.xml
-        "${data.aws_s3_bucket.prepared_data.arn}/*/*/grants.gov/v2.xml"
+        # Path: <first 3 digits of grant ID><grant id>/grants.gov/v2.OpportunitySynopsisDetail_1_0.xml
+        "${data.aws_s3_bucket.prepared_data.arn}/*/*/grants.gov/v2.OpportunitySynopsisDetail_1_0.xml",
+        # Path: <first 3 digits of grant ID><grant id>/grants.gov/v2.OpportunityForecastDetail_1_0.xml
+        "${data.aws_s3_bucket.prepared_data.arn}/*/*/grants.gov/v2.OpportunityForecastDetail_1_0.xml",
       ]
     }
   }
@@ -104,8 +103,10 @@ module "lambda_function" {
     DD_TAGS                          = join(",", sort([for k, v in local.dd_tags : "${k}:${v}"]))
     DOWNLOAD_CHUNK_LIMIT             = "20"
     GRANTS_PREPARED_DATA_BUCKET_NAME = data.aws_s3_bucket.prepared_data.id
+    GRANTS_PREPARED_DATA_TABLE_NAME  = var.grants_prepared_dynamodb_table_name
     LOG_LEVEL                        = var.log_level
     MAX_CONCURRENT_UPLOADS           = "10"
+    MAX_SPLIT_RECORDS                = tostring(var.max_split_records)
     IS_FORECASTED_GRANTS_ENABLED     = var.is_forecasted_grants_enabled
   })
 
