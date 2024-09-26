@@ -254,7 +254,7 @@ func processRecord(ctx context.Context, s3svc S3PutObjectAPI, ddbsvc DynamoDBGet
 
 	isNew := false
 	if remoteLastModified != nil {
-		if remoteLastModified.After(lastModified) {
+		if !remoteLastModified.Before(lastModified) {
 			log.Debug(logger, "Skipping record upload because the extant record is up-to-date")
 			sendMetric("record.skipped", 1)
 			return nil

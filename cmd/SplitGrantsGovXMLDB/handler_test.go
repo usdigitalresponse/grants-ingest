@@ -626,4 +626,19 @@ func TestProcessRecord(t *testing.T) {
 		err := processRecord(context.TODO(), s3Client, ddb.NewGetItemClient(t), testOpportunity)
 		assert.ErrorContains(t, err, "Error uploading prepared grant record to S3")
 	})
+
+	t.Run("matching LastUpdatedDate skips upload to S3", func(t *testing.T) {
+		setupLambdaEnvForTesting(t)
+		s3Client := mockPutObjectAPI(func(context.Context, *s3.PutObjectInput, ...func(*s3.Options)) (*s3.PutObjectOutput, error) {
+			t.Helper()
+			require.Fail(t, "PutObject called unexpectedly")
+			return nil, fmt.Errorf("PutObject called unexpectedly")
+		})
+		ddb := mockDDBClientGetItemCollection([]mockDDBClientGetItemReturnValue{{
+			GrantId:          string(testOpportunity.OpportunityID),
+			ItemLastModified: string(testOpportunity.LastUpdatedDate),
+		}})
+		err := processRecord(context.TODO(), s3Client, ddb.NewGetItemClient(t), testOpportunity)
+		assert.NoError(t, err)
+	})
 }
