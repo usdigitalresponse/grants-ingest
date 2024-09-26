@@ -73,8 +73,8 @@ func (f forecast) toXML() ([]byte, error) {
 	return xml.Marshal(grantsgov.OpportunityForecastDetail_1_0(f))
 }
 
-func (o forecast) dynamoDBItemKey() map[string]ddbtypes.AttributeValue {
+func (f forecast) dynamoDBItemKey() map[string]ddbtypes.AttributeValue {
 	return map[string]ddbtypes.AttributeValue{
-		"grant_id": &ddbtypes.AttributeValueMemberS{Value: string(o.OpportunityID)},
+		"grant_id": &ddbtypes.AttributeValueMemberS{Value: string(f.OpportunityID)},
 	}
 }
