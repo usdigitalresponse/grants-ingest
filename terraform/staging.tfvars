@@ -133,27 +133,27 @@ datadog_metrics_metadata = {
     unit        = "error"
   }
 
-  "SplitGrantsGovXMLDB.opportunity.created" = {
-    short_name  = "New grant opportunities"
-    description = "Count of new grant opportunity records created from Grants.gov data during invocation."
+  "SplitGrantsGovXMLDB.record.created" = {
+    short_name  = "New grant records"
+    description = "Count of new grant records created from Grants.gov data during invocation."
     unit        = "record"
   }
 
-  "SplitGrantsGovXMLDB.opportunity.updated" = {
-    short_name  = "Updated grant opportunities"
-    description = "Count of modified grant opportunity records updated from Grants.gov data during invocation."
+  "SplitGrantsGovXMLDB.record.updated" = {
+    short_name  = "Updated grant records"
+    description = "Count of modified grant records updated from Grants.gov data during invocation."
     unit        = "record"
   }
 
-  "SplitGrantsGovXMLDB.opportunity.skipped" = {
-    short_name  = "Skipped grant opportunities"
-    description = "Count of unchanged grant opportunity records from Grants.gov data skipped during invocation."
+  "SplitGrantsGovXMLDB.record.skipped" = {
+    short_name  = "Skipped grant records"
+    description = "Count of unchanged grant records from Grants.gov data skipped during invocation."
     unit        = "record"
   }
 
-  "SplitGrantsGovXMLDB.opportunity.failed" = {
-    short_name  = "Failed grant opportunities"
-    description = "Count of grant opportunity records from Grants.gov data that failed to process during invocation."
+  "SplitGrantsGovXMLDB.record.failed" = {
+    short_name  = "Failed grant records"
+    description = "Count of grant records from Grants.gov data that failed to process during invocation."
     unit        = "record"
   }
 }

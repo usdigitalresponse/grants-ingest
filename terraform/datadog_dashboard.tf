@@ -2071,7 +2071,7 @@ resource "datadog_dashboard" "service_dashboard" {
             display_type = "bars"
 
             formula {
-              formula_expression = "records_skipped"
+              formula_expression = "opportunities_skipped + records_skipped"
               alias              = "Skipped"
               style {
                 palette       = "cool"
@@ -2079,14 +2079,21 @@ resource "datadog_dashboard" "service_dashboard" {
               }
             }
             query {
+              // Legacy metric (before Forecasted grants were in the pipeline)
               metric_query {
-                name  = "records_skipped"
+                name  = "opportunities_skipped"
                 query = "sum:grants_ingest.SplitGrantsGovXMLDB.opportunity.skipped{$env,$service,$version}.as_count()"
+              }
+            }
+            query {
+              metric_query {
+                name = "records_skipped"
+                query = "sum:grants_ingest.SplitGrantsGovXMLDB.record.skipped{$env,$service,$version}.as_count()"
               }
             }
 
             formula {
-              formula_expression = "records_updated"
+              formula_expression = "opportunities_updated + records_updated"
               alias              = "Updated"
               style {
                 palette       = "purple"
@@ -2094,14 +2101,21 @@ resource "datadog_dashboard" "service_dashboard" {
               }
             }
             query {
+              // Legacy metric (before Forecasted grants were in the pipeline)
+              metric_query {
+                name  = "opportunities_updated"
+                query = "sum:grants_ingest.SplitGrantsGovXMLDB.opportunity.updated{$env,$service,$version}.as_count()"
+              }
+            }
+            query {
               metric_query {
                 name  = "records_updated"
-                query = "sum:grants_ingest.SplitGrantsGovXMLDB.opportunity.updated{$env,$service,$version}.as_count()"
+                query = "sum:grants_ingest.SplitGrantsGovXMLDB.record.updated{$env,$service,$version}.as_count()"
               }
             }
 
             formula {
-              formula_expression = "records_created"
+              formula_expression = "opportunities_created + records_created"
               alias              = "Created"
               style {
                 palette       = "classic"
@@ -2109,14 +2123,21 @@ resource "datadog_dashboard" "service_dashboard" {
               }
             }
             query {
+              // Legacy metric (before Forecasted grants were in the pipeline)
+              metric_query {
+                name  = "opportunities_created"
+                query = "sum:grants_ingest.SplitGrantsGovXMLDB.opportunity.created{$env,$service,$version}.as_count()"
+              }
+            }
+            query {
               metric_query {
                 name  = "records_created"
-                query = "sum:grants_ingest.SplitGrantsGovXMLDB.opportunity.created{$env,$service,$version}.as_count()"
+                query = "sum:grants_ingest.SplitGrantsGovXMLDB.record.created{$env,$service,$version}.as_count()"
               }
             }
 
             formula {
-              formula_expression = "records_failed"
+              formula_expression = "opportunities_failed + records_failed"
               alias              = "Failed"
               style {
                 palette       = "warm"
@@ -2125,8 +2146,14 @@ resource "datadog_dashboard" "service_dashboard" {
             }
             query {
               metric_query {
-                name  = "records_failed"
+                name  = "opportunities_failed"
                 query = "sum:grants_ingest.SplitGrantsGovXMLDB.opportunity.failed{$env,$service,$version}.as_count()"
+              }
+            }
+            query {
+              metric_query {
+                name  = "records_failed"
+                query = "sum:grants_ingest.SplitGrantsGovXMLDB.record.failed{$env,$service,$version}.as_count()"
               }
             }
           }
