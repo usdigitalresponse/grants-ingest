@@ -234,7 +234,7 @@ func processRecords(ctx context.Context, s3svc *s3.Client, ddbsvc DynamoDBGetIte
 // is compared with the last-modified date the record on-hand.
 // An upload is initiated when the record on-hand has a last-modified date that is more recent
 // than that of the extant item, or when no extant item exists.
-func processRecord(ctx context.Context, s3svc S3ReadWriteObjectAPI, ddbsvc DynamoDBGetItemAPI, record grantRecord) error {
+func processRecord(ctx context.Context, s3svc S3PutObjectAPI, ddbsvc DynamoDBGetItemAPI, record grantRecord) error {
 	logger := record.logWith(logger)
 
 	lastModified, err := record.lastModified()
@@ -254,7 +254,7 @@ func processRecord(ctx context.Context, s3svc S3ReadWriteObjectAPI, ddbsvc Dynam
 
 	isNew := false
 	if remoteLastModified != nil {
-		if remoteLastModified.After(lastModified) {
+		if !remoteLastModified.Before(lastModified) {
 			log.Debug(logger, "Skipping record upload because the extant record is up-to-date")
 			sendMetric("record.skipped", 1)
 			return nil

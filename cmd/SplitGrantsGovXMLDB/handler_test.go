@@ -17,14 +17,12 @@ import (
 	goenv "github.com/Netflix/go-env"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/aws"
-	awsTransport "github.com/aws/aws-sdk-go-v2/aws/transport/http"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	ddbtypes "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 	"github.com/go-kit/log"
 	"github.com/hashicorp/go-multierror"
 	"github.com/johannesboyne/gofakes3"
@@ -53,9 +51,8 @@ func (m mockDDBClientGetItemCollection) NewGetItemClient(t *testing.T) mockDynam
 		err := attributevalue.UnmarshalMap(params.Key, &getItemKey)
 		require.NoError(t, err, "Failed to extract grant_id value from DynamoDB GetItem key")
 		output := dynamodb.GetItemOutput{Item: nil}
-		targetGrantId, exists := getItemKey["grant_id"]
 		var rvErr error
-		if exists {
+		if targetGrantId, exists := getItemKey["grant_id"]; exists {
 			for _, rv := range m {
 				if rv.GrantId == targetGrantId {
 					output.Item = map[string]ddbtypes.AttributeValue{
@@ -602,54 +599,46 @@ func TestProcessRecord(t *testing.T) {
 
 	t.Run("Error getting item from DynamoDB", func(t *testing.T) {
 		setupLambdaEnvForTesting(t)
-		c := mockS3ReadwriteObjectAPI{
-			mockHeadObjectAPI(
-				func(ctx context.Context, params *s3.HeadObjectInput, optFns ...func(*s3.Options)) (*s3.HeadObjectOutput, error) {
-					t.Helper()
-					return &s3.HeadObjectOutput{}, fmt.Errorf("server error")
-				},
-			),
-			mockGetObjectAPI(nil),
-			mockPutObjectAPI(nil),
-		}
+		s3client := mockPutObjectAPI(func(context.Context, *s3.PutObjectInput, ...func(*s3.Options)) (*s3.PutObjectOutput, error) {
+			t.Helper()
+			require.Fail(t, "PutObject called unexpectedly")
+			return nil, nil
+		})
 		ddbLookups := make(mockDDBClientGetItemCollection, 0)
 		ddbLookups = append(ddbLookups, mockDDBClientGetItemReturnValue{
 			GrantId:          string(testOpportunity.OpportunityID),
 			ItemLastModified: string(testOpportunity.LastUpdatedDate),
 			GetItemErr:       errors.New("Some issue with DynamoDB"),
 		})
-		err := processRecord(context.TODO(), c, ddbLookups.NewGetItemClient(t), testOpportunity)
+		err := processRecord(context.TODO(), s3client, ddbLookups.NewGetItemClient(t), testOpportunity)
 		assert.ErrorContains(t, err, "Error determining last modified time for remote record")
 	})
 
 	t.Run("Error uploading to S3", func(t *testing.T) {
 		setupLambdaEnvForTesting(t)
-		s3Client := mockS3ReadwriteObjectAPI{
-			mockHeadObjectAPI(
-				func(context.Context, *s3.HeadObjectInput, ...func(*s3.Options)) (*s3.HeadObjectOutput, error) {
-					t.Helper()
-					return nil, &awsTransport.ResponseError{
-						ResponseError: &smithyhttp.ResponseError{Response: &smithyhttp.Response{
-							Response: &http.Response{StatusCode: 404},
-						}},
-					}
-				},
-			),
-			mockGetObjectAPI(func(context.Context, *s3.GetObjectInput, ...func(*s3.Options)) (*s3.GetObjectOutput, error) {
-				t.Helper()
-				require.Fail(t, "GetObject called unexpectedly")
-				return nil, nil
-			}),
-			mockPutObjectAPI(func(context.Context, *s3.PutObjectInput, ...func(*s3.Options)) (*s3.PutObjectOutput, error) {
-				t.Helper()
-				return nil, fmt.Errorf("some PutObject error")
-			}),
-		}
-		fmt.Printf("%T", s3Client)
+		s3Client := mockPutObjectAPI(func(context.Context, *s3.PutObjectInput, ...func(*s3.Options)) (*s3.PutObjectOutput, error) {
+			t.Helper()
+			return nil, fmt.Errorf("some PutObject error")
+		})
 		ddb := mockDDBClientGetItemCollection([]mockDDBClientGetItemReturnValue{
-			{GrantId: string(testOpportunity.OpportunityID), ItemLastModified: string(testOpportunity.LastUpdatedDate)},
+			// Do not provide a matching record, ensuring that processRecord() will attempt to upload
 		})
 		err := processRecord(context.TODO(), s3Client, ddb.NewGetItemClient(t), testOpportunity)
 		assert.ErrorContains(t, err, "Error uploading prepared grant record to S3")
+	})
+
+	t.Run("matching LastUpdatedDate skips upload to S3", func(t *testing.T) {
+		setupLambdaEnvForTesting(t)
+		s3Client := mockPutObjectAPI(func(context.Context, *s3.PutObjectInput, ...func(*s3.Options)) (*s3.PutObjectOutput, error) {
+			t.Helper()
+			require.Fail(t, "PutObject called unexpectedly")
+			return nil, fmt.Errorf("PutObject called unexpectedly")
+		})
+		ddb := mockDDBClientGetItemCollection([]mockDDBClientGetItemReturnValue{{
+			GrantId:          string(testOpportunity.OpportunityID),
+			ItemLastModified: string(testOpportunity.LastUpdatedDate),
+		}})
+		err := processRecord(context.TODO(), s3Client, ddb.NewGetItemClient(t), testOpportunity)
+		assert.NoError(t, err)
 	})
 }
