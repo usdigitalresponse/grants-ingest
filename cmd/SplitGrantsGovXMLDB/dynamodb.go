@@ -38,6 +38,9 @@ func GetDynamoDBLastModified(ctx context.Context, c DynamoDBGetItemAPI, table st
 	if err := attributevalue.UnmarshalMap(resp.Item, &item); err != nil {
 		return nil, err
 	}
+	if item.LastUpdatedDate == "" {
+		return nil, nil
+	}
 	lastUpdatedDate, err := item.LastUpdatedDate.Time()
 	return &lastUpdatedDate, err
 }
