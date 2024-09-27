@@ -2087,7 +2087,7 @@ resource "datadog_dashboard" "service_dashboard" {
             }
             query {
               metric_query {
-                name = "records_skipped"
+                name  = "records_skipped"
                 query = "sum:grants_ingest.SplitGrantsGovXMLDB.record.skipped{$env,$service,$version}.as_count()"
               }
             }
