@@ -627,18 +627,96 @@ func TestProcessRecord(t *testing.T) {
 		assert.ErrorContains(t, err, "Error uploading prepared grant record to S3")
 	})
 
-	t.Run("matching LastUpdatedDate skips upload to S3", func(t *testing.T) {
+	t.Run("Error when DDB item LastUpdatedDate is malformed", func(t *testing.T) {
 		setupLambdaEnvForTesting(t)
+		putObjectCalled := false
 		s3Client := mockPutObjectAPI(func(context.Context, *s3.PutObjectInput, ...func(*s3.Options)) (*s3.PutObjectOutput, error) {
-			t.Helper()
-			require.Fail(t, "PutObject called unexpectedly")
-			return nil, fmt.Errorf("PutObject called unexpectedly")
+			putObjectCalled = true
+			return nil, nil
 		})
-		ddb := mockDDBClientGetItemCollection([]mockDDBClientGetItemReturnValue{{
+		ddb := mockDDBClientGetItemCollection{{
+			GrantId:          string(testOpportunity.OpportunityID),
+			ItemLastModified: "this string cannot be parsed as MMDDYYYY",
+		}}
+		err := processRecord(context.TODO(), s3Client, ddb.NewGetItemClient(t), testOpportunity)
+		assert.ErrorContains(t, err, "Error determining last modified time for remote record")
+		assert.False(t, putObjectCalled, "PutObject called unexpectedly")
+	})
+
+	t.Run("skips S3 upload when DDB item LastUpdatedDate equals record", func(t *testing.T) {
+		setupLambdaEnvForTesting(t)
+		putObjectCalled := false
+		s3Client := mockPutObjectAPI(func(context.Context, *s3.PutObjectInput, ...func(*s3.Options)) (*s3.PutObjectOutput, error) {
+			putObjectCalled = true
+			return nil, nil
+		})
+		ddb := mockDDBClientGetItemCollection{{
 			GrantId:          string(testOpportunity.OpportunityID),
 			ItemLastModified: string(testOpportunity.LastUpdatedDate),
-		}})
+		}}
 		err := processRecord(context.TODO(), s3Client, ddb.NewGetItemClient(t), testOpportunity)
 		assert.NoError(t, err)
+		assert.False(t, putObjectCalled, "PutObject called unexpectedly")
+	})
+
+	t.Run("skips S3 upload when DDB item LastUpdatedDate is future", func(t *testing.T) {
+		setupLambdaEnvForTesting(t)
+		putObjectCalled := false
+		s3Client := mockPutObjectAPI(func(context.Context, *s3.PutObjectInput, ...func(*s3.Options)) (*s3.PutObjectOutput, error) {
+			putObjectCalled = true
+			return nil, nil
+		})
+		ddb := mockDDBClientGetItemCollection{{
+			GrantId:          string(testOpportunity.OpportunityID),
+			ItemLastModified: now.Add(24 * time.Hour).Format(grantsgov.TimeLayoutMMDDYYYYType),
+		}}
+		err := processRecord(context.TODO(), s3Client, ddb.NewGetItemClient(t), testOpportunity)
+		assert.NoError(t, err)
+		assert.False(t, putObjectCalled, "PutObject called unexpectedly")
+	})
+
+	t.Run("uploads to S3 when DDB item LastUpdatedDate is missing or blank", func(t *testing.T) {
+		setupLambdaEnvForTesting(t)
+		putObjectCalled := false
+		s3Client := mockPutObjectAPI(func(context.Context, *s3.PutObjectInput, ...func(*s3.Options)) (*s3.PutObjectOutput, error) {
+			putObjectCalled = true
+			return nil, nil
+		})
+		ddb := mockDDBClientGetItemCollection{{
+			GrantId:          string(testOpportunity.OpportunityID),
+			ItemLastModified: "",
+		}}
+		err := processRecord(context.TODO(), s3Client, ddb.NewGetItemClient(t), testOpportunity)
+		assert.NoError(t, err)
+		assert.True(t, putObjectCalled, "PutObject should have been called")
+	})
+
+	t.Run("uploads to S3 when DDB item LastUpdatedDate is outdated", func(t *testing.T) {
+		setupLambdaEnvForTesting(t)
+		putObjectCalled := false
+		s3Client := mockPutObjectAPI(func(context.Context, *s3.PutObjectInput, ...func(*s3.Options)) (*s3.PutObjectOutput, error) {
+			putObjectCalled = true
+			return nil, nil
+		})
+		ddb := mockDDBClientGetItemCollection{{
+			GrantId:          string(testOpportunity.OpportunityID),
+			ItemLastModified: now.Add(-24 * time.Hour).Format(grantsgov.TimeLayoutMMDDYYYYType),
+		}}
+		err := processRecord(context.TODO(), s3Client, ddb.NewGetItemClient(t), testOpportunity)
+		assert.NoError(t, err)
+		assert.True(t, putObjectCalled, "PutObject should have been called")
+	})
+
+	t.Run("uploads to S3 when DDB item is missing", func(t *testing.T) {
+		setupLambdaEnvForTesting(t)
+		putObjectCalled := false
+		s3Client := mockPutObjectAPI(func(context.Context, *s3.PutObjectInput, ...func(*s3.Options)) (*s3.PutObjectOutput, error) {
+			putObjectCalled = true
+			return nil, nil
+		})
+		ddb := mockDDBClientGetItemCollection{}
+		err := processRecord(context.TODO(), s3Client, ddb.NewGetItemClient(t), testOpportunity)
+		assert.NoError(t, err)
+		assert.True(t, putObjectCalled, "PutObject should have been called")
 	})
 }
