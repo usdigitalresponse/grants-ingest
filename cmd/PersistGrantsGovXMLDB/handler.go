@@ -12,16 +12,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/hashicorp/go-multierror"
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
-	grantsgov "github.com/usdigitalresponse/grants-ingest/pkg/grantsSchemas/grants.gov"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
-
-const (
-	MB                         = int64(1024 * 1024)
-	GRANT_OPPORTUNITY_XML_NAME = "OpportunitySynopsisDetail_1_0"
-)
-
-type opportunity grantsgov.OpportunitySynopsisDetail_1_0
 
 // handleS3Event handles events representing S3 bucket notifications of type "ObjectCreated:*"
 // for XML DB extracts saved from Grants.gov and split into separate files via the SplitGrantsGovXMLDB Lambda.
