@@ -50,18 +50,13 @@ func handleS3EventWithConfig(s3svc *s3.Client, dynamodbsvc DynamoDBUpdateItemAPI
 					return err
 				}
 
-				data, err := io.ReadAll(resp.Body)
+				record, err := decodeNextGrantRecord(resp.Body)
+				resp.Body.Close()
 				if err != nil {
-					log.Error(logger, "Error reading source opportunity from S3", err)
+					log.Error(logger, "Error decoding S3 object XML to record", err)
 					return err
 				}
-
-				var opp opportunity
-				if err := xml.Unmarshal(data, &opp); err != nil {
-					log.Error(logger, "Error parsing opportunity from XML", err)
-					return err
-				}
-				return processOpportunity(ctx, dynamodbsvc, opp)
+				return processGrantRecord(ctx, dynamodbsvc, record)
 			})
 		}(record)
 	}
@@ -76,13 +71,37 @@ func handleS3EventWithConfig(s3svc *s3.Client, dynamodbsvc DynamoDBUpdateItemAPI
 	return nil
 }
 
+// decodeNextGrantRecord reads XML from r until a grantRecord can be decoded or EOF is reached.
+// It stops reading and returns the grantRecord as soon as one is decoded.
+// If there is an error reading or unmarshalling XML, it returns a nil grantRecord and the encountered error.
+func decodeNextGrantRecord(r io.Reader) (grantRecord, error) {
+	d := xml.NewDecoder(r)
+	for {
+		token, err := d.Token()
+		if err != nil {
+			return nil, err
+		}
+		if se, ok := token.(xml.StartElement); ok {
+			if se.Name.Local == "OpportunitySynopsisDetail_1_0" {
+				var o opportunity
+				err := d.DecodeElement(&o, &se)
+				return o, err
+			}
+			if se.Name.Local == "OpportunityForecastDetail_1_0" {
+				f := forecast{}
+				err := d.DecodeElement(&f, &se)
+				return f, err
+			}
+		}
+	}
+}
+
 // processOpportunity takes a single opportunity and uploads an XML representation of the
 // opportunity to its configured DynamoDB table.
-func processOpportunity(ctx context.Context, svc DynamoDBUpdateItemAPI, opp opportunity) error {
-	logger := log.With(logger,
-		"opportunity_id", opp.OpportunityID, "opportunity_number", opp.OpportunityNumber)
+func processGrantRecord(ctx context.Context, svc DynamoDBUpdateItemAPI, rec grantRecord) error {
+	logger := rec.logWith(logger)
 
-	if err := UpdateDynamoDBItem(ctx, svc, env.DestinationTable, opp); err != nil {
+	if err := UpdateDynamoDBItem(ctx, svc, env.DestinationTable, rec); err != nil {
 		var conditionalCheckErr *types.ConditionalCheckFailedException
 		if errors.As(err, &conditionalCheckErr) {
 			log.Warn(logger, "Grants.gov data already matches the target DynamoDB item",
