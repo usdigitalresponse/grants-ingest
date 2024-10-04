@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/stretchr/testify/assert"
-	grantsgov "github.com/usdigitalresponse/grants-ingest/pkg/grantsSchemas/grants.gov"
+	"github.com/stretchr/testify/require"
+	"github.com/usdigitalresponse/grants-ingest/internal/awsHelpers"
 )
 
 type mockUpdateItemAPI func(ctx context.Context, params *dynamodb.UpdateItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.UpdateItemOutput, error)
@@ -24,28 +24,30 @@ type mockDynamoDBUpdateItemAPI struct {
 }
 
 func TestUploadDynamoDBItem(t *testing.T) {
-	now := time.Now()
 	testTableName := "test-table"
-	testHashKey := map[string]types.AttributeValue{}
-	testHashKey["grant_id"] = &types.AttributeValueMemberS{Value: "123456"}
 	testError := fmt.Errorf("oh no this is an error")
-	testOpportunity := opportunity{
-		OpportunityID:   "123456",
-		LastUpdatedDate: grantsgov.MMDDYYYYType(now.Format(grantsgov.TimeLayoutMMDDYYYYType)),
+	testItemAttrs := map[string]types.AttributeValue{
+		"someKey":    &types.AttributeValueMemberS{Value: "is a key"},
+		"attrString": &types.AttributeValueMemberS{Value: "is a string"},
+		"attrBool":   &types.AttributeValueMemberBOOL{Value: true},
 	}
+	testKey := map[string]types.AttributeValue{"someKey": testItemAttrs["someKey"]}
 
 	for _, tt := range []struct {
-		name   string
-		client func(t *testing.T) DynamoDBUpdateItemAPI
-		expErr error
+		name       string
+		key, attrs map[string]types.AttributeValue
+		client     func(t *testing.T) DynamoDBUpdateItemAPI
+		expErr     error
 	}{
 		{
 			"UpdateItem successful",
+			testKey,
+			testItemAttrs,
 			func(t *testing.T) DynamoDBUpdateItemAPI {
 				return mockUpdateItemAPI(func(ctx context.Context, params *dynamodb.UpdateItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.UpdateItemOutput, error) {
 					t.Helper()
-					assert.Equal(t, aws.String(testTableName), params.TableName)
-					assert.Equal(t, testHashKey, params.Key)
+					panic(fmt.Sprintf("%s | %s", *params.ConditionExpression, *params.UpdateExpression))
+					assert.Equal(t, testKey, params.Key)
 					return &dynamodb.UpdateItemOutput{}, nil
 				})
 			},
@@ -53,19 +55,36 @@ func TestUploadDynamoDBItem(t *testing.T) {
 		},
 		{
 			"UpdateItem returns error",
+			testKey,
+			testItemAttrs,
 			func(t *testing.T) DynamoDBUpdateItemAPI {
 				return mockUpdateItemAPI(func(ctx context.Context, params *dynamodb.UpdateItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.UpdateItemOutput, error) {
 					t.Helper()
 					assert.Equal(t, aws.String(testTableName), params.TableName)
-					assert.Equal(t, testHashKey, params.Key)
+					assert.Equal(t, testKey, params.Key)
 					return &dynamodb.UpdateItemOutput{}, testError
 				})
 			},
 			testError,
 		},
+		{
+			"Empty attribute map returns error",
+			testKey,
+			make(map[string]types.AttributeValue),
+			func(t *testing.T) DynamoDBUpdateItemAPI {
+				return mockUpdateItemAPI(func(ctx context.Context, params *dynamodb.UpdateItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.UpdateItemOutput, error) {
+					t.Helper()
+					assert.Equal(t, aws.String(testTableName), params.TableName)
+					assert.Equal(t, testKey, params.Key)
+					require.Fail(t, "UpdateItem called unexpectedly")
+					return &dynamodb.UpdateItemOutput{}, nil
+				})
+			},
+			awsHelpers.ErrEmptyFields,
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			err := UpdateDynamoDBItem(context.TODO(), tt.client(t), testTableName, testOpportunity)
+			err := UpdateDynamoDBItem(context.TODO(), tt.client(t), testTableName, tt.key, tt.attrs)
 			if tt.expErr != nil {
 				assert.EqualError(t, err, tt.expErr.Error())
 			} else {

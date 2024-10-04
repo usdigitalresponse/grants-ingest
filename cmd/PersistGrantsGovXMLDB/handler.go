@@ -101,7 +101,11 @@ func decodeNextGrantRecord(r io.Reader) (grantRecord, error) {
 func processGrantRecord(ctx context.Context, svc DynamoDBUpdateItemAPI, rec grantRecord) error {
 	logger := rec.logWith(logger)
 
-	if err := UpdateDynamoDBItem(ctx, svc, env.DestinationTable, rec); err != nil {
+	itemAttrs, err := rec.dynamoDBAttributeMap()
+	if err != nil {
+		return log.Errorf(logger, "Error marshaling grantRecord to DynamoDB attributes map", err)
+	}
+	if err := UpdateDynamoDBItem(ctx, svc, env.DestinationTable, rec.dynamoDBItemKey(), itemAttrs); err != nil {
 		var conditionalCheckErr *types.ConditionalCheckFailedException
 		if errors.As(err, &conditionalCheckErr) {
 			log.Warn(logger, "Grants.gov data already matches the target DynamoDB item",
