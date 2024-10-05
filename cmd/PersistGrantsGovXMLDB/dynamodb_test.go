@@ -46,7 +46,6 @@ func TestUploadDynamoDBItem(t *testing.T) {
 			func(t *testing.T) DynamoDBUpdateItemAPI {
 				return mockUpdateItemAPI(func(ctx context.Context, params *dynamodb.UpdateItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.UpdateItemOutput, error) {
 					t.Helper()
-					panic(fmt.Sprintf("%s | %s", *params.ConditionExpression, *params.UpdateExpression))
 					assert.Equal(t, testKey, params.Key)
 					return &dynamodb.UpdateItemOutput{}, nil
 				})
