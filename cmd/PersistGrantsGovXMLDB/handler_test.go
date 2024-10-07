@@ -311,35 +311,19 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 						assert.Equal(t, "123456", itemKey)
 
 						// Check expected `is_forecast` attribute value
-						foundTestValue := false
-						for attrNamePlaceholder, attrName := range params.ExpressionAttributeNames {
-							if attrName == "is_forecast" {
-								// DynamoDB maps attribute names and corresponding values to placeholders.
-								// e.g. `{"#13": "is_forecast"}` corresponds to `{":13": true}`
-								// means `is_forecast = true`.
-								// Note that the placeholder numbers are assigned in arbitrary order.
-								attrValuePlaceholder := strings.Replace(attrNamePlaceholder, "#", ":", 1)
-								attrValue := params.ExpressionAttributeValues[attrValuePlaceholder]
-								var itemIsForecast bool
-								assert.NoError(t, attributevalue.Unmarshal(attrValue, &itemIsForecast))
-								if tt.grantRecordType == "opportunity" {
-									assert.False(t, itemIsForecast)
-									foundTestValue = true
-								} else if tt.grantRecordType == "forecast" {
-									assert.True(t, itemIsForecast)
-									foundTestValue = true
-								} else {
-									require.Fail(t, "Cannot test an unrecognized grantRecord type")
-								}
-								break
-							}
-						}
-						if !foundTestValue {
-							require.Fail(t,
-								"Failed to locate `is_forecast` attribute in DynamoDB item",
-								"Cross-checked DynamoDB item attribute value placeholders map "+
-									"against the following name placeholders map: %v",
-								params.ExpressionAttributeNames)
+						attrValuePlaceholder := findDDBExpressionAttributePlaceholder(t,
+							"is_forecast", params.ExpressionAttributeNames)
+						attrValue := params.ExpressionAttributeValues[attrValuePlaceholder]
+						var itemIsForecast bool
+						assert.NoError(t, attributevalue.Unmarshal(attrValue, &itemIsForecast))
+						if tt.grantRecordType == "opportunity" {
+							assert.False(t, itemIsForecast)
+						} else if tt.grantRecordType == "forecast" {
+							assert.True(t, itemIsForecast)
+						} else {
+							require.Fail(t, "Cannot test an unrecognized grantRecord type",
+								"Expected grantRecord type %q or %q but received %q",
+								"opportunity", "forecast", tt.grantRecordType)
 						}
 						return nil, nil
 					}),
@@ -354,6 +338,24 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 			})
 		}
 	})
+}
+
+// DynamoDB maps attribute names and corresponding values to placeholders.
+// e.g. `{"#13": "some_attribute_name"}` corresponds to `{":13": true}` means `some_attribute_name = true`.
+// Note that the placeholder numbers are assigned in arbitrary order.
+// This helper identifies the name placeholder that corresponds to the targetName attribute
+// and converts it to a value placeholder by replacing `#` with `:`.
+func findDDBExpressionAttributePlaceholder(t *testing.T, targetName string, expressionAttributeNames map[string]string) string {
+	t.Helper()
+	for namePlaceholder, attrName := range expressionAttributeNames {
+		if attrName == targetName {
+			return strings.Replace(namePlaceholder, "#", ":", 1)
+		}
+	}
+	require.Failf(t, "Failed to locate target attribute in DynamoDB expression attribute names mapping",
+		"Could not find %q in the following name placeholders map: %v",
+		targetName, expressionAttributeNames)
+	return ""
 }
 
 func TestDecodeNextGrantRecord(t *testing.T) {
