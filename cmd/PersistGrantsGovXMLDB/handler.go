@@ -32,7 +32,7 @@ func handleS3EventWithConfig(s3svc *s3.Client, dynamodbsvc DynamoDBUpdateItemAPI
 				defer span.Finish(tracer.WithError(err))
 				defer func() {
 					if err != nil {
-						sendMetric("opportunity.failed", 1)
+						sendMetric("record.failed", 1)
 					}
 				}()
 
@@ -116,6 +116,6 @@ func processGrantRecord(ctx context.Context, svc DynamoDBUpdateItemAPI, rec gran
 	}
 
 	log.Info(logger, "Successfully uploaded opportunity")
-	sendMetric("opportunity.saved", 1)
+	sendMetric("record.saved", 1)
 	return nil
 }

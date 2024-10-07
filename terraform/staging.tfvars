@@ -49,15 +49,15 @@ datadog_metrics_metadata = {
     unit        = "record"
   }
 
-  "PersistGrantsGovXMLDB.opportunity.saved" = {
-    short_name  = "Saved opportunities"
-    description = "Count of opportunity records persisted to DynamoDB with Grants.gov data."
+  "PersistGrantsGovXMLDB.record.saved" = {
+    short_name  = "Saved grant records"
+    description = "Count of grant records persisted to DynamoDB with Grants.gov data."
     unit        = "record"
   }
 
-  "PersistGrantsGovXMLDB.opportunity.failed" = {
-    short_name  = "Failed opportunities"
-    description = "Count of opportunity records that failed to be persisted to DynamoDB with Grants.gov data."
+  "PersistGrantsGovXMLDB.record.failed" = {
+    short_name  = "Failed grant records"
+    description = "Count of grant records that failed to be persisted to DynamoDB with Grants.gov data."
     unit        = "record"
   }
 
