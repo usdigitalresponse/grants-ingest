@@ -26,13 +26,13 @@ jobs:
             proxy.golang.org:443
             sum.golang.org:443
             storage.googleapis.com:443
-      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
         with:
           ref: ${{ inputs.ref }}
           show-progress: 'false'
           persist-credentials: 'false'
       - name: Restore/save Taskfile cache
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        uses: actions/cache@2cdf405574d6ef1f33a1d12acccd3ae82f47b3f2 # v4.1.0
         with:
           key: ${{ runner.os }}-qa-taskfile
           path: |
@@ -70,13 +70,13 @@ jobs:
             proxy.golang.org:443
             sum.golang.org:443
             storage.googleapis.com:443
-      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
         with:
           ref: ${{ inputs.ref }}
           show-progress: 'false'
           persist-credentials: 'false'
       - name: Restore Taskfile cache
-        uses: actions/cache/restore@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        uses: actions/cache/restore@2cdf405574d6ef1f33a1d12acccd3ae82f47b3f2 # v4.1.0
         with:
           key: ${{ runner.os }}-qa-taskfile
           path: |
@@ -109,7 +109,7 @@ jobs:
             github.com:443
             proxy.golang.org:443
             sum.golang.org:443
-      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
         with:
           ref: ${{ inputs.ref }}
           show-progress: 'false'
@@ -136,7 +136,7 @@ jobs:
             proxy.golang.org:443
             sum.golang.org:443
             storage.googleapis.com:443
-      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
         with:
           ref: ${{ inputs.ref }}
           show-progress: 'false'
@@ -168,13 +168,13 @@ jobs:
             proxy.golang.org:443
             sum.golang.org:443
             storage.googleapis.com:443
-      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
         with:
           ref: ${{ inputs.ref }}
           show-progress: 'false'
           persist-credentials: 'false'
       - name: Restore Taskfile cache
-        uses: actions/cache/restore@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        uses: actions/cache/restore@2cdf405574d6ef1f33a1d12acccd3ae82f47b3f2 # v4.1.0
         with:
           key: ${{ runner.os }}-qa-taskfile
           path: |
@@ -206,12 +206,12 @@ jobs:
             api.github.com:443
             github.com:443
             objects.githubusercontent.com:443
-      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
         with:
           ref: ${{ inputs.ref }}
           show-progress: 'false'
           persist-credentials: 'false'
-      - uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+      - uses: actions/cache@2cdf405574d6ef1f33a1d12acccd3ae82f47b3f2 # v4.1.0
         name: Cache plugin dir
         with:
           path: .tflint.d/plugins
