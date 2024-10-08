@@ -37,15 +37,17 @@ module "lambda_execution_policy" {
       ]
       resources = [
         data.aws_s3_bucket.prepared_data.arn,
-        # Path: <first 3 of grant id>/<grant id>/grants.gov/v2.xml
-        "${data.aws_s3_bucket.prepared_data.arn}/*/*/grants.gov/v2.xml"
+        # Path: <first 3 of grant id>/<grant id>/grants.gov/v2.xml (deprecated)
+        "${data.aws_s3_bucket.prepared_data.arn}/*/*/grants.gov/v2.xml",
+        # Path: <first 3 digits of grant ID><grant id>/grants.gov/v2.OpportunitySynopsisDetail_1_0.xml
+        "${data.aws_s3_bucket.prepared_data.arn}/*/*/grants.gov/v2.OpportunitySynopsisDetail_1_0.xml",
       ]
     }
     AllowDynamoDBPreparedData = {
       effect = "Allow"
       actions = [
         "dynamodb:ListTables",
-        "dynamodb:UpdateItem"
+        "dynamodb:UpdateItem",
       ]
       resources = [var.grants_prepared_dynamodb_table_arn]
     }

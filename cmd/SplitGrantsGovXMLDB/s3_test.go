@@ -16,12 +16,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type mockGetObjectAPI func(ctx context.Context, params *s3.GetObjectInput, optFns ...func(*s3.Options)) (*s3.GetObjectOutput, error)
-
-func (m mockGetObjectAPI) GetObject(ctx context.Context, params *s3.GetObjectInput, optFns ...func(*s3.Options)) (*s3.GetObjectOutput, error) {
-	return m(ctx, params, optFns...)
-}
-
 type mockHeadObjectAPI func(ctx context.Context, params *s3.HeadObjectInput, optFns ...func(*s3.Options)) (*s3.HeadObjectOutput, error)
 
 func (m mockHeadObjectAPI) HeadObject(ctx context.Context, params *s3.HeadObjectInput, optFns ...func(*s3.Options)) (*s3.HeadObjectOutput, error) {
@@ -32,12 +26,6 @@ type mockPutObjectAPI func(ctx context.Context, params *s3.PutObjectInput, optFn
 
 func (m mockPutObjectAPI) PutObject(ctx context.Context, params *s3.PutObjectInput, optFns ...func(*s3.Options)) (*s3.PutObjectOutput, error) {
 	return m(ctx, params, optFns...)
-}
-
-type mockS3ReadwriteObjectAPI struct {
-	mockHeadObjectAPI
-	mockGetObjectAPI
-	mockPutObjectAPI
 }
 
 func createErrorResponseMap() map[int]*awsTransport.ResponseError {
