@@ -978,10 +978,10 @@ resource "datadog_dashboard" "service_dashboard" {
         }
       }
 
-      // Shows counts of opportunities saved vs failed
+      // Shows counts of records saved vs failed
       widget {
         timeseries_definition {
-          title          = "Opportunity Records Saved vs Failed"
+          title          = "Grant Records Saved vs Failed"
           show_legend    = true
           legend_layout  = "horizontal"
           legend_columns = ["sum"]
@@ -995,7 +995,7 @@ resource "datadog_dashboard" "service_dashboard" {
             display_type = "bars"
 
             formula {
-              formula_expression = "records_saved"
+              formula_expression = "opportunities_saved + records_saved"
               alias              = "Saved"
               style {
                 palette       = "cool"
@@ -1003,14 +1003,21 @@ resource "datadog_dashboard" "service_dashboard" {
               }
             }
             query {
+              // Legacy metric (before Forecasted grants were in the pipeline)
+              metric_query {
+                name  = "opportunities_saved"
+                query = "sum:grants_ingest.PersistGrantsGovXMLDB.opportunity.saved{$env,$service,$version}.as_count()"
+              }
+            }
+            query {
               metric_query {
                 name  = "records_saved"
-                query = "sum:grants_ingest.PersistGrantsGovXMLDB.opportunity.saved{$env,$service,$version}.as_count()"
+                query = "sum:grants_ingest.PersistGrantsGovXMLDB.record.saved{$env,$service,$version}.as_count()"
               }
             }
 
             formula {
-              formula_expression = "records_failed"
+              formula_expression = "opportunities_failed + records_failed"
               alias              = "Failed"
               style {
                 palette       = "warm"
@@ -1018,9 +1025,16 @@ resource "datadog_dashboard" "service_dashboard" {
               }
             }
             query {
+              // Legacy metric (before Forecasted grants were in the pipeline)
+              metric_query {
+                name  = "opportunities_failed"
+                query = "sum:grants_ingest.PersistGrantsGovXMLDB.opportunity.failed{$env,$service,$version}.as_count()"
+              }
+            }
+            query {
               metric_query {
                 name  = "records_failed"
-                query = "sum:grants_ingest.PersistGrantsGovXMLDB.opportunity.failed{$env,$service,$version}.as_count()"
+                query = "sum:grants_ingest.PersistGrantsGovXMLDB.record.failed{$env,$service,$version}.as_count()"
               }
             }
           }
