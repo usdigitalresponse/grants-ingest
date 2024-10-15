@@ -12,6 +12,7 @@ eventbridge_scheduler_enabled           = false
 ssm_deployment_parameters_path_prefix   = "/grants-ingest/local"
 dynamodb_contributor_insights_enabled   = false
 ffis_ingest_email_address               = "ffis-ingest@localhost.grants.usdr.dev"
+is_forecasted_grants_enabled            = true
 max_split_grantsgov_opportunity_records = 10
 max_split_grantsgov_forecast_records    = 10
 ses_active_receipt_rule_set_enabled     = false

@@ -226,6 +226,12 @@ variable "ses_active_receipt_rule_set_enabled" {
   default     = true
 }
 
+variable "is_forecasted_grants_enabled" {
+  description = "When true, enables processing of forecasted grant records from Grants.gov."
+  type        = bool
+  default     = false
+}
+
 variable "max_split_grantsgov_records" {
   description = "Optional hard limit (i.e. for testing) on the number of records (of any type) that SplitGrantsGovXMLDB handler will process during a single invocation."
   type        = number
