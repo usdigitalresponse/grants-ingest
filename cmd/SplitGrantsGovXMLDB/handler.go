@@ -125,7 +125,8 @@ func readRecords(ctx context.Context, r io.Reader, ch chan<- grantRecord) error 
 	span, ctx := tracer.StartSpanFromContext(ctx, "read.xml")
 
 	// Count records sent to ch
-	countSentRecords := 0
+	countSentOpportunityRecords := 0
+	countSentForecastRecords := 0
 
 	d := xml.NewDecoder(r)
 	for {
@@ -136,8 +137,13 @@ func readRecords(ctx context.Context, r io.Reader, ch chan<- grantRecord) error 
 			return err
 		}
 
-		// End early if we have reached any configured limit on the number of records sent to ch
-		if env.MaxSplitRecords > -1 && countSentRecords >= env.MaxSplitRecords {
+		// End early if a configured limit on the number of records sent to ch is reached
+		// OR if both record types have configured limits and both have been reached
+		if (env.MaxSplitRecords > -1 &&
+			countSentOpportunityRecords+countSentForecastRecords >= env.MaxSplitRecords) ||
+			(env.MaxSplitForecastRecords > -1 && env.MaxSplitOpportunityRecords > -1 &&
+				countSentForecastRecords >= env.MaxSplitForecastRecords &&
+				countSentOpportunityRecords >= env.MaxSplitOpportunityRecords) {
 			break
 		}
 
@@ -158,14 +164,18 @@ func readRecords(ctx context.Context, r io.Reader, ch chan<- grantRecord) error 
 			if se.Name.Local == GRANT_OPPORTUNITY_XML_NAME {
 				var o opportunity
 				if err = d.DecodeElement(&o, &se); err == nil {
-					countSentRecords++
-					ch <- &o
+					if env.MaxSplitOpportunityRecords < 0 || countSentOpportunityRecords < env.MaxSplitOpportunityRecords {
+						ch <- &o
+						countSentOpportunityRecords++
+					}
 				}
 			} else if se.Name.Local == GRANT_FORECAST_XML_NAME && env.IsForecastedGrantsEnabled {
 				var f forecast
 				if err = d.DecodeElement(&f, &se); err == nil {
-					countSentRecords++
-					ch <- &f
+					if env.MaxSplitForecastRecords < 0 || countSentForecastRecords < env.MaxSplitForecastRecords {
+						ch <- &f
+						countSentForecastRecords++
+					}
 				}
 			}
 
