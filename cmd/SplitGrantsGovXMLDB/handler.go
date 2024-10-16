@@ -10,7 +10,6 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/go-kit/log/level"
 	"github.com/hashicorp/go-multierror"
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
@@ -153,7 +152,7 @@ func readRecords(ctx context.Context, r io.Reader, ch chan<- grantRecord) error 
 				// EOF means that we're done reading
 				break
 			}
-			level.Error(logger).Log("msg", "Error reading XML token", "error", err)
+			log.Error(logger, "Error reading XML token", err)
 			span.Finish(tracer.WithError(err))
 			return err
 		}
