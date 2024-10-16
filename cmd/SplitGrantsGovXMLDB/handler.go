@@ -10,7 +10,6 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/go-kit/log/level"
 	"github.com/hashicorp/go-multierror"
 	"github.com/usdigitalresponse/grants-ingest/internal/log"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
@@ -125,7 +124,8 @@ func readRecords(ctx context.Context, r io.Reader, ch chan<- grantRecord) error 
 	span, ctx := tracer.StartSpanFromContext(ctx, "read.xml")
 
 	// Count records sent to ch
-	countSentRecords := 0
+	countSentOpportunityRecords := 0
+	countSentForecastRecords := 0
 
 	d := xml.NewDecoder(r)
 	for {
@@ -136,8 +136,13 @@ func readRecords(ctx context.Context, r io.Reader, ch chan<- grantRecord) error 
 			return err
 		}
 
-		// End early if we have reached any configured limit on the number of records sent to ch
-		if env.MaxSplitRecords > -1 && countSentRecords >= env.MaxSplitRecords {
+		// End early if a configured limit on the number of records sent to ch is reached
+		// OR if both record types have configured limits and both have been reached
+		if (env.MaxSplitRecords > -1 &&
+			countSentOpportunityRecords+countSentForecastRecords >= env.MaxSplitRecords) ||
+			(env.MaxSplitForecastRecords > -1 && env.MaxSplitOpportunityRecords > -1 &&
+				countSentForecastRecords >= env.MaxSplitForecastRecords &&
+				countSentOpportunityRecords >= env.MaxSplitOpportunityRecords) {
 			break
 		}
 
@@ -147,7 +152,7 @@ func readRecords(ctx context.Context, r io.Reader, ch chan<- grantRecord) error 
 				// EOF means that we're done reading
 				break
 			}
-			level.Error(logger).Log("msg", "Error reading XML token", "error", err)
+			log.Error(logger, "Error reading XML token", err)
 			span.Finish(tracer.WithError(err))
 			return err
 		}
@@ -158,14 +163,18 @@ func readRecords(ctx context.Context, r io.Reader, ch chan<- grantRecord) error 
 			if se.Name.Local == GRANT_OPPORTUNITY_XML_NAME {
 				var o opportunity
 				if err = d.DecodeElement(&o, &se); err == nil {
-					countSentRecords++
-					ch <- &o
+					if env.MaxSplitOpportunityRecords < 0 || countSentOpportunityRecords < env.MaxSplitOpportunityRecords {
+						ch <- &o
+						countSentOpportunityRecords++
+					}
 				}
 			} else if se.Name.Local == GRANT_FORECAST_XML_NAME && env.IsForecastedGrantsEnabled {
 				var f forecast
 				if err = d.DecodeElement(&f, &se); err == nil {
-					countSentRecords++
-					ch <- &f
+					if env.MaxSplitForecastRecords < 0 || countSentForecastRecords < env.MaxSplitForecastRecords {
+						ch <- &f
+						countSentForecastRecords++
+					}
 				}
 			}
 

@@ -10,6 +10,8 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
+	"strings"
 	"testing"
 	"text/template"
 	"time"
@@ -516,7 +518,6 @@ func TestLambdaInvocationScenarios(t *testing.T) {
 			Body:   bytes.NewReader(sourceData.Bytes()),
 		})
 		require.NoError(t, err)
-		// err = handleS3Event(context.TODO(), s3client, newMockDDBClient(t, mockDDBGetItemRVLookup{}), events.S3Event{
 		err = handleS3Event(context.TODO(), s3client, make(mockDDBClientGetItemCollection, 0).NewGetItemClient(t), events.S3Event{
 			Records: []events.S3EventRecord{
 				{S3: events.S3Entity{
@@ -580,6 +581,7 @@ func (r *MockReader) Read(p []byte) (int, error) {
 }
 
 func TestReadRecords(t *testing.T) {
+	setupLambdaEnvForTesting(t)
 	t.Run("Context cancelled between reads", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.TODO())
 		err := readRecords(ctx, &MockReader{func(p []byte) (int, error) {
@@ -587,6 +589,78 @@ func TestReadRecords(t *testing.T) {
 			return int(copy(p, []byte("<Grants>"))), nil
 		}}, make(chan<- grantRecord, 10))
 		assert.ErrorIs(t, err, context.Canceled)
+	})
+
+	t.Run("max record limits", func(t *testing.T) {
+		for _, tt := range []struct {
+			name                                                                 string
+			maxSplitRecords, maxSplitOpportunityRecords, maxSplitForecastRecords int
+			expOpportunityRecords, expForecastRecords                            int
+		}{
+			{
+				"no limits processes all records",
+				-1, -1, -1,
+				10, 10,
+			},
+			{
+				"opportunity limit does not limit forecasts",
+				-1, 2, -1,
+				2, 10,
+			},
+			{
+				"forecast limit does not limit opportunities",
+				-1, -1, 2,
+				10, 2,
+			},
+			{
+				"hard limit takes precedent over no type limits",
+				2, -1, -1,
+				2, 0,
+			},
+			{
+				"hard limit takes precedent over type limits",
+				2, 3, 5,
+				2, 0,
+			},
+			{
+				"mix of limits",
+				5, 3, -1,
+				3, 2,
+			},
+		} {
+			t.Run(tt.name, func(t *testing.T) {
+				env.MaxSplitRecords = tt.maxSplitRecords
+				env.MaxSplitOpportunityRecords = tt.maxSplitOpportunityRecords
+				env.MaxSplitForecastRecords = tt.maxSplitForecastRecords
+				env.IsForecastedGrantsEnabled = true
+
+				xmlData := "<Grants>\n" +
+					// Content of records doesn't matter since we're just looking at the tag
+					strings.Repeat("<OpportunitySynopsisDetail_1_0></OpportunitySynopsisDetail_1_0>\n", 10) +
+					strings.Repeat("<OpportunityForecastDetail_1_0></OpportunityForecastDetail_1_0>\n", 10) +
+					"</Grants>"
+				ch := make(chan grantRecord, 20)
+				require.NoError(t, readRecords(context.TODO(), strings.NewReader(xmlData), ch))
+				close(ch)
+				var countSentOpportunityRecords, countSentForecastRecords int
+				for rec := range ch {
+					switch reflect.Indirect(reflect.ValueOf(rec)).Type().Name() {
+					case "opportunity":
+						countSentOpportunityRecords++
+					case "forecast":
+						countSentForecastRecords++
+					default:
+						require.Fail(t,
+							"Unknown grantRecord type sent to channel during test setup",
+							"type %T unrecognized", rec)
+					}
+				}
+				assert.Equalf(t, tt.expOpportunityRecords, countSentOpportunityRecords,
+					"Unexpected number of opportunity records sent to channel")
+				assert.Equalf(t, tt.expForecastRecords, countSentForecastRecords,
+					"Unexpected number of forecast records sent to channel")
+			})
+		}
 	})
 }
 

@@ -44,7 +44,7 @@ func (cmd *Cmd) Run(app *kong.Kong, logger *log.Logger) error {
 		if !cmd.DryRun {
 			return err
 		}
-		app.Errorf(err.Error())
+		app.Errorf("%s", err.Error())
 	}
 
 	log.Debug(*logger, "Mapping files in directory to S3 keys...", "directory", cmd.SourceDirectory)

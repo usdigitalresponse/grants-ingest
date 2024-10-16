@@ -29,15 +29,17 @@ import (
 )
 
 type Environment struct {
-	LogLevel                  string `env:"LOG_LEVEL,default=INFO"`
-	DownloadChunkLimit        int64  `env:"DOWNLOAD_CHUNK_LIMIT,default=10"`
-	DestinationBucket         string `env:"GRANTS_PREPARED_DATA_BUCKET_NAME,required=true"`
-	DynamoDBTableName         string `env:"GRANTS_PREPARED_DATA_TABLE_NAME,required=true"`
-	MaxConcurrentUploads      int    `env:"MAX_CONCURRENT_UPLOADS,default=1"`
-	MaxSplitRecords           int    `env:"MAX_SPLIT_RECORDS,default=-1"`
-	UsePathStyleS3Opt         bool   `env:"S3_USE_PATH_STYLE,default=false"`
-	IsForecastedGrantsEnabled bool   `env:"IS_FORECASTED_GRANTS_ENABLED,default=false"`
-	Extras                    goenv.EnvSet
+	LogLevel                   string `env:"LOG_LEVEL,default=INFO"`
+	DownloadChunkLimit         int64  `env:"DOWNLOAD_CHUNK_LIMIT,default=10"`
+	DestinationBucket          string `env:"GRANTS_PREPARED_DATA_BUCKET_NAME,required=true"`
+	DynamoDBTableName          string `env:"GRANTS_PREPARED_DATA_TABLE_NAME,required=true"`
+	MaxConcurrentUploads       int    `env:"MAX_CONCURRENT_UPLOADS,default=1"`
+	UsePathStyleS3Opt          bool   `env:"S3_USE_PATH_STYLE,default=false"`
+	IsForecastedGrantsEnabled  bool   `env:"IS_FORECASTED_GRANTS_ENABLED,default=false"`
+	MaxSplitRecords            int    `env:"MAX_SPLIT_RECORDS,default=-1"`             // Hard limit of records to process, regardless of type. -1 for no limit.
+	MaxSplitOpportunityRecords int    `env:"MAX_SPLIT_OPPORTUNITY_RECORDS,default=-1"` // Limit opportunity-type records to process. -1 for no limit.
+	MaxSplitForecastRecords    int    `env:"MAX_SPLIT_FORECAST_RECORDS,default=-1"`    // Limit forecast-type records to process. -1 for no limit.
+	Extras                     goenv.EnvSet
 }
 
 var (
