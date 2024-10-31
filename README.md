@@ -45,7 +45,7 @@ Terraform modules located within the `modules` subdirectory.
 ### Runtime
 
 Runtime code that executes (e.g. by AWS Lambda) within the target environment in response to
-some triggering event. Runtime code is written using Go (currently targeting version `1.20.x`),
+some triggering event. Runtime code is written using Go (currently targeting version `1.23.x`),
 which is organized in the repository root directory according to the following conventions:
 
 - `cmd/`: This directory contains one subdirectory per Lambda function, and should provide a single
