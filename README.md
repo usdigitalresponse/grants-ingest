@@ -226,6 +226,17 @@ to development. You can [install the `task` utility](https://taskfile.dev/instal
 and then run `task` in your command-line environment to see a list of the available helpers.
 
 
+### Go compiler architecture
+
+This project is configured to target ARM64 CPU architecture when building Go binaries,
+since that is what we run on staging and production.
+Some contributors who develop on 64-bit Intel machines may have issues running Lambdas on LocalStack with this configuration.
+Currently, the suggested workaround is to make the following modifications to target 64-bit Intel when building locally and deploying to LocalStack:
+
+- In `Taskfile.yml`, modify the `go-build-lambda` task's command to set `GOARCH=amd64` (replaces `GOARCH=arm64`).
+- In `terraform/local.tfvars`, add the following Terraform input variable: `lambda_arch = "x86_64"`.
+
+
 #### Quick Reference
 
 The following items can be referred to as a quick "cheat-sheet" for development:
