@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
@@ -15,12 +14,8 @@ type DynamoDBUpdateItemAPI interface {
 	UpdateItem(ctx context.Context, params *dynamodb.UpdateItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.UpdateItemOutput, error)
 }
 
-func UpdateDynamoDBItem(ctx context.Context, c DynamoDBUpdateItemAPI, table string, opp opportunity) error {
-	key, err := buildKey(opp)
-	if err != nil {
-		return err
-	}
-	expr, err := buildUpdateExpression(opp)
+func UpdateDynamoDBItem(ctx context.Context, c DynamoDBUpdateItemAPI, table string, key, attrs map[string]types.AttributeValue) error {
+	expr, err := buildUpdateExpression(attrs)
 	if err != nil {
 		return err
 	}
@@ -36,24 +31,13 @@ func UpdateDynamoDBItem(ctx context.Context, c DynamoDBUpdateItemAPI, table stri
 	return err
 }
 
-func buildKey(o opportunity) (map[string]types.AttributeValue, error) {
-	oid, err := attributevalue.Marshal(o.OpportunityID)
-
-	return map[string]types.AttributeValue{"grant_id": oid}, err
-}
-
-func buildUpdateExpression(o opportunity) (expression.Expression, error) {
-	oppAttr, err := attributevalue.MarshalMap(o)
-	if err != nil {
-		return expression.Expression{}, err
-	}
-
+func buildUpdateExpression(m map[string]types.AttributeValue) (expression.Expression, error) {
 	update := expression.UpdateBuilder{}
-	for k, v := range oppAttr {
+	for k, v := range m {
 		update = update.Set(expression.Name(k), expression.Value(v))
 	}
 	update = awsHelpers.DDBSetRevisionForUpdate(update)
-	condition, err := awsHelpers.DDBIfAnyValueChangedCondition(oppAttr)
+	condition, err := awsHelpers.DDBIfAnyValueChangedCondition(m)
 	if err != nil {
 		return expression.Expression{}, err
 	}
