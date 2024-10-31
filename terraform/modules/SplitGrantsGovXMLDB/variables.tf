@@ -104,7 +104,19 @@ variable "is_forecasted_grants_enabled" {
 }
 
 variable "max_split_records" {
-  description = "Optional limit (i.e. for testing) on the number of records that the handler will process during a single invocation."
+  description = "Optional limit (i.e. for testing) on the number of records that the handler will process during a single invocation. This setting is a hard cap on top of opportunity- and forecast-specific limits."
+  type        = number
+  default     = -1
+}
+
+variable "max_split_opportunity_records" {
+  description = "Optional limit (i.e. for testing) on the number of opportunity records that the handler will process during a single invocation."
+  type        = number
+  default     = -1
+}
+
+variable "max_split_forecast_records" {
+  description = "Optional limit (i.e. for testing) on the number of opportunity records that the handler will process during a single invocation."
   type        = number
   default     = -1
 }
