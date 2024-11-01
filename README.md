@@ -45,7 +45,7 @@ Terraform modules located within the `modules` subdirectory.
 ### Runtime
 
 Runtime code that executes (e.g. by AWS Lambda) within the target environment in response to
-some triggering event. Runtime code is written using Go (currently targeting version `1.20.x`),
+some triggering event. Runtime code is written using Go (currently targeting version `1.23.x`),
 which is organized in the repository root directory according to the following conventions:
 
 - `cmd/`: This directory contains one subdirectory per Lambda function, and should provide a single
@@ -219,11 +219,23 @@ shows logs emitted in the past 1 hour, and will continue to display new logs as 
 awslocal logs tail /aws/lambda/grants-ingest-DownloadGrantsGovDB --since 1h --follow
 ```
 
+
 ### Running Common Tasks
 
 This repository provides a `Taskfile.yml` file for defining and running common tasks related
 to development. You can [install the `task` utility](https://taskfile.dev/installation/)
 and then run `task` in your command-line environment to see a list of the available helpers.
+
+
+### Go compiler architecture
+
+This project is configured to target ARM64 CPU architecture when building Go binaries,
+since that is what we run on staging and production.
+Some contributors who develop on 64-bit Intel machines may have issues running Lambdas on LocalStack with this configuration.
+Currently, the suggested workaround is to make the following modifications to target 64-bit Intel when building locally and deploying to LocalStack:
+
+- In `Taskfile.yml`, modify the `go-build-lambda` task's command to set `GOARCH=amd64` (replaces `GOARCH=arm64`).
+- In `terraform/local.tfvars`, add the following Terraform input variable: `lambda_arch = "x86_64"`.
 
 
 #### Quick Reference
