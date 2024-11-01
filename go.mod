@@ -1,6 +1,6 @@
 module github.com/usdigitalresponse/grants-ingest
 
-go 1.20
+go 1.23.2
 
 require (
 	github.com/DataDog/datadog-lambda-go v1.17.0
