@@ -81,7 +81,7 @@ jobs:
         run: task prebuild-lambda
       - name: Store build sources
         id: store
-        uses: actions/upload-artifact@604373da6381bf24206979c74d06a550515601b9 # v4.4.1
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: ${{ env.SOURCES_KEY }}
           path: ${{ env.SOURCES_PATH }}
@@ -200,7 +200,7 @@ jobs:
           UPX_RESULT: ${{ steps.pack.outputs.result }}
       - name: Store build artifacts
         id: store
-        uses: actions/upload-artifact@604373da6381bf24206979c74d06a550515601b9 # v4.4.1
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: ${{ env.ARTIFACTS_KEY }}
           path: ${{ env.ARTIFACTS_PATH }}
@@ -319,7 +319,7 @@ jobs:
           UPX_RESULT: ${{ steps.pack.outputs.result }}
       - name: Store build artifacts
         id: store
-        uses: actions/upload-artifact@604373da6381bf24206979c74d06a550515601b9 # v4.4.1
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: ${{ env.ARTIFACTS_KEY }}
           path: ${{ env.ARTIFACTS_PATH }}
