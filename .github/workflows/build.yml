@@ -144,7 +144,7 @@ jobs:
           echo "$COMPILED_CHECKSUMS" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
       - name: Install UPX
-        uses: crazy-max/ghaction-upx@0fc45e912669ba9e8fa2b430e97c8da2a632e29b # v3.0.0
+        uses: crazy-max/ghaction-upx@de21b8cbed76979407eeb6e41aa5e270afc3225c # v3.1.0
         with:
           version: v4.1.0
           install-only: true
@@ -263,7 +263,7 @@ jobs:
           echo "$COMPILED_CHECKSUMS" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
       - name: Install UPX
-        uses: crazy-max/ghaction-upx@0fc45e912669ba9e8fa2b430e97c8da2a632e29b # v3.0.0
+        uses: crazy-max/ghaction-upx@de21b8cbed76979407eeb6e41aa5e270afc3225c # v3.1.0
         with:
           version: v4.1.0
           install-only: true
