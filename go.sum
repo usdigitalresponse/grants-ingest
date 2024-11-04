@@ -8,8 +8,8 @@ github.com/DataDog/datadog-agent/pkg/remoteconfig/state v0.57.0 h1:LplNAmMgZvGU7
 github.com/DataDog/datadog-agent/pkg/remoteconfig/state v0.57.0/go.mod h1:4Vo3SJ24uzfKHUHLoFa8t8o+LH+7TCQ7sPcZDtOpSP4=
 github.com/DataDog/datadog-go/v5 v5.5.0 h1:G5KHeB8pWBNXT4Jtw0zAkhdxEAWSpWH00geHI6LDrKU=
 github.com/DataDog/datadog-go/v5 v5.5.0/go.mod h1:K9kcYBlxkcPP8tvvjZZKs/m1edNAUFzBbdpTUKfCsuw=
-github.com/DataDog/datadog-lambda-go v1.17.0 h1:8e7Td+dAj+aTzFf5nH/Gvw29BbL6DRZL0Q+sQosCyq0=
-github.com/DataDog/datadog-lambda-go v1.17.0/go.mod h1:7+v12GJYBbyl240mHPsP3OMf/na6dEccGWgOgBTDZ4Q=
+github.com/DataDog/datadog-lambda-go v1.19.0 h1:0G23fOUguTWqu6Y/36lFKfuUl94Gk0VFHghHWRpkJSo=
+github.com/DataDog/datadog-lambda-go v1.19.0/go.mod h1:V18Zh3T4QnzUGj89ajYigDqEykYjQjS9IkDzRp4GSu8=
 github.com/DataDog/go-libddwaf/v3 v3.4.0 h1:NJ2W2vhYaOm1OWr1LJCbdgp7ezG/XLJcQKBmjFwhSuM=
 github.com/DataDog/go-libddwaf/v3 v3.4.0/go.mod h1:n98d9nZ1gzenRSk53wz8l6d34ikxS+hs62A31Fqmyi4=
 github.com/DataDog/go-sqllexer v0.0.10 h1:u07DuRfdlPPmOX/dclb1gcn/zaqWxUiURRRVenKILxc=
